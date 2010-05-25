@@ -16,23 +16,25 @@ class HttpRouter
       path = raw_url(args, options)
       raise TooManyParametersException.new unless args.empty?
       Rack::Utils.uri_escape!(path)
-      generate_querystring(path, options) if options && !options.empty?
+      generate_querystring(path, options)
       path
     end
 
     def generate_querystring(uri, params)
-      uri_size = uri.size
-      params.each do |k,v|
-        case v
-        when Array
-          v.each do |v_part|
-            uri << '&' << Rack::Utils.escape(k.to_s) << '%5B%5D=' << Rack::Utils.escape(v_part.to_s)
+      if params && !params.empty?
+        uri_size = uri.size
+        params.each do |k,v|
+          case v
+          when Array
+            v.each do |v_part|
+              uri << '&' << Rack::Utils.escape(k.to_s) << '%5B%5D=' << Rack::Utils.escape(v_part.to_s)
+            end
+          else
+            uri << '&' << Rack::Utils.escape(k.to_s) << '=' << Rack::Utils.escape(v.to_s)
           end
-        else
-          uri << '&' << Rack::Utils.escape(k.to_s) << '=' << Rack::Utils.escape(v.to_s)
         end
+        uri[uri_size] = ??
       end
-      uri[uri_size] = ??
     end
 
     def variables

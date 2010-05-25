@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
-    attr_accessor :value, :variable, :catchall, :request_node
-    attr_reader :linear, :lookup
+    attr_accessor :value, :variable, :catchall
+    attr_reader :linear, :lookup, :request_node, :extension_node
 
     def initialize
       reset!
@@ -30,6 +30,11 @@ class HttpRouter
       else
         @lookup[val] ||= Node.new
       end
+    end
+    
+    def add_extension(ext)
+      @extension_node ||= Node.new
+      @extension_node.add(ext)
     end
     
     def add_request_methods(options)

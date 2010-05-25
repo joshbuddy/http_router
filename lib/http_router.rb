@@ -57,8 +57,7 @@ class HttpRouter
     route.trailing_slash_ignore = trailing_slash_ignore
     route.partially_match = partially_match
     paths.each_with_index do |path, i|
-      current_node = @root
-      path.parts.each { |part| current_node = current_node.add(part) }
+      current_node = @root.add_path(path)
       working_set = current_node.add_request_methods(options)
       working_set.each do |current_node|
         current_node.value = path

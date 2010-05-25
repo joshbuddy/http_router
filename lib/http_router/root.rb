@@ -5,6 +5,14 @@ class HttpRouter
       reset!
     end
 
+    def add_path(path)
+      node = path.parts.inject(self) { |node, part| node.add(part) }
+      if path.extension
+        node = node.add_extension(path.extension)
+      end
+      node
+    end
+
     def find(request)
       path = request.path_info.dup
       path.slice!(-1) if @base.ignore_trailing_slash? && path[-1] == ?/
@@ -12,10 +20,13 @@ class HttpRouter
       extension = $1
       parts = @base.split(path)
       parts << '' if path[path.size - 1] == ?/
-
       current_node = self
       params = []
       while current_node
+        if current_node.extension_node && extension && parts.empty?
+          parts << extension
+          current_node = current_node.extension_node
+        end
         break if current_node.nil? || (current_node.value && current_node.value.route.partially_match?) || parts.empty?
         unless current_node.linear.empty?
           whole_path = parts.join('/')
