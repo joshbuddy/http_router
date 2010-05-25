@@ -18,9 +18,19 @@ describe "HttpRouter#generate" do
       @router.url(:test, :var => 'test').should == '/test'
     end
 
+    it "should generate from a hash with extra parts going to the query string" do
+      @router.add("/:var").name(:test)
+      @router.url(:test, :var => 'test', :query => 'string').should == '/test?query=string'
+    end
+
     it "should generate from an array" do
       @router.add("/:var").name(:test)
       @router.url(:test, 'test').should == '/test'
+    end
+
+    it "should generate from an array with extra parts going to the query string" do
+      @router.add("/:var").name(:test)
+      @router.url(:test, 'test', :query => 'string').should == '/test?query=string'
     end
 
     it "should generate with a format" do
