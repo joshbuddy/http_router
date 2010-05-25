@@ -2,7 +2,11 @@
 
 == Introduction
  
-When I wrote Usher, I made a few compromised in design that I wasn't totally happy with. More and more features got added to it, and eventually, it became harder to maintain. I took a few moments to work in Node.js, and wrote a router there called Sherpa, which I was happier with. But I felt that by losing more abstraction, and tackling just the problem of HTTP routing, I could come up with something even better.
+When I wrote Usher, I made a few compromises in design that I wasn't totally happy with. More and more features got added to it, and eventually, it became harder to maintain. I took a few moments to work in Node.js, and wrote a router there called Sherpa, which I was happier with. But I felt that by losing more abstraction, and tackling just the problem of HTTP routing, I could come up with something even better.
+
+== Warning
+
+This is very new code. Lots of stuff probably doesn't work right. I will likely never support all the features I had in Usher. Documentation is super-sparse.
 
 == Features
 
