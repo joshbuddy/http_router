@@ -43,6 +43,15 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
   s.summary = %q{A kick-ass HTTP router for use in Rack & Sinatra}
+  s.test_files = [
+    "spec/generate_spec.rb",
+    "spec/rack/dispatch_spec.rb",
+    "spec/rack/generate_spec.rb",
+    "spec/rack/route_spec.rb",
+    "spec/recognize_spec.rb",
+    "spec/sinatra/recognize_spec.rb",
+    "spec/spec_helper.rb"
+  ]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
