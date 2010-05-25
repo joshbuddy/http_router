@@ -1,0 +1,60 @@
+= HTTP Router
+
+== Introduction
+ 
+When I wrote Usher, I made a few compromised in design that I wasn't totally happy with. More and more features got added to it, and eventually, it became harder to maintain. I took a few moments to work in Node.js, and wrote a router there called Sherpa, which I was happier with. But I felt that by losing more abstraction, and tackling just the problem of HTTP routing, I could come up with something even better.
+
+== Features
+
+* Supports variables, and globbing.
+* Regex support for variables.
+* Request condition support.
+* Partial matches.
+* Supports interstitial variables (e.g. /my-:variable-brings.all.the.boys/yard).
+* Very fast and small code base (~600 loc).
+* Sinatra compatibility.
+
+== Usage
+
+=== <tt>HttpRouter.new</tt>
+
+Takes the following options:
+
+* <tt>:default_app</tt> - The default #call made on non-matches. Defaults to a 404 generator.
+* <tt>:ignore_trailing_slash</tt> - Ignores the trailing slash when matching. Defaults to true.
+* <tt>:redirect_trailing_slash</tt> - Redirect on trailing slash matches to non-trailing slash paths. Defaults to false.
+
+=== <tt>#add(name, options)</tt>
+
+Maps a route. The format for variables in paths is:
+  :variable
+  *glob
+
+Everything else is treated literally. Optional parts are surrounded by brackets. Partially matching paths have a trailing <tt>*</tt>. Optional trailing slash matching is done with <tt>/?</tt>.
+
+Once you have a route object, use <tt>HttpRouter::Route#to</tt> to add a destination and <tt>HttpRouter::Route#name</tt> to name it.
+
+e.g.
+  
+  r = HttpRouter.new
+  r.add('/test/:variable(.:format)').name(:my_test_path).to {|env| [200, {}, "Hey dude #{env['router.params'][:variable]}"]}
+  r.add('/test').redirect_to("http://www.google.com")
+  r.add('/static').serves_static_from('/my_file_system')
+  
+As well, you can support regex matching and request conditions. To add a regex match, use <tt>:matches_with => { :id => /\d+/ }</tt>.
+To match on a request condition you can use <tt>:conditions => {:request_method => %w(POST HEAD)}</tt>.
+
+There are convenience methods HttpRouter#get, HttpRouter#post, etc for each request method.
+
+=== <tt>#url(name or route, *args)</tt>
+
+Generates a route. The args can either be a hash, a list, or a mix of both.
+
+=== <tt>#call(env or Rack::Request)</tt>
+
+Recognizes and dispatches the request.
+
+=== <tt>#recognize(env or Rack::Request)</tt>
+
+Only performs recognition.
+
