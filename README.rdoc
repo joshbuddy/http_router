@@ -42,7 +42,7 @@ e.g.
   
   r = HttpRouter.new
   r.add('/test/:variable(.:format)').name(:my_test_path).to {|env| [200, {}, "Hey dude #{env['router.params'][:variable]}"]}
-  r.add('/test').redirect_to("http://www.google.com")
+  r.add('/test').redirect_to("http://www.google.com/")
   r.add('/static').serves_static_from('/my_file_system')
   
 As well, you can support regex matching and request conditions. To add a regex match, use <tt>:matches_with => { :id => /\d+/ }</tt>.
