@@ -98,6 +98,44 @@ class HttpRouter
     add(path, options)
   end
 
+  def recognize(env)
+    response = @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
+  end
+
+  def url(route, *args)
+    case route
+      when Symbol
+        url(@routes[route], *args)
+      when nil
+        raise UngeneratableRouteException.new
+      else
+        route.url(*args)
+    end
+  end
+
+  def call(env)
+    request = Rack::Request.new(env)
+    if redirect_trailing_slash? && (request.head? || request.get?) && request.path_info[-1] == ?/
+      response = Rack::Response.new
+      response.redirect(request.path_info[0, request.path_info.size - 1], 302)
+      response.finish
+    else
+      response = recognize(request)
+      env['router'] = self
+      if response.is_a?(RoutingError)
+        [response.status, response.headers, []]
+      elsif response && response.route.dest && response.route.dest.respond_to?(:call)
+        process_params(env, response)
+        consume_path!(request, response) if response.partial_match?
+        response.route.dest.call(env)
+      else
+        @default_app.call(env)
+      end
+    end
+  end
+
+  private
+
   def extract_partial_match(path)
     if path[-1] == ?*
       path.slice!(-1)
@@ -126,7 +164,8 @@ class HttpRouter
     end
   end
 
-  def compile(path, options)
+
+  def compile_optionals(path)
     start_index = 0
     end_index = 1
 
@@ -150,7 +189,11 @@ class HttpRouter
           end
       end
     end
-    
+    paths
+  end
+  
+  def compile(path, options)
+    paths = compile_optionals(path)
     variables = {}
     paths.map do |path|
       original_path = path.dup
@@ -164,28 +207,7 @@ class HttpRouter
           v_name = part[1, part.size].to_sym
           variables[v_name] ||= Glob.new(self, v_name, options && options[:matches_with] && options && options[:matches_with][v_name])
         else
-          part_segments = part.split(/(:[a-zA-Z_]+)/)
-          if part_segments.size > 1
-            index = 0
-            part_segments.map do |seg|
-              new_seg = if seg[0] == ?:
-                next_index = index + 1
-                scan_regex = if next_index == part_segments.size
-                  /^[^\/]+/
-                else
-                  /^.*?(?=#{Regexp.quote(part_segments[next_index])})/
-                end
-                v_name = seg[1, seg.size].to_sym
-                variables[v_name] ||= Variable.new(self, v_name, scan_regex)
-              else
-                /^#{Regexp.quote(seg)}/
-              end
-              index += 1
-              new_seg
-            end
-          else
-            part
-          end
+          generate_interstitial_parts(part, variables)
         end
       end
       new_path.flatten!
@@ -193,28 +215,28 @@ class HttpRouter
     end
   end
 
-  def call(env)
-    request = Rack::Request.new(env)
-    if redirect_trailing_slash? && (request.head? || request.get?) && request.path_info[-1] == ?/
-      response = Rack::Response.new
-      response.redirect(request.path_info[0, request.path_info.size - 1], 302)
-      response.finish
-    else
-      response = recognize(request)
-      env['router'] = self
-      if response.is_a?(RoutingError)
-        [response.status, response.headers, []]
-      elsif response && response.route.dest && response.route.dest.respond_to?(:call)
-        process_params(env, response)
-        consume_path!(request, response) if response.partial_match?
-        #if response.rest
-        #  request.env["SCRIPT_NAME"] += request.env["PATH_INFO"][0, -response.rest.size]
-        #  request.env["PATH_INFO"] = response.rest || ''
-        #end
-        response.route.dest.call(env)
-      else
-        @default_app.call(env)
+  def generate_interstitial_parts(part, variables)
+    part_segments = part.split(/(:[a-zA-Z_]+)/)
+    if part_segments.size > 1
+      index = 0
+      part_segments.map do |seg|
+        new_seg = if seg[0] == ?:
+          next_index = index + 1
+          scan_regex = if next_index == part_segments.size
+            /^[^\/]+/
+          else
+            /^.*?(?=#{Regexp.quote(part_segments[next_index])})/
+          end
+          v_name = seg[1, seg.size].to_sym
+          variables[v_name] ||= Variable.new(self, v_name, scan_regex)
+        else
+          /^#{Regexp.quote(seg)}/
+        end
+        index += 1
+        new_seg
       end
+    else
+      part
     end
   end
 
@@ -232,18 +254,4 @@ class HttpRouter
     end
   end
 
-  def recognize(env)
-    response = @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
-  end
-
-  def url(route, *args)
-    case route
-      when Symbol
-        url(@routes[route], *args)
-      when nil
-        raise UngeneratableRouteException.new
-      else
-        route.url(*args)
-    end
-  end
 end

@@ -16,12 +16,22 @@ class HttpRouter
     def find(request)
       path = request.path_info.dup
       path.slice!(-1) if @base.ignore_trailing_slash? && path[-1] == ?/
-      path.gsub!(/\.([^\/\.]+)$/, '')
-      extension = $1
+      extension = extract_extension(path)
       parts = @base.split(path)
       parts << '' if path[path.size - 1] == ?/
-      current_node = self
+
       params = []
+      if current_node = process_parts(parts, extension, params)
+        current_node = current_node.find_on_request_methods(request)
+      end
+      
+      process_response(current_node, parts, extension, params, request)
+    end
+    
+    private
+    
+    def process_parts(parts, extension, params)
+      current_node = self
       while current_node
         if current_node.extension_node && extension && parts.empty?
           parts << extension
@@ -62,42 +72,29 @@ class HttpRouter
           current_node = nil
         end
       end
-      
-      if current_node && current_node.request_node
-        current_node = current_node.request_node
-        while current_node
-          previous_node = current_node
-          break if current_node.nil? || current_node.is_a?(RoutingError) || current_node.value
-          request_value = request.send(current_node.request_method)
-          unless current_node.linear.empty?
-            next_node = current_node.linear.find do |(regexp, node)|
-              regexp === request_value
-            end
-            if next_node
-              current_node = next_node.last
-              next
-            end
-          end
-          current_node = current_node.lookup[request_value] || current_node.catchall
-          if current_node.nil?
-            current_node = previous_node.request_method == :request_method ? RoutingError.new(405, {"Allow" => previous_node.lookup.keys.join(", ")}) : nil
-          else
-            current_node
-          end
-        end
-      end
-      if current_node.is_a?(RoutingError)
-        current_node
-      elsif current_node && current_node.value
+      current_node
+    end
+
+    def process_response(node, parts, extension, params, request)
+      if node.is_a?(RoutingError)
+        node
+      elsif node && node.value
         if parts.empty?
-          post_match(current_node.value, params, extension, request.path_info)
-        elsif current_node.value.route.partially_match?
+          post_match(node.value, params, extension, request.path_info)
+        elsif node.value.route.partially_match?
           rest = '/' << parts.join('/') << (extension ? ".#{extension}" : '')
-          
-          post_match(current_node.value, params, nil, request.path_info[0, request.path_info.size - rest.size], rest)
+          post_match(node.value, params, nil, request.path_info[0, request.path_info.size - rest.size], rest)
         else
           nil
         end
+      else
+        nil
+      end
+    end
+
+    def extract_extension(path)
+      if path.gsub!(/\.([^\/\.]+)$/, '')
+        extension = $1
       else
         nil
       end
