@@ -63,7 +63,7 @@ class HttpRouter
     alias_method :conditions, :condition
 
     def matching(*match)
-      raise if compiled?
+      guard_compiled
       @matches_with.merge!(match.pop) if match.last.is_a?(Hash)
       match.each_slice(2) do |(k,v)|
         @matches_with[k] = v
