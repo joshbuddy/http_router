@@ -60,9 +60,6 @@ class HttpRouter
 
           def route(verb, path, options={}, &block)
             name = options.delete(:name)
-            options[:conditions] ||= {}
-            options[:conditions][:request_method] = verb
-            options[:conditions][:host] = options.delete(:host) if options.key?(:host)
 
             define_method "#{verb} #{path}", &block
             unbound_method = instance_method("#{verb} #{path}")
@@ -75,7 +72,11 @@ class HttpRouter
 
             invoke_hook(:route_added, verb, path, block)
 
-            route = router.add(path, options).to(block)
+            route = router.add(path)
+            route.request_method(verb)
+            route.host(options.delete(:host)) if options.key?(:host)
+            
+            route.to(block)
             route.name(name) if name
             route
           end

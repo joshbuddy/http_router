@@ -43,12 +43,14 @@ e.g.
   r = HttpRouter.new
   r.add('/test/:variable(.:format)').name(:my_test_path).to {|env| [200, {}, "Hey dude #{env['router.params'][:variable]}"]}
   r.add('/test').redirect("http://www.google.com/")
-  r.add('/static').serves_static_from('/my_file_system')
+  r.add('/static').static('/my_file_system')
   
-As well, you can support regex matching and request conditions. To add a regex match, use <tt>:matches_with => { :id => /\d+/ }</tt>.
-To match on a request condition you can use <tt>:conditions => {:request_method => %w(POST HEAD)}</tt>.
+As well, you can support regex matching and request conditions. To add a regex match, use <tt>matching(:id => /\d+/)</tt>.
+To match on a request condition you can use <tt>condition(:request_method => %w(POST HEAD))</tt> or more succinctly <tt>request_method('POST', 'HEAD')</tt>.
 
 There are convenience methods HttpRouter#get, HttpRouter#post, etc for each request method.
+
+Routes will not be recognized unless <tt>#to</tt> has been called on it.
 
 === <tt>#url(name or route, *args)</tt>
 

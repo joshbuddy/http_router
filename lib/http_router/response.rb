@@ -13,6 +13,11 @@ class HttpRouter
       path.route
     end
     
+    def dest
+      route.dest
+    end
+    alias_method :destination, :dest
+    
     def partial_match?
       remaining_path
     end

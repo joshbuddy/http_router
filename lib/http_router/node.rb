@@ -38,7 +38,7 @@ class HttpRouter
     end
     
     def add_request_methods(options)
-      if options && options[:conditions]
+      if !options.empty?
         generate_request_method_tree(options)
       elsif @request_node
         current_node = @request_node
@@ -64,9 +64,11 @@ class HttpRouter
       end
     end
     
-    def generate_request_method_tree(options)
+    def generate_request_method_tree(request_options)
+      raise if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
+      
+      
       current_nodes = [@request_node ||= RequestNode.new]
-      request_options = options[:conditions]
       RequestNode::RequestMethods.each do |method|
         current_nodes.each_with_index do |current_node, current_node_index|
           if request_options[method]  #we care about the method
