@@ -32,8 +32,8 @@ class HttpRouter
     
     def process_parts(parts, extension, params)
       current_node = self
-      while current_node
-        if current_node.extension_node && extension && parts.empty?
+      loop do
+        if parts.empty? && current_node.extension_node && extension
           parts << extension
           current_node = current_node.extension_node
         end
@@ -70,6 +70,7 @@ class HttpRouter
           break
         else
           current_node = nil
+          break
         end
       end
       current_node

@@ -42,7 +42,7 @@ describe "Usher (for rack) route dispatching" do
   describe "HTTP POST" do
     before(:each) do
       route_set.reset!
-      route_set.add('/sample').request_method('POST').to(@app)
+      route_set.add('/sample').post.to(@app)
       route_set.add('/sample').to(MockApp.new("You shouldn't get here if you are using POST"))
     end
 
@@ -64,8 +64,8 @@ describe "Usher (for rack) route dispatching" do
 
   it "should returns HTTP 405 if the method mis-matches" do
     route_set.reset!
-    route_set.add('/sample').request_method('POST').to(@app)
-    route_set.add('/sample').request_method('PUT').to(@app)
+    route_set.post('/sample').to(@app)
+    route_set.put('/sample').to(@app)
     response = route_set.call_with_mock_request('/sample', 'GET')
     response.status.should eql(405)
     response['Allow'].should == 'POST, PUT'
