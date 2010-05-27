@@ -1,3 +1,16 @@
+unless Rack::Utils.respond_to?(:query_escape)
+  module Rack
+    module Utils
+      def uri_escape(s)
+        s.to_s.gsub(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) {
+          '%'<<$1.unpack('H2'*$1.size).join('%').upcase
+        }
+      end
+      module_function :uri_escape
+    end
+  end
+end
+
 unless Rack::Utils.respond_to?(:uri_escape)
   module Rack
     module Utils

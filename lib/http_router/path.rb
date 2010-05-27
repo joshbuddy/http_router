@@ -1,3 +1,4 @@
+require 'cgi'
 class HttpRouter
   class Path
     attr_reader :parts, :extension
@@ -26,11 +27,9 @@ class HttpRouter
         params.each do |k,v|
           case v
           when Array
-            v.each do |v_part|
-              uri << '&' << Rack::Utils.escape(k.to_s) << '%5B%5D=' << Rack::Utils.escape(v_part.to_s)
-            end
+            v.each { |v_part| uri << '&' << CGI.escape(k.to_s) << '%5B%5D=' << CGI.escape(v_part.to_s) }
           else
-            uri << '&' << Rack::Utils.escape(k.to_s) << '=' << Rack::Utils.escape(v.to_s)
+            uri << '&' << CGI.escape(k.to_s) << '=' << CGI.escape(v.to_s)
           end
         end
         uri[uri_size] = ??
@@ -46,7 +45,7 @@ class HttpRouter
     end
 
     def variable_names
-      variables.map{|v| v.name}
+      @variable_names ||= variables.map{|v| v.name}
     end
 
     def matches_extension?(extension)

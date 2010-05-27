@@ -1,7 +1,7 @@
 class HttpRouter
   class Route
-    attr_reader :dest, :paths, :default_values
-    attr_accessor :trailing_slash_ignore, :partially_match
+    attr_reader :dest, :paths
+    attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(base, path)
       @base = base
@@ -24,7 +24,7 @@ class HttpRouter
 
     def name(name)
       @name = name
-      @base.routes[name] = self
+      @base.named_routes[name] = self
     end
 
     def get
@@ -138,6 +138,7 @@ class HttpRouter
 
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
+      options = default_values.merge(options) if default_values && options
       path = matching_path(args.empty? ? options : args)
       raise UngeneratableRouteException.new unless path
       path.url(args, options)

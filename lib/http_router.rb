@@ -17,13 +17,15 @@ class HttpRouter
   AlreadyCompiledException    = Class.new(RuntimeError)
   RoutingError                = Struct.new(:status, :headers)
 
-  attr_reader :routes, :root
+  attr_reader :named_routes, :routes, :root
 
   def initialize(options = nil)
-    reset!
     @default_app = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
+    @routes = []
+    @named_routes = {}
+    reset!
   end
 
   def ignore_trailing_slash?
@@ -36,7 +38,8 @@ class HttpRouter
 
   def reset!
     @root = Root.new(self)
-    @routes = {}
+    @routes.clear
+    @named_routes.clear
   end
 
   def default(app)
@@ -49,7 +52,9 @@ class HttpRouter
   end
 
   def add(path)
-    Route.new(self, path.dup)
+    route = Route.new(self, path.dup)
+    @routes << route
+    route
   end
 
   def get(path)
@@ -79,7 +84,7 @@ class HttpRouter
   def url(route, *args)
     case route
       when Symbol
-        url(@routes[route], *args)
+        url(@named_routes[route], *args)
       when nil
         raise UngeneratableRouteException.new
       else
