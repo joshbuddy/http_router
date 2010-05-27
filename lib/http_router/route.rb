@@ -12,6 +12,7 @@ class HttpRouter
       @variable_store = {}
       @matches_with = {}
       @conditions =  {}
+      @default_values = {}
     end
 
     def method_missing(method, *args, &block)
@@ -25,6 +26,11 @@ class HttpRouter
     def name(name)
       @name = name
       @base.named_routes[name] = self
+    end
+
+    def default(v)
+      @default_values.merge!(v)
+      self
     end
 
     def get
