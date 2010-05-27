@@ -52,17 +52,17 @@ describe "HttpRouter#recognize" do
 
   context "request methods" do
     it "should pick a specific request_method" do
-      route = @router.add("/test").request_method('POST').to(:test)
+      route = @router.post("/test").to(:test)
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).route.should == route
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).status.should == 405
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).headers['Allow'].should == "POST"
     end
 
     it "should pick a specific request_method with other paths all through it" do
-      @router.add("/test").request_method('POST').to(:test_post)
-      @router.add("/test/post").request_method('POST').to(:test_post_post)
-      @router.add("/test").request_method('GET').to(:test_get)
-      @router.add("/test/post").request_method('GET').to(:test_post_get)
+      @router.post("/test").to(:test_post)
+      @router.post("/test/post").to(:test_post_post)
+      @router.get("/test").to(:test_get)
+      @router.get("/test/post").to(:test_post_get)
       @router.add("/test/post").to(:test_post_catchall)
       @router.add("/test").to(:test_catchall)
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).dest.should == :test_post
@@ -75,7 +75,7 @@ describe "HttpRouter#recognize" do
 
     it "should move an endpoint to the non-specific request method when a more specific route gets added" do
       @router.add("/test").name(:test_catchall).to(:test1)
-      @router.add("/test").request_method('POST').name(:test_post).to(:test2)
+      @router.post("/test").request_method('POST').name(:test_post).to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).route.named.should == :test_post
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).route.named.should == :test_catchall
     end

@@ -27,13 +27,43 @@ class HttpRouter
       @base.routes[name] = self
     end
 
-    def condition(c)
-      @conditions.merge!(c)
+    def get
+      request_method('GET', 'HEAD')
+    end
+    
+    def post
+      request_method('POST')
+    end
+    
+    def head
+      request_method('head')
+    end
+    
+    def put
+      request_method('PUT')
+    end
+    
+    def delete
+      request_method('DELETE')
+    end
+    
+    def only_get
+      request_method('DELETE')
+    end
+      
+    def condition(conditions)
+      guard_compiled
+      conditions.each do |k,v|
+        @conditions.key?(k) ?
+          @conditions[k] << v :
+          @conditions[k] = Array(v)
+      end
       self
     end
     alias_method :conditions, :condition
 
     def matching(*match)
+      raise if compiled?
       @matches_with.merge!(match.pop) if match.last.is_a?(Hash)
       match.each_slice(2) do |(k,v)|
         @matches_with[k] = v
@@ -56,6 +86,10 @@ class HttpRouter
       self
     end
   
+    def compiled?
+      !@paths.nil?
+    end
+  
     def compile
       unless @paths
         @paths = compile_paths
@@ -68,12 +102,12 @@ class HttpRouter
           end
         end
       end
+      self
     end
   
     def redirect(path, status = 302)
-      unless (300..399).include?(status)
-        raise ArgumentError, "Status has to be an integer between 300 and 399"
-      end
+      guard_compiled
+      raise(ArgumentError, "Status has to be an integer between 300 and 399") unless (300..399).include?(status)
       to { |env|
         params = env['router.params']
         response = ::Rack::Response.new
@@ -84,6 +118,8 @@ class HttpRouter
     end
     
     def static(root)
+      guard_compiled
+      raise AlreadyCompiledException.new if compiled?
       if File.directory?(root)
         partial.to ::Rack::File.new(root)
       else
@@ -101,7 +137,6 @@ class HttpRouter
     end
 
     def url(*args)
-      compile
       options = args.last.is_a?(Hash) ? args.pop : nil
       path = matching_path(args.empty? ? options : args)
       raise UngeneratableRouteException.new unless path
@@ -145,21 +180,11 @@ class HttpRouter
     end
     
     def extract_partial_match(path)
-      if path[-1] == ?*
-        path.slice!(-1)
-        true
-      else
-        false
-      end
+      path[-1] == ?* && path.slice!(-1)
     end
 
     def extract_trailing_slash(path)
-      if path[-2, 2] == '/?'
-        path.slice!(-2, 2)
-        true
-      else
-        false
-      end
+      path[-2, 2] == '/?' && path.slice!(-2, 2)
     end
 
     def extract_extension(path)
@@ -247,6 +272,8 @@ class HttpRouter
       end
     end
 
-    
+    def guard_compiled
+      raise AlreadyCompiledException.new if compiled?
+    end
   end
 end

@@ -14,6 +14,7 @@ class HttpRouter
   UngeneratableRouteException = Class.new(RuntimeError)
   MissingParameterException   = Class.new(RuntimeError)
   TooManyParametersException  = Class.new(RuntimeError)
+  AlreadyCompiledException    = Class.new(RuntimeError)
   RoutingError                = Struct.new(:status, :headers)
 
   attr_reader :routes, :root
@@ -52,23 +53,23 @@ class HttpRouter
   end
 
   def get(path)
-    add(path).request_method('GET', 'HEAD')
+    add(path).get
   end
 
   def post(path)
-    add(path).request_method('POST')
+    add(path).post
   end
 
   def put(path)
-    add(path).request_method('PUT')
+    add(path).put
   end
 
   def delete(path)
-    add(path).request_method('DELETE')
+    add(path).delete
   end
 
   def only_get(path)
-    add(path).request_method('GET')
+    add(path).only_get
   end
 
   def recognize(env)
