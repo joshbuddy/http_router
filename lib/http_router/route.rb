@@ -157,24 +157,14 @@ class HttpRouter
           end
           nil
         else
-          maximum_matched_route = nil
-          maximum_matched_params = -1
-          @paths.each do |path|
-            param_count = 0
-            path.variables.each do |variable|
-              if params && params.key?(variable.name)
-                param_count += 1
-              else
-                param_count = -1
-                break
-              end
-            end
-            if (param_count != -1 && param_count > maximum_matched_params)
-              maximum_matched_params = param_count;
-              maximum_matched_route = path;
+          @paths.reverse_each do |path|
+            if params && !params.empty?
+              return path if (path.variable_names & params.keys).size == path.variable_names.size
+            elsif path.variable_names.empty?
+              return path
             end
           end
-          maximum_matched_route
+          nil
         end
       end
     end
