@@ -165,7 +165,7 @@ describe "HttpRouter#recognize" do
 
   context("dynamic greedy paths") do
     it "should recognize greedy variables" do
-      route = @router.add('/:variable').matching(:variable, /\d+/).to(:test)
+      route = @router.add('/:variable').matching(:variable => /\d+/).to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/123'))
       response.route.should == route
       response.params.should == ['123']
