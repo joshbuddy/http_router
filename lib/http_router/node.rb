@@ -121,7 +121,7 @@ class HttpRouter
         current_node = current_node.request_node
         while current_node
           previous_node = current_node
-          break if current_node.nil? || current_node.is_a?(RoutingError) || current_node.value
+          break if current_node.nil? || current_node.is_a?(RoutingResponse) || current_node.value
           request_value = request.send(current_node.request_method)
           unless current_node.linear.empty?
             next_node = current_node.linear.find do |(regexp, node)|
@@ -134,7 +134,7 @@ class HttpRouter
           end
           current_node = current_node.lookup[request_value] || current_node.catchall
           if current_node.nil?
-            current_node = previous_node.request_method == :request_method ? RoutingError.new(405, {"Allow" => previous_node.lookup.keys.join(", ")}) : nil
+            current_node = previous_node.request_method == :request_method ? RoutingResponse.new(405, {"Allow" => previous_node.lookup.keys.join(", ")}) : nil
           else
             current_node
           end

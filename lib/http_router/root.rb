@@ -77,7 +77,7 @@ class HttpRouter
     end
 
     def process_response(node, parts, extension, params, request)
-      if node.is_a?(RoutingError)
+      if node.is_a?(RoutingResponse)
         node
       elsif node && node.value
         if parts.empty?

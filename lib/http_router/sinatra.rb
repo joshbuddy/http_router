@@ -26,7 +26,7 @@ class HttpRouter
         private
           def route!(base=self.class, pass_block=nil)
             if base.router and match = base.router.recognize(@request)
-              if match.is_a?(RoutingError)
+              if match.is_a?(RoutingResponse)
                 route_eval { 
                   match.headers.each{|k,v| response[k] = v}
                   status match.status

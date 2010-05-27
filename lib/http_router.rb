@@ -15,7 +15,7 @@ class HttpRouter
   MissingParameterException   = Class.new(RuntimeError)
   TooManyParametersException  = Class.new(RuntimeError)
   AlreadyCompiledException    = Class.new(RuntimeError)
-  RoutingError                = Struct.new(:status, :headers)
+  RoutingResponse             = Struct.new(:status, :headers)
 
   attr_reader :named_routes, :routes, :root
 
@@ -101,7 +101,7 @@ class HttpRouter
     else
       response = recognize(request)
       env['router'] = self
-      if response.is_a?(RoutingError)
+      if response.is_a?(RoutingResponse)
         [response.status, response.headers, []]
       elsif response && response.route.dest && response.route.dest.respond_to?(:call)
         process_params(env, response)
