@@ -32,6 +32,12 @@ describe "HttpRouter#generate" do
       @router.add("/:var").name(:test).compile
       @router.url(:test, 'test', :query => 'string').should == '/test?query=string'
     end
+    
+    it "should generate with multiple dynamics" do
+      @router.add("/:var/:baz").name(:test).compile
+      @router.url(:test, 'one', 'two').should == '/one/two'
+      @router.url(:test, :var => 'one', :baz => 'two').should == '/one/two'
+    end
 
     context "with a :format" do
       it "should generate with a format" do
@@ -64,6 +70,20 @@ describe "HttpRouter#generate" do
         @router.add("/:var1(.:format)").name(:test).compile
         @router.url(:test, 'var').should == '/var'
         @router.url(:test, 'var', :format => 'html').should == '/var.html'
+      end
+      
+      it "should generate multiple dynamics and a format" do
+        @router.add("/:foo/:bar.:format").name(:test).compile
+        @router.url(:test, 'var', 'baz', 'html').should == '/var/baz.html'
+        @router.url(:test, :foo => 'var', :bar => 'baz', :format => 'html').should == '/var/baz.html'
+      end
+      
+      it "should generate multiple dynamics and an optional format" do
+        @router.add("/:foo/:bar(.:format)").name(:test).compile
+        @router.url(:test, 'var', 'baz').should == '/var/baz'
+        @router.url(:test, 'var', 'baz', 'html').should == '/var/baz.html'
+        @router.url(:test, :foo => 'var', :bar => 'baz').should == '/var/baz'
+        @router.url(:test, :foo => 'var', :bar => 'baz', :format => 'html').should == '/var/baz.html'
       end
     end
 
@@ -108,7 +128,7 @@ describe "HttpRouter#generate" do
       # However, url generated with:
       #   url(:test, :var1 => 'blah', :var3 => 'more')
       # would be recognized as /:var1(/:var2) instead of /:var1(/:var3)
-      # Might want to throw ane error when generating a route thats broken like this.
+      # Might want to throw an error when generating a route thats broken like this.
       it "should be smart about multiple optionals"
     end
   end
