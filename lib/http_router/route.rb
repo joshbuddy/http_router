@@ -15,6 +15,15 @@ class HttpRouter
       @default_values = {}
     end
 
+    def significant_variable_names
+      unless @significant_variable_names
+        @significant_variable_names = @paths.map { |p| p.variable_names }
+        @significant_variable_names.flatten!
+        @significant_variable_names.uniq!
+      end
+      @significant_variable_names
+    end
+
     def method_missing(method, *args, &block)
       if RequestNode::RequestMethods.include?(method)
         condition(method => args)
@@ -142,24 +151,27 @@ class HttpRouter
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options = default_values.merge(options) if default_values && options
-      path = matching_path(args.empty? ? options : args)
+      path = if args.empty?
+        matching_path(options)
+      else
+        matching_path(args, options)
+      end
       raise UngeneratableRouteException.new unless path
       path.url(args, options)
     end
 
     private
 
-    def matching_path(params)
+    def matching_path(params, other_hash = nil)
       if @paths.size == 1
         @paths.first
       else
         if params.is_a?(Array)
-          @paths.each do |path|
-            if path.variables.size == params.size
-              return path
-            end
-          end
-          nil
+          significant_keys = other_hash && significant_variable_names & other_hash.keys
+          @paths.find { |path| 
+            var_count = significant_keys ? params.size + significant_keys.size : params.size
+            path.variables.size == var_count
+          }
         else
           @paths.reverse_each do |path|
             if params && !params.empty?

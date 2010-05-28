@@ -19,63 +19,17 @@ class HttpRouter
       extension = extract_extension(path)
       parts = @base.split(path)
       parts << '' if path[path.size - 1] == ?/
-
       params = []
-      if current_node = process_parts(parts, extension, params)
-        current_node = current_node.find_on_request_methods(request)
-      end
-      
-      process_response(current_node, parts, extension, params, request)
+      process_response(
+        find_on_parts(request, parts, extension, params),
+        parts,
+        extension,
+        params, 
+        request
+      )
     end
     
     private
-    
-    def process_parts(parts, extension, params)
-      current_node = self
-      loop do
-        if parts.empty? && current_node.extension_node && extension
-          parts << extension
-          current_node = current_node.extension_node
-        end
-        break if current_node.nil? || (current_node.value && current_node.value.route.partially_match?) || parts.empty?
-        unless current_node.linear.empty?
-          whole_path = parts.join('/')
-          next_node = current_node.linear.find do |(tester, node)|
-            if tester.is_a?(Regexp) and match = whole_path.match(tester)
-              whole_path.slice!(0,match[0].size)
-              parts.replace(@base.split(whole_path))
-              node
-            elsif new_params = tester.matches(parts, whole_path)
-              params << new_params
-              node
-            else
-              nil
-            end
-          end
-          if next_node
-            current_node = next_node.last
-            next
-          end
-        end
-        if match = current_node.lookup[parts.first]
-          parts.shift
-          current_node = match
-        elsif current_node.catchall
-          params << current_node.catchall.variable.matches(parts, whole_path)
-          parts.shift
-          current_node = current_node.catchall
-        elsif parts.size == 1 && parts.first == '' && current_node && (current_node.value && current_node.value.route.trailing_slash_ignore?)
-          parts.shift
-        elsif current_node.request_node
-          break
-        else
-          current_node = nil
-          break
-        end
-      end
-      current_node
-    end
-
     def process_response(node, parts, extension, params, request)
       if node.is_a?(RoutingResponse)
         node

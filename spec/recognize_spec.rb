@@ -75,9 +75,15 @@ describe "HttpRouter#recognize" do
 
     it "should move an endpoint to the non-specific request method when a more specific route gets added" do
       @router.add("/test").name(:test_catchall).to(:test1)
-      @router.post("/test").request_method('POST').name(:test_post).to(:test2)
+      @router.post("/test").name(:test_post).to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).route.named.should == :test_post
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).route.named.should == :test_catchall
+    end
+
+    it "should try both specific and non-specifc routes" do
+      @router.post("/test").host('host1').to(:post_host1)
+      @router.add("/test").host('host2').to(:any_post2)
+      @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'POST')).dest.should == :any_post2
     end
 
   end
