@@ -15,6 +15,7 @@ class HttpRouter
   MissingParameterException   = Class.new(RuntimeError)
   TooManyParametersException  = Class.new(RuntimeError)
   AlreadyCompiledException    = Class.new(RuntimeError)
+
   RoutingResponse             = Struct.new(:status, :headers)
 
   attr_reader :named_routes, :routes, :root
