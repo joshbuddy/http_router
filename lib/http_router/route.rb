@@ -42,7 +42,7 @@ class HttpRouter
     end
     
     def head
-      request_method('head')
+      request_method('HEAD')
     end
     
     def put
