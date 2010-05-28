@@ -4,7 +4,7 @@ class HttpRouter
     attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(base, path)
-      @base = base
+      @router = base
       @path = path
       @original_path = path.dup
       @partially_match = extract_partial_match(path)
@@ -34,7 +34,7 @@ class HttpRouter
 
     def name(name)
       @name = name
-      @base.named_routes[name] = self
+      router.named_routes[name] = self
     end
 
     def default(v)
@@ -107,7 +107,7 @@ class HttpRouter
         @paths = compile_paths
         @paths.each do |path|
           path.route = self
-          current_node = @base.root.add_path(path)
+          current_node = router.root.add_path(path)
           working_set = current_node.add_request_methods(@conditions)
           working_set.each do |current_node|
             current_node.value = path
@@ -161,6 +161,10 @@ class HttpRouter
     end
 
     private
+    
+    def router
+      @router
+    end
 
     def matching_path(params, other_hash = nil)
       if @paths.size == 1
@@ -196,7 +200,7 @@ class HttpRouter
     def extract_extension(path)
       if match = path.match(/^(.*)(\.:([a-zA-Z_]+))$/)
         path.replace(match[1])
-        Variable.new(@base, match[3].to_sym)
+        router.variable(match[3].to_sym)
       elsif match = path.match(/^(.*)(\.([a-zA-Z_]+))$/)
         path.replace(match[1])
         match[3]
@@ -236,14 +240,14 @@ class HttpRouter
       paths.map do |path|
         original_path = path.dup
         extension = extract_extension(path)
-        new_path = @base.split(path).map do |part|
+        new_path = router.split(path).map do |part|
           case part[0]
           when ?:
             v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= Variable.new(@base, v_name, @matches_with[v_name])
+            @variable_store[v_name] ||= router.variable(v_name, @matches_with[v_name])
           when ?*
             v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= Glob.new(@base, v_name, @matches_with[v_name])
+            @variable_store[v_name] ||= router.glob(v_name, @matches_with[v_name])
           else
             generate_interstitial_parts(part)
           end
@@ -266,7 +270,7 @@ class HttpRouter
               /^.*?(?=#{Regexp.quote(part_segments[next_index])})/
             end
             v_name = seg[1, seg.size].to_sym
-            @variable_store[v_name] ||= Variable.new(@base, v_name, scan_regex)
+            @variable_store[v_name] ||= router.variable(v_name, scan_regex)
           else
             /^#{Regexp.quote(seg)}/
           end

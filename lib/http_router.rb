@@ -82,6 +82,7 @@ class HttpRouter
     response = @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
   end
 
+  # Generate a URL for a specified route.
   def url(route, *args)
     case route
       when Symbol
@@ -93,6 +94,7 @@ class HttpRouter
     end
   end
 
+  # Allow the router to be called via Rake / Middleware.
   def call(env)
     request = Rack::Request.new(env)
     if redirect_trailing_slash? && (request.head? || request.get?) && request.path_info[-1] == ?/
@@ -112,6 +114,26 @@ class HttpRouter
         @default_app.call(env)
       end
     end
+  end
+  
+  # Returns a new node
+  def node(*args)
+    Node.new(self, *args)
+  end
+
+  # Returns a new request node
+  def request_node(*args)
+    RequestNode.new(self, *args)
+  end
+
+  # Returns a new variable
+  def variable(*args)
+    Variable.new(self, *args)
+  end
+  
+  # Returns a new glob
+  def glob(*args)
+    Glob.new(self, *args)
   end
 
   private

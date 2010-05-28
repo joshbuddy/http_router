@@ -3,7 +3,7 @@ class HttpRouter
     attr_reader :name, :matches_with
 
     def initialize(base, name, matches_with = nil)
-      @base = base
+      @router = base
       @name = name
       @matches_with = matches_with
     end
@@ -13,7 +13,7 @@ class HttpRouter
         parts.first
       elsif @matches_with && match = @matches_with.match(whole_path)
         whole_path.slice!(0, match[0].size)
-        parts.replace(@base.split(whole_path))
+        parts.replace(router.split(whole_path))
         match[0]
       end
     end
@@ -21,6 +21,11 @@ class HttpRouter
     def ===(part)
       @matches_with.nil?
     end
+    
+    protected
+      def router
+        @router
+      end
     
   end
 end

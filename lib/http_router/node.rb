@@ -4,7 +4,7 @@ class HttpRouter
     attr_reader :linear, :lookup, :request_node, :extension_node
 
     def initialize(base)
-      @base = base
+      @router = base
       reset!
     end
 
@@ -17,24 +17,24 @@ class HttpRouter
     def add(val)
       if val.is_a?(Variable)
         if val.matches_with
-          new_node = Node.new(@base)
+          new_node = router.node
           @linear << [val, new_node]
           new_node
         else
-          @catchall ||= Node.new(@base)
+          @catchall ||= router.node
           @catchall.variable = val
           @catchall
         end
       elsif val.is_a?(Regexp)
-        @linear << [val, Node.new(@base)]
+        @linear << [val, router.node]
         @linear.last.last
       else
-        @lookup[val] ||= Node.new(@base)
+        @lookup[val] ||= router.node
       end
     end
     
     def add_extension(ext)
-      @extension_node ||= Node.new(@base)
+      @extension_node ||= router.node
       @extension_node.add(ext)
     end
     
@@ -44,7 +44,7 @@ class HttpRouter
       elsif @request_node
         current_node = @request_node
         while current_node.request_method
-          current_node = (current_node.catchall ||= RequestNode.new(@base))
+          current_node = (current_node.catchall ||= router.request_node)
         end
         [current_node]
       else
@@ -53,12 +53,16 @@ class HttpRouter
     end
     
     protected
+    
+    def router
+      @router
+    end
 
     def transplant_value
       if @value
         target_node = @request_node
         while target_node.request_method
-          target_node = (target_node.catchall ||= RequestNode.new(@base))
+          target_node = (target_node.catchall ||= router.request_node)
         end
         target_node.value = @value
         @value = nil
@@ -71,7 +75,7 @@ class HttpRouter
       RequestNode::RequestMethods.each do |method|
         if request_options.key?(method) # so, the request method we care about it ..
           if current_nodes == [self]
-            current_nodes = [@request_node ||= RequestNode.new(@base)]
+            current_nodes = [@request_node ||= router.request_node]
           end
           
           for current_node_index in (0...current_nodes.size)
@@ -83,16 +87,16 @@ class HttpRouter
               case RequestNode::RequestMethods.index(method) <=> RequestNode::RequestMethods.index(current_node.request_method)
               when 0 #use this node
                 if request_options[method].is_a?(Regexp)
-                  new_node = RequestNode.new(@base)
+                  new_node = router.request_node
                   current_nodes[current_node_index] = new_node
                   current_node.linear << [request_options[method], new_node]
                 elsif request_options[method].is_a?(Array)
-                  current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= RequestNode.new(@base)}
+                  current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= router.request_node}
                 else
-                  current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= RequestNode.new(@base))
+                  current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= router.request_node)
                 end
               when 1 #this node is farther ahead
-                current_nodes[current_node_index] = (current_node.catchall ||= RequestNode.new(@base))
+                current_nodes[current_node_index] = (current_node.catchall ||= router.request_node)
               when -1 #this method is more important than the current node
                 next_node = current_node.dup
                 current_node.reset!
@@ -100,12 +104,12 @@ class HttpRouter
                 redo
               end
             else
-              current_node.catchall ||= RequestNode.new(@base)
+              current_node.catchall ||= router.request_node
             end
           end
           current_nodes.flatten!
         elsif current_nodes.first.is_a?(RequestNode) && !current_nodes.first.request_method.nil?
-          current_nodes.map!{|n| n.catchall ||= RequestNode.new(@base)}
+          current_nodes.map!{|n| n.catchall ||= router.request_node}
         end
       end
       transplant_value
@@ -122,7 +126,7 @@ class HttpRouter
           next_node = @linear.find do |(tester, node)|
             if tester.is_a?(Regexp) and match = whole_path.match(tester) #and match.index == 0 TODO
               whole_path.slice!(0,match[0].size)
-              parts.replace(@base.split(whole_path))
+              parts.replace(router.split(whole_path))
               node
             elsif new_params = tester.matches(parts, whole_path)
               params << new_params

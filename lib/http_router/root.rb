@@ -1,10 +1,5 @@
 class HttpRouter
   class Root < Node
-    def initialize(base)
-      @base = base
-      reset!
-    end
-
     def add_path(path)
       node = path.parts.inject(self) { |node, part| node.add(part) }
       if path.extension
@@ -15,9 +10,9 @@ class HttpRouter
 
     def find(request)
       path = request.path_info.dup
-      path.slice!(-1) if @base.ignore_trailing_slash? && path[-1] == ?/
+      path.slice!(-1) if router.ignore_trailing_slash? && path[-1] == ?/
       extension = extract_extension(path)
-      parts = @base.split(path)
+      parts = router.split(path)
       parts << '' if path[path.size - 1] == ?/
       params = []
       process_response(
