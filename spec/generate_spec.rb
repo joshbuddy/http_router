@@ -131,7 +131,7 @@ describe "HttpRouter#generate" do
       # Might want to throw an error when generating a route thats broken like this.
       it "should be smart about multiple optionals" do
         #yeah, lets warn!
-        proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbigiousRouteException)
+        proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbiguousRouteException)
       end
     end
   end

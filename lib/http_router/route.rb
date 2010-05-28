@@ -107,7 +107,7 @@ class HttpRouter
         @paths = compile_paths
         @paths.each_with_index do |p1, i|
           @paths[i+1, @paths.size].each do |p2|
-            raise AmbigiousRouteException.new if p1 === p2
+            raise AmbiguousRouteException.new if p1 === p2
           end
         end
         @paths.each do |path|

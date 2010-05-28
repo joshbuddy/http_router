@@ -15,7 +15,7 @@ class HttpRouter
   MissingParameterException   = Class.new(RuntimeError)
   TooManyParametersException  = Class.new(RuntimeError)
   AlreadyCompiledException    = Class.new(RuntimeError)
-  AmbigiousRouteException     = Class.new(RuntimeError)
+  AmbiguousRouteException     = Class.new(RuntimeError)
 
   RoutingResponse             = Struct.new(:status, :headers)
 
