@@ -55,12 +55,12 @@ describe "HttpRouter#generate" do
         @router.url(:test).should == '/test'
       end
       
-      it "should generate a dynamic path a format" do
+      it "should generate a dynamic path and a format" do
         @router.add("/:var1.:format").name(:test).compile
         @router.url(:test, 'var', :format => 'html').should == '/var.html'
       end
       
-      it "should generate a dynamic path and optional format" do
+      it "should generate a dynamic path and an optional format" do
         @router.add("/:var1(.:format)").name(:test).compile
         @router.url(:test, 'var').should == '/var'
         @router.url(:test, 'var', :format => 'html').should == '/var.html'
