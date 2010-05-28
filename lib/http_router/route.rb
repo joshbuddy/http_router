@@ -162,9 +162,7 @@ class HttpRouter
 
     private
     
-    def router
-      @router
-    end
+    attr_reader :router
 
     def matching_path(params, other_hash = nil)
       if @paths.size == 1

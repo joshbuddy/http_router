@@ -23,9 +23,6 @@ class HttpRouter
     end
     
     protected
-      def router
-        @router
-      end
-    
+      attr_reader :router
   end
 end

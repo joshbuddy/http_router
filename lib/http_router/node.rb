@@ -54,9 +54,7 @@ class HttpRouter
     
     protected
     
-    def router
-      @router
-    end
+    attr_reader :router
 
     def transplant_value
       if @value
