@@ -1,6 +1,6 @@
 $LOAD_PATH << File.dirname(__FILE__)
 require 'rack'
-require 'rack/uri_escape'
+require 'ext/rack/uri_escape'
 
 class HttpRouter
   autoload :Node,     'http_router/node'
