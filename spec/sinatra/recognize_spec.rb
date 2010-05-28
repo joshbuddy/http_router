@@ -1,5 +1,5 @@
 require "sinatra"
-require "http_router/sinatra"
+require "http_router/interface/sinatra"
 
 describe "Usher (for Sinatra) route recognition" do
   before(:each) do
