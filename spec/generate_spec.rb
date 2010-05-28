@@ -129,7 +129,10 @@ describe "HttpRouter#generate" do
       #   url(:test, :var1 => 'blah', :var3 => 'more')
       # would be recognized as /:var1(/:var2) instead of /:var1(/:var3)
       # Might want to throw an error when generating a route thats broken like this.
-      it "should be smart about multiple optionals"
+      it "should be smart about multiple optionals" do
+        #yeah, lets warn!
+        proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbigiousRouteException)
+      end
     end
   end
 end

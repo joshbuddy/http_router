@@ -105,6 +105,11 @@ class HttpRouter
     def compile
       unless @paths
         @paths = compile_paths
+        @paths.each_with_index do |p1, i|
+          @paths[i+1, @paths.size].each do |p2|
+            raise AmbigiousRouteException.new if p1 === p2
+          end
+        end
         @paths.each do |path|
           path.route = self
           current_node = router.root.add_path(path)

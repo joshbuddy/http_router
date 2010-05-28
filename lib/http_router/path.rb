@@ -13,6 +13,23 @@ class HttpRouter
       "
     end
 
+    def ===(other_path)
+      return false if @parts.size != other_path.parts.size
+      @parts.each_with_index {|p,i| 
+        return unless compare_parts(p, other_path.parts[i])
+      }
+      compare_parts(@extension, other_path.extension)
+    end
+
+    def compare_parts(p1, p2)
+      case p1
+      when Glob then p2.is_a?(Glob)
+      when Variable then p2.is_a?(Variable)
+      else
+        p1 == p2
+      end
+    end
+
     def url(args, options)
       path = raw_url(args, options)
       raise TooManyParametersException.new unless args.empty?
