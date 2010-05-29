@@ -9,8 +9,8 @@ class HttpRouter
     end
 
     def reset!
-      @linear = []
-      @lookup = {}
+      @linear = nil
+      @lookup = nil
       @catchall = nil
     end
 
@@ -18,6 +18,7 @@ class HttpRouter
       if val.is_a?(Variable)
         if val.matches_with
           new_node = router.node
+          create_linear
           @linear << [val, new_node]
           new_node
         else
@@ -26,9 +27,11 @@ class HttpRouter
           @catchall
         end
       elsif val.is_a?(Regexp)
+        create_linear
         @linear << [val, router.node]
         @linear.last.last
       else
+        create_lookup
         @lookup[val] ||= router.node
       end
     end
@@ -87,10 +90,13 @@ class HttpRouter
                 if request_options[method].is_a?(Regexp)
                   new_node = router.request_node
                   current_nodes[current_node_index] = new_node
+                  current_node.create_linear
                   current_node.linear << [request_options[method], new_node]
                 elsif request_options[method].is_a?(Array)
+                  current_node.create_lookup
                   current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= router.request_node}
                 else
+                  current_node.create_lookup
                   current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= router.request_node)
                 end
               when 1 #this node is farther ahead
@@ -119,7 +125,7 @@ class HttpRouter
         parts << extension
         extension_node.find_on_parts(request, parts, extension, params)
       else
-        unless @linear.empty?
+        if @linear && !@linear.empty?
           whole_path = parts.join('/')
           next_node = @linear.find do |(tester, node)|
             if tester.is_a?(Regexp) and match = whole_path.match(tester) #and match.index == 0 TODO
@@ -135,7 +141,7 @@ class HttpRouter
           end
           return next_node.last.find_on_parts(request, parts, extension, params) if next_node
         end
-        if match = @lookup[parts.first]
+        if match = @lookup && @lookup[parts.first]
           parts.shift
           match.find_on_parts(request, parts, extension, params)
         elsif @catchall
@@ -154,6 +160,14 @@ class HttpRouter
         end
       end
     end
+
+    def create_linear
+      @linear ||= []
+    end
+
+    def create_lookup
+      @lookup ||= {}
+    end
   end
   
   class RequestNode < Node
@@ -163,14 +177,14 @@ class HttpRouter
     def find_on_request_methods(request)
       if @request_method
         request_value = request.send(request_method)
-        unless @linear.empty?
+        if @linear && !@linear.empty?
           next_node = @linear.find do |(regexp, node)|
             regexp === request_value
           end
           next_node &&= next_node.find_on_request_methods(request)
           return next_node if next_node
         end
-        if next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request))
+        if @lookup and next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request))
           return next_node
         elsif next_node = (@catchall && @catchall.find_on_request_methods(request))
           return next_node
