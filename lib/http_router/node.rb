@@ -126,7 +126,7 @@ class HttpRouter
               whole_path.slice!(0,match[0].size)
               parts.replace(router.split(whole_path))
               node
-            elsif new_params = tester.matches(parts, whole_path)
+            elsif new_params = tester.matches(request.env, parts, whole_path)
               params << new_params
               node
             else
@@ -139,7 +139,7 @@ class HttpRouter
           parts.shift
           match.find_on_parts(request, parts, extension, params)
         elsif @catchall
-          params << @catchall.variable.matches(parts, whole_path)
+          params << @catchall.variable.matches(request.env, parts, whole_path)
           parts.shift
           @catchall.find_on_parts(request, parts, extension, params)
         elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore?)

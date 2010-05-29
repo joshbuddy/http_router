@@ -29,6 +29,15 @@ describe "HttpRouter#recognize" do
       end
     end
 
+    context("proc acceptance") do
+      it "should match optionally with a proc" do
+        route = @router.add("/:test").matching(:test => /^\d+/).matching(:test => proc{|env, val| val == '123' or raise}).to(:test)
+        response = @router.recognize(Rack::MockRequest.env_for('/123'))
+        response.route.should == route
+        response.params_as_hash[:test].should == '123'
+      end
+    end
+
     context("trailing slashes") do
       it "should ignore a trailing slash" do
         route = @router.add("/test").to(:test)

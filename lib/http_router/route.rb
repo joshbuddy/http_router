@@ -11,6 +11,7 @@ class HttpRouter
       @trailing_slash_ignore = extract_trailing_slash(path)
       @variable_store = {}
       @matches_with = {}
+      @additional_matchers = {}
       @conditions =  {}
       @default_values = {}
     end
@@ -79,7 +80,18 @@ class HttpRouter
 
     def matching(match)
       guard_compiled
-      @matches_with.merge!(match)
+      match.each do |var_name, matchers|
+        matchers = Array(matchers)
+        matchers.each do |m|
+          if m.respond_to?(:call)
+            (@additional_matchers[var_name] ||= []) << m
+          else
+            @matches_with.key?(var_name) ?
+              raise :
+              @matches_with[var_name] = m
+          end    
+        end
+      end
       self
     end
 
@@ -203,7 +215,8 @@ class HttpRouter
     def extract_extension(path)
       if match = path.match(/^(.*)(\.:([a-zA-Z_]+))$/)
         path.replace(match[1])
-        router.variable(match[3].to_sym)
+        v_name = match[3].to_sym
+        router.variable(match[3].to_sym, @matches_with[v_name], @additional_matchers && @additional_matchers[v_name])
       elsif match = path.match(/^(.*)(\.([a-zA-Z_]+))$/)
         path.replace(match[1])
         match[3]
@@ -247,10 +260,10 @@ class HttpRouter
           case part[0]
           when ?:
             v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= router.variable(v_name, @matches_with[v_name])
+            @variable_store[v_name] ||= router.variable(v_name, @matches_with[v_name], @additional_matchers && @additional_matchers[v_name])
           when ?*
             v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= router.glob(v_name, @matches_with[v_name])
+            @variable_store[v_name] ||= router.glob(v_name, @matches_with[v_name], @additional_matchers && @additional_matchers[v_name])
           else
             generate_interstitial_parts(part)
           end
@@ -274,7 +287,7 @@ class HttpRouter
             else
               /^#{matcher || '.*?'}(?=#{Regexp.quote(part_segments[next_index])})/
             end
-            @variable_store[v_name] ||= router.variable(v_name, scan_regex)
+            @variable_store[v_name] ||= router.variable(v_name, scan_regex, @additional_matchers && @additional_matchers[v_name])
           else
             /^#{Regexp.quote(seg)}/
           end
