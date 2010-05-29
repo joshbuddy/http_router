@@ -33,6 +33,18 @@ class HttpRouter
       end
     end
 
+    def with_options(options)
+      if options && options[:matching]
+        default(options[:matching])
+      end
+      if options && options[:conditions]
+        condition(options[:conditions])
+      end
+      if options && options[:default_values]
+        default(options[:default_values])
+      end
+    end
+
     def name(name)
       @name = name
       router.named_routes[name] = self
