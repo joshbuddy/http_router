@@ -19,8 +19,6 @@ class HttpRouter
   UnsupportedRequestConditionError = Class.new(RuntimeError)
   AmbiguousVariableException       = Class.new(RuntimeError)
 
-  RoutingResponse             = Struct.new(:status, :headers)
-
   attr_reader :named_routes, :routes, :root
 
   def initialize(options = nil)
@@ -105,17 +103,17 @@ class HttpRouter
       response.redirect(request.path_info[0, request.path_info.size - 1], 302)
       response.finish
     else
-      response = recognize(request)
       env['router'] = self
-      if response.is_a?(RoutingResponse)
-        [response.status, response.headers, []]
-      elsif response && response.route.dest && response.route.dest.respond_to?(:call)
-        process_params(env, response)
-        consume_path!(request, response) if response.partial_match?
-        response.route.dest.call(env)
-      else
-        @default_app.call(env)
+      if response = recognize(request)
+        if response.matched? && response.route.dest && response.route.dest.respond_to?(:call)
+          process_params(env, response)
+          consume_path!(request, response) if response.partial_match?
+          return response.route.dest.call(env)
+        elsif !response.matched?
+          return [response.status, response.headers, []]
+        end
       end
+      @default_app.call(env)
     end
   end
   

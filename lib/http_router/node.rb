@@ -194,7 +194,7 @@ class HttpRouter
       if @value
         self
       else
-        current_node = request_method == :request_method ? RoutingResponse.new(405, {"Allow" => @lookup.keys.join(", ")}) : nil
+        current_node = request_method == :request_method ? Response.unmatched(405, {"Allow" => @lookup.keys.join(", ")}) : nil
       end
     end
 

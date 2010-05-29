@@ -26,7 +26,7 @@ class HttpRouter
     
     private
     def process_response(node, parts, extension, params, request)
-      if node.is_a?(RoutingResponse)
+      if node.respond_to?(:matched?) && !node.matched?
         node
       elsif node && node.value
         if parts.empty?
@@ -52,7 +52,7 @@ class HttpRouter
 
     def post_match(path, params, extension, matched_path, remaining_path = nil)
       if path.route.partially_match? || path.matches_extension?(extension)
-        Response.new(path, params, extension, matched_path, remaining_path)
+        Response.matched(path, params, extension, matched_path, remaining_path)
       else
         nil
       end
