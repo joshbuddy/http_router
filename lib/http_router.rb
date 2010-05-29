@@ -11,11 +11,13 @@ class HttpRouter
   autoload :Response, 'http_router/response'
   autoload :Path,     'http_router/path'
 
-  UngeneratableRouteException = Class.new(RuntimeError)
-  MissingParameterException   = Class.new(RuntimeError)
-  TooManyParametersException  = Class.new(RuntimeError)
-  AlreadyCompiledException    = Class.new(RuntimeError)
-  AmbiguousRouteException     = Class.new(RuntimeError)
+  UngeneratableRouteException      = Class.new(RuntimeError)
+  MissingParameterException        = Class.new(RuntimeError)
+  TooManyParametersException       = Class.new(RuntimeError)
+  AlreadyCompiledException         = Class.new(RuntimeError)
+  AmbiguousRouteException          = Class.new(RuntimeError)
+  UnsupportedRequestConditionError = Class.new(RuntimeError)
+  AmbiguousVariableException       = Class.new(RuntimeError)
 
   RoutingResponse             = Struct.new(:status, :headers)
 

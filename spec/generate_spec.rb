@@ -121,18 +121,21 @@ describe "HttpRouter#generate" do
         @router.url(:test, :var1 => 'var', :var2 => 'fooz', :format => 'html').should == '/var/fooz.html'
         @router.url(:test, :var1 => 'var', :format => 'html').should == '/var.html'
       end
-      
-      
-      # Right now a route like this works:
-      #   /:var1(/:var2)(/:var3)
-      # However, url generated with:
-      #   url(:test, :var1 => 'blah', :var3 => 'more')
-      # would be recognized as /:var1(/:var2) instead of /:var1(/:var3)
-      # Might want to throw an error when generating a route thats broken like this.
+    end
+    
+    context "exceptions" do
       it "should be smart about multiple optionals" do
-        #yeah, lets warn!
         proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbiguousRouteException)
       end
+
+      it "should raise on identical variable name" do
+        proc {@router.add("/:var1(/:var1)(/:var1)").compile}.should raise_error(HttpRouter::AmbiguousVariableException)
+      end
+
+      it "should raise on unsupported request methods" do
+        proc {@router.add("/").condition(:flibberty => 'gibet').compile}.should raise_error(HttpRouter::UnsupportedRequestConditionError)
+      end
+
     end
   end
 end

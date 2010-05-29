@@ -68,7 +68,7 @@ class HttpRouter
     end
     
     def generate_request_method_tree(request_options)
-      raise if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
+      raise(UnsupportedRequestConditionError.new) if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
       current_nodes = [self]
       RequestNode::RequestMethods.each do |method|
         if request_options.key?(method) # so, the request method we care about it ..
