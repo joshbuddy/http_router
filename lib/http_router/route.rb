@@ -267,12 +267,13 @@ class HttpRouter
         part_segments.map do |seg|
           new_seg = if seg[0] == ?:
             next_index = index + 1
-            scan_regex = if next_index == part_segments.size
-              /^[^\/]+/
-            else
-              /^.*?(?=#{Regexp.quote(part_segments[next_index])})/
-            end
             v_name = seg[1, seg.size].to_sym
+            matcher = @matches_with[v_name]
+            scan_regex = if next_index == part_segments.size
+              matcher || /^[^\/]+/
+            else
+              /^#{matcher || '.*?'}(?=#{Regexp.quote(part_segments[next_index])})/
+            end
             @variable_store[v_name] ||= router.variable(v_name, scan_regex)
           else
             /^#{Regexp.quote(seg)}/

@@ -167,6 +167,14 @@ describe "HttpRouter#recognize" do
       response.route.should == route
       response.params_as_hash[:variable].should == 'value'
     end
+
+    it "should recognize interstitial variables with a regex" do
+      route = @router.add('/one-:variable-time').matching(:variable => /^\d+/).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time')).should be_nil
+      response = @router.recognize(Rack::MockRequest.env_for('/one-123-time'))
+      response.route.should == route
+      response.params_as_hash[:variable].should == '123'
+    end
   end
 
   context("dynamic greedy paths") do
