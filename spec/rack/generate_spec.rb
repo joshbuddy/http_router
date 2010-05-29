@@ -1,7 +1,7 @@
 route_set = HttpRouter.new
 route_set.extend(CallWithMockRequestMixin)
 
-describe "Usher (for rack) route generation" do
+describe "HttpRouter route generation" do
   before(:each) do
     route_set.reset!
     @app = MockApp.new("Hello World!")
