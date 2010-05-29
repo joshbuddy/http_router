@@ -1,7 +1,7 @@
 require "sinatra"
 require "http_router/interface/sinatra"
 
-describe "Usher (for Sinatra) route recognition" do
+describe "HttpRouter (for Sinatra) route recognition" do
   before(:each) do
     @app = Sinatra.new { register HttpRouter::Interface::Sinatra::Extension }
     @app.extend(CallWithMockRequestMixin)

@@ -1,7 +1,7 @@
 route_set = HttpRouter.new
 route_set.extend(CallWithMockRequestMixin)
 
-describe "Usher (for rack) route dispatching with redirect_on_trailing_delimiters" do
+describe "HttpRouter route dispatching with redirect_on_trailing_delimiters" do
   before(:each) do
     @route_set = HttpRouter.new(:redirect_trailing_slash => true)
     @route_set.extend(CallWithMockRequestMixin)
@@ -16,7 +16,7 @@ describe "Usher (for rack) route dispatching with redirect_on_trailing_delimiter
 
 end
 
-describe "Usher (for rack) route dispatching" do
+describe "HttpRouter route dispatching" do
   before(:each) do
     route_set.reset!
     @app = MockApp.new("Hello World!")
