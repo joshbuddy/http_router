@@ -123,19 +123,5 @@ describe "HttpRouter#generate" do
       end
     end
     
-    context "exceptions" do
-      it "should be smart about multiple optionals" do
-        proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbiguousRouteException)
-      end
-
-      it "should raise on identical variable name" do
-        proc {@router.add("/:var1(/:var1)(/:var1)").compile}.should raise_error(HttpRouter::AmbiguousVariableException)
-      end
-
-      it "should raise on unsupported request methods" do
-        proc {@router.add("/").condition(:flibberty => 'gibet').compile}.should raise_error(HttpRouter::UnsupportedRequestConditionError)
-      end
-
-    end
   end
 end

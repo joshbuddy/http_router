@@ -48,35 +48,34 @@ class HttpRouter
     @default_app = app
   end
   
-  def split(path, with_delimiter = false)
-    path.slice!(0) if path[0] == ?/
-    with_delimiter ? path.split('(/)') : path.split('/')
+  def split(path)
+    (path[0] == ?/ ? path[1, path.size] : path).split('/')
   end
 
-  def add(path)
-    route = Route.new(self, path.dup)
+  def add(path, options = nil)
+    route = Route.new(self, path.dup).with_options(options)
     @routes << route
     route
   end
 
-  def get(path)
-    add(path).get
+  def get(path, options = nil)
+    add(path, options).get
   end
 
-  def post(path)
-    add(path).post
+  def post(path, options = nil)
+    add(path, options).post
   end
 
-  def put(path)
-    add(path).put
+  def put(path, options = nil)
+    add(path, options).put
   end
 
-  def delete(path)
-    add(path).delete
+  def delete(path, options = nil)
+    add(path, options).delete
   end
 
-  def only_get(path)
-    add(path).only_get
+  def only_get(path, options = nil)
+    add(path, options).only_get
   end
 
   def recognize(env)

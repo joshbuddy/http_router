@@ -43,6 +43,7 @@ class HttpRouter
       if options && options[:default_values]
         default(options[:default_values])
       end
+      self
     end
 
     def name(name)

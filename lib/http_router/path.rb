@@ -9,10 +9,10 @@ class HttpRouter
         raise AmbiguousVariableException.new("You have duplicate variable name present: #{duplicate_variable_names.join(', ')}")
       end
 
-      @eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException.new(\"missing parameter #{$1}\"))}" }
+      eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException.new(\"missing parameter #{$1}\"))}" }
       instance_eval "
       def raw_url(args,options)
-        \"#{@eval_path}\"
+        \"#{eval_path}\"
       end
       "
     end
