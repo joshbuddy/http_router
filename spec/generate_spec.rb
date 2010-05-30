@@ -122,6 +122,12 @@ describe "HttpRouter#generate" do
         @router.url(:test, :var1 => 'var', :format => 'html').should == '/var.html'
       end
     end
-    
+
+    context "with default values" do
+      it "should generate with all params" do
+        @router.add("/:var").default(:page => 1).name(:test).compile
+        @router.url(:test, 123).should == "/123?page=1"
+      end
+    end
   end
 end

@@ -180,6 +180,7 @@ class HttpRouter
 
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
+      options ||= {} if default_values
       options = default_values.merge(options) if default_values && options
       path = if args.empty?
         matching_path(options)
