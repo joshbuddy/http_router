@@ -21,13 +21,14 @@ class HttpRouter
 
   attr_reader :named_routes, :routes, :root
 
-  def initialize(options = nil)
+  def initialize(options = nil, &block)
     @default_app = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @routes = []
     @named_routes = {}
     reset!
+    instance_eval(&block) if block
   end
 
   def ignore_trailing_slash?

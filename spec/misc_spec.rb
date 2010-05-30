@@ -13,6 +13,13 @@ describe "HttpRouter" do
       @router.recognize(Rack::MockRequest.env_for('http://host1/123', :method => 'GET')).route.dest.should == :test
     end
   end
+
+  context "instance_eval block" do
+    HttpRouter.new {
+      add('/test').to :test
+    }.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).dest.should == :test
+  
+  end
   
   context "exceptions" do
     it "should be smart about multiple optionals" do
