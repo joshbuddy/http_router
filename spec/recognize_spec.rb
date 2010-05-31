@@ -81,6 +81,10 @@ describe "HttpRouter#recognize" do
         route = @router.add("/test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).should be_nil
       end
+      it "should not capture the trailing slash in a variable normally" do
+        route = @router.add("/:test").to(:test)
+        @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test'
+      end
     end
 
   end
@@ -222,5 +226,16 @@ describe "HttpRouter#recognize" do
       response = @router.recognize(Rack::MockRequest.env_for('/asd'))
       response.should be_nil
     end
+
+    it "should capture the trailing slash in a greedy variable" do
+      route = @router.add("/:test").matching(:test => /.*/).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test/'
+    end
+
+    it "should capture the extension in a greedy variable" do
+      route = @router.add("/:test").matching(:test => /.*/).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/test.html')).params.first.should == 'test.html'
+    end
+
   end
 end

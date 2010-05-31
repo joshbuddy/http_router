@@ -145,6 +145,7 @@ class HttpRouter
       else
         if @linear && !@linear.empty?
           whole_path = parts.join('/')
+          whole_path << '.' << extension if extension
           next_node = @linear.find do |(tester, node)|
             if tester.is_a?(Regexp) and match = whole_path.match(tester) #and match.index == 0 TODO
               whole_path.slice!(0,match[0].size)
@@ -166,7 +167,7 @@ class HttpRouter
           params << @catchall.variable.matches(request.env, parts, whole_path)
           parts.shift
           @catchall.find_on_parts(request, parts, extension, params)
-        elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore?)
+        elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
           parts.shift
           find_on_parts(request, parts, extension, params)
         elsif request_node

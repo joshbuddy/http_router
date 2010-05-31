@@ -10,7 +10,6 @@ class HttpRouter
 
     def find(request)
       path = request.path_info.dup
-      path.slice!(-1) if router.ignore_trailing_slash? && path[-1] == ?/
       extension = extract_extension(path)
       parts = router.split(path)
       parts << '' if path[path.size - 1] == ?/
