@@ -24,23 +24,15 @@ class HttpRouter
         node
       elsif node && node.value
         if parts.empty?
-          post_match(node.value, params, request.path_info)
+          Response.matched(node.value, params, request.path_info)
         elsif node.value.route.partially_match?
           rest = '/' << parts.join('/')
-          post_match(node.value, params, request.path_info[0, request.path_info.size - rest.size], rest)
+          Response.matched(node.value, params, request.path_info[0, request.path_info.size - rest.size], rest)
         else
           nil
         end
       else
         nil
-      end
-    end
-
-    def post_match(path, params, matched_path, remaining_path = nil)
-      if path.route.partially_match?
-        Response.matched(path, params, matched_path, remaining_path)
-      else
-        Response.matched(path, params, matched_path, remaining_path)
       end
     end
   end
