@@ -1,10 +1,10 @@
 require 'cgi'
 class HttpRouter
   class Path
-    attr_reader :parts, :extension
+    attr_reader :parts
     attr_accessor :route
-    def initialize(path, parts, extension)
-      @path, @parts, @extension = path, parts, extension
+    def initialize(path, parts)
+      @path, @parts = path, parts
       if duplicate_variable_names = variable_names.dup.uniq!
         raise AmbiguousVariableException.new("You have duplicate variable name present: #{duplicate_variable_names.join(', ')}")
       end
@@ -22,7 +22,7 @@ class HttpRouter
       @parts.each_with_index {|p,i| 
         return unless compare_parts(p, other_path.parts[i])
       }
-      compare_parts(@extension, other_path.extension)
+      true
     end
 
     def compare_parts(p1, p2)
@@ -60,17 +60,12 @@ class HttpRouter
     def variables
       unless @variables
         @variables = @parts.select{|p| p.is_a?(Variable)}
-        @variables << @extension if @extension.is_a?(Variable)
       end
       @variables
     end
 
     def variable_names
       @variable_names ||= variables.map{|v| v.name}
-    end
-
-    def matches_extension?(extension)
-      @extension.nil? || @extension === (extension)
     end
   end
 end

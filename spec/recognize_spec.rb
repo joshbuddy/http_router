@@ -140,7 +140,6 @@ describe "HttpRouter#recognize" do
       route = @router.add('/test.:format').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/test.html'))
       response.route.should == route
-      response.extension.should == 'html'
       response.params_as_hash[:format].should == 'html'
       @router.recognize(Rack::MockRequest.env_for('/test')).should be_nil
     end
@@ -149,19 +148,16 @@ describe "HttpRouter#recognize" do
       route = @router.add('/test(.:format)').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/test.html'))
       response.route.should == route
-      response.extension.should == 'html'
       response.params_as_hash[:format].should == 'html'
       response = @router.recognize(Rack::MockRequest.env_for('/test'))
       response.route.should == route
-      response.extension.should be_nil
       response.params_as_hash[:format].should be_nil
     end
 
     it "should recognize '/:test.:format'" do
-      route = @router.add('/:test.:format').to(:test)
+      route = @router.add('/:test.:format').compile.to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.html'))
       response.route.should == route
-      response.extension.should == 'html'
       response.params_as_hash[:format].should == 'html'
       response.params_as_hash[:test].should == 'hey'
     end
@@ -170,12 +166,10 @@ describe "HttpRouter#recognize" do
       route = @router.add('/:test(.:format)').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.html'))
       response.route.should == route
-      response.extension.should == 'html'
       response.params_as_hash[:format].should == 'html'
       response.params_as_hash[:test].should == 'hey'
       response = @router.recognize(Rack::MockRequest.env_for('/hey'))
       response.route.should == route
-      response.extension.should be_nil
       response.params_as_hash[:format].should be_nil
       response.params_as_hash[:test].should == 'hey'
     end
@@ -214,6 +208,14 @@ describe "HttpRouter#recognize" do
       response.route.should == route
       response.params_as_hash[:variable].should == '123'
     end
+    
+    it "should recognize interstitial variable when there is an extension" do
+      route = @router.add('/hey.:greed.html').to(:test)
+      response = @router.recognize(Rack::MockRequest.env_for('/hey.greedyboy.html'))
+      response.route.should == route
+      response.params_as_hash[:greed].should == 'greedyboy'
+    end
+    
   end
 
   context("dynamic greedy paths") do

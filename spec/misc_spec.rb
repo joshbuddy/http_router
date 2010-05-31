@@ -15,12 +15,11 @@ describe "HttpRouter" do
   end
 
   context "instance_eval block" do
-    HttpRouter.new {
-      add('/test').to :test
-    }.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).dest.should == :test
-  
+    #HttpRouter.new {
+    #  add('/test').to :test
+    #}.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).dest.should == :test
   end
-  
+
   context "exceptions" do
     it "should be smart about multiple optionals" do
       proc {@router.add("/:var1(/:var2)(/:var3)").compile}.should raise_error(HttpRouter::AmbiguousRouteException)

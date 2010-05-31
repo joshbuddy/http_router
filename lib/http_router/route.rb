@@ -9,7 +9,6 @@ class HttpRouter
       @original_path = path.dup
       @partially_match = extract_partial_match(path)
       @trailing_slash_ignore = extract_trailing_slash(path)
-      @variable_store = {}
       @matches_with = {}
       @arbitrary = []
       @conditions =  {}
@@ -228,18 +227,6 @@ class HttpRouter
       path[-2, 2] == '/?' && path.slice!(-2, 2)
     end
 
-    def extract_extension(path)
-      if match = path.match(/^(.*)(\.:([a-zA-Z_]+))$/)
-        path.replace(match[1])
-        v_name = match[3].to_sym
-        router.variable(match[3].to_sym, @matches_with[v_name])
-      elsif match = path.match(/^(.*)(\.([a-zA-Z_]+))$/)
-        path.replace(match[1])
-        match[3]
-      end
-    end
-
-
     def compile_optionals(path)
       start_index = 0
       end_index = 1
@@ -271,26 +258,28 @@ class HttpRouter
       paths = compile_optionals(@path)
       paths.map do |path|
         original_path = path.dup
-        extension = extract_extension(path)
-        new_path = router.split(path).map do |part|
-          case part[0]
-          when ?:
-            v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= router.variable(v_name, @matches_with[v_name])
-          when ?*
-            v_name = part[1, part.size].to_sym
-            @variable_store[v_name] ||= router.glob(v_name, @matches_with[v_name])
+        index = -1
+        split_path = router.split(path)
+        new_path = split_path.map do |part|
+          index += 1
+          case part
+          when /^:([a-zA-Z_0-9]+)$/
+            v_name = $1.to_sym
+            router.variable(v_name, @matches_with[v_name])
+          when /^\*([a-zA-Z_0-9]+)$/
+            v_name = $1.to_sym
+            router.glob(v_name, @matches_with[v_name])
           else
             generate_interstitial_parts(part)
           end
         end
         new_path.flatten!
-        Path.new(original_path, new_path, extension)
+        Path.new(original_path, new_path)
       end
     end
 
     def generate_interstitial_parts(part)
-      part_segments = part.split(/(:[a-zA-Z_]+)/)
+      part_segments = part.scan(/:[a-zA-Z_0-9]+|[^:]+/)
       if part_segments.size > 1
         index = 0
         part_segments.map do |seg|
@@ -303,7 +292,7 @@ class HttpRouter
             else
               /^#{matcher || '.*?'}(?=#{Regexp.quote(part_segments[next_index])})/
             end
-            @variable_store[v_name] ||= router.variable(v_name, scan_regex)
+            router.variable(v_name, scan_regex)
           else
             /^#{Regexp.quote(seg)}/
           end

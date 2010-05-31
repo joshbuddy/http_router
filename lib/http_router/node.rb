@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
     attr_accessor :value, :variable, :catchall
-    attr_reader :linear, :lookup, :request_node, :extension_node, :arbitrary_node
+    attr_reader :linear, :lookup, :request_node, :arbitrary_node
 
     def initialize(base)
       @router = base
@@ -34,11 +34,6 @@ class HttpRouter
         create_lookup
         @lookup[val] ||= router.node
       end
-    end
-    
-    def add_extension(ext)
-      @extension_node ||= router.node
-      @extension_node.add(ext)
     end
     
     def add_request_methods(options)
@@ -138,47 +133,43 @@ class HttpRouter
       current_nodes
     end
 
-    def find_on_parts(request, parts, extension, params)
-      if parts.empty? && extension_node && extension
-        parts << extension
-        extension_node.find_on_parts(request, parts, extension, params)
-      else
-        if @linear && !@linear.empty?
-          whole_path = parts.join('/')
-          whole_path << '.' << extension if extension
-          next_node = @linear.find do |(tester, node)|
-            if tester.is_a?(Regexp) and match = whole_path.match(tester) #and match.index == 0 TODO
-              whole_path.slice!(0,match[0].size)
-              parts.replace(router.split(whole_path))
-              node
-            elsif new_params = tester.matches(request.env, parts, whole_path)
-              params << new_params
-              node
-            else
-              nil
-            end
+    def find_on_parts(request, parts, params)
+      if @linear && !@linear.empty?
+        whole_path = parts.join('/')
+        next_node = @linear.find do |(tester, node)|
+          if tester.is_a?(Regexp) and match = tester.match(whole_path) #and match.index == 0 TODO
+            whole_path.slice!(0,match[0].size)
+            parts.replace(router.split(whole_path))
+            node
+          elsif tester.respond_to?(:matches) and new_params = tester.matches(request.env, parts, whole_path)
+            params << new_params
+            node
+          else
+            nil
           end
-          return next_node.last.find_on_parts(request, parts, extension, params) if next_node
         end
-        if match = @lookup && @lookup[parts.first]
-          parts.shift
-          match.find_on_parts(request, parts, extension, params)
-        elsif @catchall
-          params << @catchall.variable.matches(request.env, parts, whole_path)
-          parts.shift
-          @catchall.find_on_parts(request, parts, extension, params)
-        elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
-          parts.shift
-          find_on_parts(request, parts, extension, params)
-        elsif request_node
-          request_node.find_on_request_methods(request)
-        elsif arbitrary_node
-          arbitrary_node.find_on_arbitrary(request)
-        elsif @value
-          self
-        else
-          nil
+        if next_node and match = next_node.last.find_on_parts(request, parts, params)
+          return match
         end
+      end
+      if match = @lookup && @lookup[parts.first]
+        parts.shift
+        match.find_on_parts(request, parts, params)
+      elsif @catchall
+        params << @catchall.variable.matches(request.env, parts, whole_path)
+        parts.shift
+        @catchall.find_on_parts(request, parts, params)
+      elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
+        parts.shift
+        find_on_parts(request, parts, params)
+      elsif request_node
+        request_node.find_on_request_methods(request)
+      elsif arbitrary_node
+        arbitrary_node.find_on_arbitrary(request)
+      elsif @value
+        self
+      else
+        nil
       end
     end
 
