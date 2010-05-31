@@ -155,7 +155,7 @@ describe "HttpRouter#recognize" do
     end
 
     it "should recognize '/:test.:format'" do
-      route = @router.add('/:test.:format').compile.to(:test)
+      route = @router.add('/:test.:format').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.html'))
       response.route.should == route
       response.params_as_hash[:format].should == 'html'
