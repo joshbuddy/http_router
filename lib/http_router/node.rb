@@ -57,13 +57,19 @@ class HttpRouter
     
     def add_arbitrary(procs)
       target = self
-      procs.each do |proc|
-        target = (@arbitrary_node ||= router.arbitrary_node) unless target.is_a?(ArbitraryNode)
-        target.create_linear
-        target.linear << [proc, router.arbitrary_node]
-        target = target.linear.last.last
+      if procs && !procs.empty?
+        @arbitrary_node ||= router.arbitrary_node
+        @arbitrary_node.create_linear
+        target = router.node
+        @arbitrary_node.linear << [procs, target]
+        if @value
+          @arbitrary_node.catchall = router.node
+          @arbitrary_node.catchall.value = @value
+          @value = nil
+        end
+      elsif @arbitrary_node
+        target = @arbitrary_node.catchall = router.node
       end
-      
       target
     end
     
@@ -187,13 +193,12 @@ class HttpRouter
   class ArbitraryNode < Node
     def find_on_arbitrary(request)
       if @linear && !@linear.empty?
-        next_node = @linear.find do |(proc, node)|
-          proc.call(request)
+        next_node = @linear.find do |(procs, node)|
+          procs.all?{|p| p.call(request)}
         end
-        next_node &&= next_node.last.find_on_arbitrary(request)
-        return next_node
+        return next_node.last if next_node
       end
-      self if @value
+      @catchall
     end
   end
   
@@ -218,7 +223,9 @@ class HttpRouter
         end
       end
       
-      if @value
+      if @arbitrary_node
+        @arbitrary_node.find_on_arbitrary(request)
+      elsif @value
         self
       else
         current_node = request_method == :request_method ? Response.unmatched(405, {"Allow" => @lookup.keys.join(", ")}) : nil

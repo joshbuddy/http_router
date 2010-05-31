@@ -119,8 +119,8 @@ class HttpRouter
       self
     end
 
-    def arbitrary(proc)
-      @arbitrary << proc
+    def arbitrary(proc = nil, &block)
+      @arbitrary << (proc || block)
       self
     end
   

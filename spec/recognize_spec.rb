@@ -32,10 +32,36 @@ describe "HttpRouter#recognize" do
     context("proc acceptance") do
       it "should match optionally with a proc" do
         @router.add("/test").arbitrary(Proc.new{|req| req.host == 'hellodooly' }).to(:test1)
-        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).to(:test2)
-        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove/test'))
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test2)
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test3)
+        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8080/test'))
+        response.dest.should == :test3
+      end
+
+      it "should still use an existing less specific node if possible" do
+        @router.add("/test").to(:test4)
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'hellodooly' }).to(:test1)
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test2)
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test3)
+        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8081/test'))
+        response.dest.should == :test4
+      end
+
+      it "should match optionally with a proc and request conditions" do
+        @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test1)
+        @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test2)
+        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8080/test'))
         response.dest.should == :test2
       end
+
+      it "should still use an existing less specific node if possible with request conditions" do
+        @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test1)
+        @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test2)
+        @router.add("/test").get.to(:test3)
+        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8081/test'))
+        response.dest.should == :test3
+      end
+
     end
 
     context("trailing slashes") do
