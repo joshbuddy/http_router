@@ -127,6 +127,10 @@ class HttpRouter
     RequestNode.new(self, *args)
   end
 
+  def arbitrary_node(*args)
+    ArbitraryNode.new(self, *args)
+  end
+
   # Returns a new variable
   def variable(*args)
     Variable.new(self, *args)

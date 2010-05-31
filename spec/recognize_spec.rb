@@ -31,10 +31,10 @@ describe "HttpRouter#recognize" do
 
     context("proc acceptance") do
       it "should match optionally with a proc" do
-        route = @router.add("/:test").matching(:test => /^\d+/).matching(:test => proc{|env, val| val == '123' or raise}).to(:test)
-        response = @router.recognize(Rack::MockRequest.env_for('/123'))
-        response.route.should == route
-        response.params_as_hash[:test].should == '123'
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'hellodooly' }).to(:test1)
+        @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).to(:test2)
+        response = @router.recognize(Rack::MockRequest.env_for('http://lovelove/test'))
+        response.dest.should == :test2
       end
     end
 

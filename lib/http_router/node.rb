@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
     attr_accessor :value, :variable, :catchall
-    attr_reader :linear, :lookup, :request_node, :extension_node
+    attr_reader :linear, :lookup, :request_node, :extension_node, :arbitrary_node
 
     def initialize(base)
       @router = base
@@ -53,6 +53,18 @@ class HttpRouter
       else
         [self]
       end
+    end
+    
+    def add_arbitrary(procs)
+      target = self
+      procs.each do |proc|
+        target = (@arbitrary_node ||= router.arbitrary_node) unless target.is_a?(ArbitraryNode)
+        target.create_linear
+        target.linear << [proc, router.arbitrary_node]
+        target = target.linear.last.last
+      end
+      
+      target
     end
     
     protected
@@ -153,6 +165,8 @@ class HttpRouter
           find_on_parts(request, parts, extension, params)
         elsif request_node
           request_node.find_on_request_methods(request)
+        elsif arbitrary_node
+          arbitrary_node.find_on_arbitrary(request)
         elsif @value
           self
         else
@@ -167,6 +181,19 @@ class HttpRouter
 
     def create_lookup
       @lookup ||= {}
+    end
+  end
+
+  class ArbitraryNode < Node
+    def find_on_arbitrary(request)
+      if @linear && !@linear.empty?
+        next_node = @linear.find do |(proc, node)|
+          proc.call(request)
+        end
+        next_node &&= next_node.last.find_on_arbitrary(request)
+        return next_node
+      end
+      self if @value
     end
   end
   

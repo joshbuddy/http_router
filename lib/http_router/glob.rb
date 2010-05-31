@@ -6,7 +6,6 @@ class HttpRouter
         while !parts.empty? and match = @matches_with.match(parts.first)
           params << parts.shift
         end
-        return unless additional_matchers(env, params)
         whole_path.replace(parts.join('/'))
         params
       else
