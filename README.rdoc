@@ -20,6 +20,8 @@ This is very new code. Lots of stuff probably doesn't work right. I will likely 
 
 == Usage
 
+Please see the examples directory for a bunch of awesome rackup file examples, with tonnes of commentary.
+
 === <tt>HttpRouter.new</tt>
 
 Takes the following options:

@@ -21,6 +21,10 @@ class HttpRouter
 
   attr_reader :named_routes, :routes, :root
 
+  def self.override_rack_mapper!
+    require File.join('ext', 'rack', 'rack_mapper')
+  end
+
   def initialize(options = nil, &block)
     @default_app = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
@@ -29,10 +33,6 @@ class HttpRouter
     @named_routes = {}
     reset!
     instance_eval(&block) if block
-  end
-
-  def override_rack_mapper!
-    require File.join('ext', 'rack', 'rack_mapper')
   end
 
   def ignore_trailing_slash?
