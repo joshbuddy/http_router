@@ -26,11 +26,13 @@ class HttpRouter
   end
 
   def initialize(options = nil, &block)
+    @options = options
     @default_app = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @routes = []
     @named_routes = {}
+    @init_block = block
     reset!
     instance_eval(&block) if block
   end
@@ -143,6 +145,20 @@ class HttpRouter
   # Returns a new glob
   def glob(*args)
     Glob.new(self, *args)
+  end
+
+  def dup
+    dup_router = HttpRouter.new(@options, &@init_block)
+    @routes.each do |r|
+      new_route = r.dup
+      new_route.router = dup_router
+      dup_router.add_route new_route
+    end
+    dup_router
+  end
+
+  def add_route(route)
+    route.compile
   end
 
   private

@@ -1,7 +1,7 @@
 class HttpRouter
   class Route
     attr_reader :dest, :paths
-    attr_accessor :trailing_slash_ignore, :partially_match, :default_values
+    attr_accessor :trailing_slash_ignore, :partially_match, :default_values, :router
 
     def initialize(base, path)
       @router = base

@@ -15,9 +15,11 @@ describe "HttpRouter" do
   end
 
   context "instance_eval block" do
-    #HttpRouter.new {
-    #  add('/test').to :test
-    #}.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).dest.should == :test
+    it "run the routes" do
+      HttpRouter.new {
+        add('/test').to :test
+      }.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).dest.should == :test
+    end
   end
 
   context "exceptions" do
@@ -34,4 +36,19 @@ describe "HttpRouter" do
     end
 
   end
+
+  context "dupping" do
+    it "run the routes" do
+      r1 = HttpRouter.new {
+        add('/test').to :test
+      }
+    
+      r2 = r1.dup
+      r2.add('/test2').to(:test2)
+      r1.recognize(Rack::MockRequest.env_for('/test2')).should be_nil
+      r2.recognize(Rack::MockRequest.env_for('/test2')).should_not be_nil
+    end
+  end
+
+
 end
