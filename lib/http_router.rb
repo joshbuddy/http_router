@@ -31,6 +31,10 @@ class HttpRouter
     instance_eval(&block) if block
   end
 
+  def override_rack_mapper!
+    require File.join('ext', 'rack', 'rack_mapper')
+  end
+
   def ignore_trailing_slash?
     @ignore_trailing_slash
   end
