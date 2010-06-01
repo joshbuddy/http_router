@@ -89,6 +89,15 @@ describe "HttpRouter#recognize" do
 
   end
 
+  context "variables" do
+    it "should recognize a simple variable" do
+      @router.add("/foo").to(:test1)
+      @router.add("/foo/:id").to(:test2)
+      @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
+      @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
+    end
+  end
+
   context "request methods" do
     it "should pick a specific request_method" do
       route = @router.post("/test").to(:test)
