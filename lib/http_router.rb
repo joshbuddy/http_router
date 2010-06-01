@@ -152,13 +152,10 @@ class HttpRouter
     @routes.each do |r|
       new_route = r.dup
       new_route.router = dup_router
-      dup_router.add_route new_route
+      dup_router.routes << new_route
+      new_route.compile(true)
     end
     dup_router
-  end
-
-  def add_route(route)
-    route.compile
   end
 
   private

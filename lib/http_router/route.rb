@@ -47,7 +47,8 @@ class HttpRouter
 
     def name(name)
       @name = name
-      router.named_routes[name] = self
+      router.named_routes[@name] = self if @name && compiled?
+      self
     end
 
     def default(v)
@@ -127,8 +128,9 @@ class HttpRouter
       !@paths.nil?
     end
   
-    def compile
-      unless @paths
+    def compile(force = false)
+      if force || @paths.nil?
+        router.named_routes[@name] = self if @name
         @paths = compile_paths
         @paths.each_with_index do |p1, i|
           @paths[i+1, @paths.size].each do |p2|
