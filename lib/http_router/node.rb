@@ -140,7 +140,7 @@ class HttpRouter
     end
 
     def find_on_parts(request, parts, params)
-      if !parts.empty?
+      unless parts.empty?
         if @linear && !@linear.empty?
           whole_path = parts.join('/')
           next_node = @linear.find do |(tester, node)|

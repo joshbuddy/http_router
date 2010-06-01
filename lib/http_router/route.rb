@@ -5,6 +5,7 @@ class HttpRouter
 
     def initialize(base, path)
       @router = base
+      path[0,0] = '/' unless path[0] == ?/
       @path = path
       @original_path = path.dup
       @partially_match = extract_partial_match(path)

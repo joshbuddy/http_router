@@ -10,7 +10,7 @@ describe "HttpRouter#recognize" do
         @router.recognize(Rack::MockRequest.env_for(path)).route.should == route
       end
     end
-
+    
     context("with optional parts") do
       it "work either way" do
         route = @router.add("/test(/optional)").to(:test)
@@ -86,7 +86,6 @@ describe "HttpRouter#recognize" do
         @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test'
       end
     end
-
   end
 
   context "variables" do
@@ -95,6 +94,15 @@ describe "HttpRouter#recognize" do
       @router.add("/foo/:id").to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
       @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
+    end
+  end
+
+  context "missing leading /" do
+    it "should recognize a simple path" do
+      @router.add("foo").to(:test1)
+      @router.add("foo.html").to(:test2)
+      @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
+      @router.recognize(Rack::MockRequest.env_for('/foo.html')).dest.should == :test2
     end
   end
 
