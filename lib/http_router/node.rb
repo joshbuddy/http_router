@@ -17,10 +17,14 @@ class HttpRouter
     def add(val)
       if val.is_a?(Variable)
         if val.matches_with
-          new_node = router.node
           create_linear
-          @linear << [val, new_node]
-          new_node
+          if @linear.assoc(val)
+            @linear.assoc(val).last
+          else
+            new_node = router.node
+            @linear << [val, new_node]
+            new_node
+          end
         else
           @catchall ||= router.node
           @catchall.variable = val
@@ -28,8 +32,12 @@ class HttpRouter
         end
       elsif val.is_a?(Regexp)
         create_linear
-        @linear << [val, router.node]
-        @linear.last.last
+        if @linear.assoc(val)
+          @linear.assoc(val).last
+        else
+          @linear << [val, router.node]
+          @linear.last.last
+        end
       else
         create_lookup
         @lookup[val] ||= router.node
