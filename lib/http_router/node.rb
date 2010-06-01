@@ -17,27 +17,14 @@ class HttpRouter
     def add(val)
       if val.is_a?(Variable)
         if val.matches_with
-          create_linear
-          if @linear.assoc(val)
-            @linear.assoc(val).last
-          else
-            new_node = router.node
-            @linear << [val, new_node]
-            new_node
-          end
+          add_to_linear(val)
         else
           @catchall ||= router.node
           @catchall.variable = val
           @catchall
         end
       elsif val.is_a?(Regexp)
-        create_linear
-        if @linear.assoc(val)
-          @linear.assoc(val).last
-        else
-          @linear << [val, router.node]
-          @linear.last.last
-        end
+        add_to_linear(val)
       else
         create_lookup
         @lookup[val] ||= router.node
@@ -57,7 +44,18 @@ class HttpRouter
         [self]
       end
     end
-    
+ 
+    def add_to_linear(val)
+      create_linear
+      if @linear.assoc(val)
+        @linear.assoc(val).last
+      else
+        new_node = router.node
+        @linear << [val, new_node]
+        new_node
+      end
+    end
+   
     def add_arbitrary(procs)
       target = self
       if procs && !procs.empty?
