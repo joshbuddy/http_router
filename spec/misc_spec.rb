@@ -51,13 +51,14 @@ describe "HttpRouter" do
       r2.recognize(Rack::MockRequest.env_for('/test2')).should_not be_nil
       r1.named_routes[:test_route].should == r1.routes.first
       r2.named_routes[:test_route].should == r2.routes.first
-      
+
       r1.add('/another').name(:test).to(:test2)
       
       r1.routes.size.should == r2.routes.size
       r1.url(:test).should == '/another'
       r2.url(:test).should == '/test2'
-      
+      r1.routes.first.dest.should == :test
+      r2.routes.first.dest.should == :test
     end
   end
 end

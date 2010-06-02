@@ -164,7 +164,6 @@ class HttpRouter
     @routes.each do |route|
       new_route = route.clone
       new_route.instance_variable_set(:@router, cloned_router)
-      
     end
     cloned_router
   end
