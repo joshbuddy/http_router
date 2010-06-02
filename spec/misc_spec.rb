@@ -44,7 +44,7 @@ describe "HttpRouter" do
       }
       r2 = r1.clone
       
-      r2.add('/test2').to(:test2)
+      r2.add('/test2').name(:test).to(:test2)
       r2.routes.size.should == 2
       
       r1.recognize(Rack::MockRequest.env_for('/test2')).should be_nil
@@ -52,9 +52,12 @@ describe "HttpRouter" do
       r1.named_routes[:test_route].should == r1.routes.first
       r2.named_routes[:test_route].should == r2.routes.first
       
-      r1.add('/another')
+      r1.add('/another').name(:test).to(:test2)
       
       r1.routes.size.should == r2.routes.size
+      r1.url(:test).should == '/another'
+      r2.url(:test).should == '/test2'
+      
     end
   end
 end
