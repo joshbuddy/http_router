@@ -44,7 +44,10 @@ class HttpRouter
     @named_routes            = {}
     @init_block              = block
     reset!
-    instance_eval(&block) if block
+    if block
+      instance_eval(&block)
+      @routes.each {|r| r.compile}
+    end
   end
 
   def ignore_trailing_slash?
