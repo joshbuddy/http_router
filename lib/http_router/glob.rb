@@ -1,14 +1,14 @@
 class HttpRouter
   class Glob < Variable
 
-    def matches?(env, parts, whole_path)
+    def matches?(parts, whole_path)
       @matches_with.nil? or (!parts.empty? and match = @matches_with.match(parts.first) and match.begin(0))
     end
 
-    def consume(env, parts, whole_path)
+    def consume(parts, whole_path)
       if @matches_with
         params = [parts.shift]
-        params << parts.shift while matches?(env, parts, whole_path)
+        params << parts.shift while matches?(parts, whole_path)
         params
       else
         params = parts.dup

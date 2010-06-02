@@ -146,17 +146,13 @@ class HttpRouter
           response = nil
           dupped_parts = nil
           next_node = @linear.find do |(tester, node)|
-            if tester.respond_to?(:matches?) and tester.matches?(request.env, parts, whole_path)
+            if tester.respond_to?(:matches?) and tester.matches?(parts, whole_path)
               dupped_parts = parts.dup
-              params << tester.consume(request.env, dupped_parts, whole_path)
-              if response = node.find_on_parts(request, dupped_parts, params)
-                parts.replace(dupped_parts)
-              end
+              params << tester.consume(dupped_parts, whole_path)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
             elsif tester.respond_to?(:match) and match = tester.match(whole_path) and match.begin(0) == 0
               dupped_parts = router.split(whole_path[match[0].size, whole_path.size])
-              if response = node.find_on_parts(request, dupped_parts, params)
-                parts.replace(dupped_parts)
-              end
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
             else
               nil
             end
@@ -167,7 +163,7 @@ class HttpRouter
           parts.shift
           return match.find_on_parts(request, parts, params)
         elsif @catchall
-          params << @catchall.variable.consume(request.env, parts, whole_path)
+          params << @catchall.variable.consume(parts, whole_path)
           return @catchall.find_on_parts(request, parts, params)
         elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
           parts.shift
