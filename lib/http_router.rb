@@ -32,13 +32,14 @@ class HttpRouter
       options = args.first
     else
       default_app = args.first
-      options = args.last
+      options = args[1]
     end
 
     @options                 = options
     @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
+    @middleware              = options && options.key?(:middleware) ? options[:middleware] : false
     @routes                  = []
     @named_routes            = {}
     @init_block              = block
@@ -122,7 +123,7 @@ class HttpRouter
       response.finish
     else
       env['router'] = self
-      if response = recognize(request)
+      if response = recognize(request) and !@middleware
         if response.matched? && response.route.dest && response.route.dest.respond_to?(:call)
           process_params(env, response)
           consume_path!(request, response) if response.partial_match?
@@ -131,6 +132,7 @@ class HttpRouter
           return [response.status, response.headers, []]
         end
       end
+      env['router.response'] = response if @middleware
       @default_app.call(env)
     end
   end

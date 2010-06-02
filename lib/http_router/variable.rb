@@ -8,13 +8,17 @@ class HttpRouter
       @matches_with = matches_with
     end
 
-    def matches(env, parts, whole_path)
-      if @matches_with.nil?
-        parts.first
-      elsif @matches_with and match = @matches_with.match(whole_path)
-        whole_path.slice!(0, match[0].size)
-        parts.replace(router.split(whole_path))
+    def matches?(env, parts, whole_path)
+      @matches_with.nil? or (@matches_with and match = @matches_with.match(whole_path) and match.begin(0) == 0)
+    end
+
+    def consume(env, parts, whole_path)
+      if @matches_with
+        match = @matches_with.match(whole_path)
+        parts.replace(router.split(whole_path[match.end(0), whole_path.size]))
         match[0]
+      else
+        parts.shift
       end
     end
 

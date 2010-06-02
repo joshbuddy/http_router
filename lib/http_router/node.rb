@@ -141,30 +141,33 @@ class HttpRouter
 
     def find_on_parts(request, parts, params)
       unless parts.empty?
+        whole_path = parts.join('/')
         if @linear && !@linear.empty?
-          whole_path = parts.join('/')
+          response = nil
+          dupped_parts = nil
           next_node = @linear.find do |(tester, node)|
-            if tester.is_a?(Regexp) and match = tester.match(whole_path) #and match.index == 0 TODO
-              whole_path.slice!(0,match[0].size)
-              parts.replace(router.split(whole_path))
-              node
-            elsif tester.respond_to?(:matches) and new_params = tester.matches(request.env, parts, whole_path)
-              params << new_params
-              node
+            if tester.respond_to?(:matches?) and tester.matches?(request.env, parts, whole_path)
+              dupped_parts = parts.dup
+              params << tester.consume(request.env, dupped_parts, whole_path)
+              if response = node.find_on_parts(request, dupped_parts, params)
+                parts.replace(dupped_parts)
+              end
+            elsif tester.respond_to?(:match) and match = tester.match(whole_path) and match.begin(0) == 0
+              dupped_parts = router.split(whole_path[match[0].size, whole_path.size])
+              if response = node.find_on_parts(request, dupped_parts, params)
+                parts.replace(dupped_parts)
+              end
             else
               nil
             end
           end
-          if next_node and match = next_node.last.find_on_parts(request, parts, params)
-            return match
-          end
+          return response if response
         end
         if match = @lookup && @lookup[parts.first]
           parts.shift
           return match.find_on_parts(request, parts, params)
         elsif @catchall
-          params << @catchall.variable.matches(request.env, parts, whole_path)
-          parts.shift
+          params << @catchall.variable.consume(request.env, parts, whole_path)
           return @catchall.find_on_parts(request, parts, params)
         elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
           parts.shift

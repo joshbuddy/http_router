@@ -3,7 +3,7 @@ describe "HttpRouter#recognize" do
     @router = HttpRouter.new
   end
 
-  context("static paths") do
+  context("with static paths") do
     ['/', '/test', '/test/time', '/one/more/what', '/test.html'].each do |path|
       it "should recognize #{path.inspect}" do
         route = @router.add(path).to(path)
@@ -28,7 +28,7 @@ describe "HttpRouter#recognize" do
       end
     end
 
-    context("partial matching") do
+    context("with partial matching") do
       it "should match partially or completely" do
         route = @router.add("/test*").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test')).route.should == route
@@ -38,8 +38,8 @@ describe "HttpRouter#recognize" do
       end
     end
 
-    context("proc acceptance") do
-      it "should match optionally with a proc" do
+    context("with proc acceptance") do
+      it "should match" do
         @router.add("/test").arbitrary(Proc.new{|req| req.host == 'hellodooly' }).to(:test1)
         @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test2)
         @router.add("/test").arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test3)
@@ -56,7 +56,7 @@ describe "HttpRouter#recognize" do
         response.dest.should == :test4
       end
 
-      it "should match optionally with a proc and request conditions" do
+      it "should match with request conditions" do
         @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 80}.to(:test1)
         @router.add("/test").get.arbitrary(Proc.new{|req| req.host == 'lovelove' }).arbitrary{|req| req.port == 8080}.to(:test2)
         response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8080/test'))
@@ -73,32 +73,32 @@ describe "HttpRouter#recognize" do
 
     end
 
-    context("trailing slashes") do
-      it "should ignore a trailing slash" do
+    context("with trailing slashes") do
+      it "should ignore" do
         route = @router.add("/test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).route.should == route
       end
 
-      it "should not recognize a trailing slash when used with the /? syntax and ignore_trailing_slash disabled" do
+      it "should not recognize when used with the /? syntax and ignore_trailing_slash disabled" do
         @router = HttpRouter.new(:ignore_trailing_slash => false)
         route = @router.add("/test/?").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).route.should == route
       end
 
-      it "should recognize a trailing slash when used with the /? syntax and ignore_trailing_slash enabled" do
+      it "should recognize when used with the /? syntax and ignore_trailing_slash enabled" do
         @router = HttpRouter.new(:ignore_trailing_slash => false)
         route = @router.add("/test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).should be_nil
       end
-      it "should not capture the trailing slash in a variable normally" do
+      it "should not capture normally" do
         route = @router.add("/:test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test'
       end
     end
   end
 
-  context "variables" do
-    it "should recognize a simple variable" do
+  context "with variables" do
+    it "should recognize" do
       @router.add("/foo").to(:test1)
       @router.add("/foo/:id").to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
@@ -106,8 +106,8 @@ describe "HttpRouter#recognize" do
     end
   end
 
-  context "missing leading /" do
-    it "should recognize a simple path" do
+  context "with missing leading /" do
+    it "should recognize" do
       @router.add("foo").to(:test1)
       @router.add("foo.html").to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
@@ -115,15 +115,15 @@ describe "HttpRouter#recognize" do
     end
   end
 
-  context "request methods" do
-    it "should pick a specific request_method" do
+  context "with request methods" do
+    it "should recognize" do
       route = @router.post("/test").to(:test)
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).route.should == route
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).status.should == 405
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).headers['Allow'].should == "POST"
     end
 
-    it "should pick a specific request_method with other paths all through it" do
+    it "should recognize deeply" do
       @router.post("/test").to(:test_post)
       @router.post("/test/post").to(:test_post_post)
       @router.get("/test").to(:test_get)
@@ -153,7 +153,7 @@ describe "HttpRouter#recognize" do
 
   end
 
-  context("dynamic paths") do
+  context("with dynamic paths") do
     it "should recognize '/:variable'" do
       route = @router.add('/:variable').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/value'))
@@ -200,14 +200,14 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:test].should == 'hey'
     end
     
-    context "globs" do
-      it "should recognize a glob" do
+    context "with globs" do
+      it "should recognize" do
         route = @router.add('/test/*variable').to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test/one/two/three'))
         response.route.should == route
         response.params.should == [['one', 'two', 'three']]
       end
-      it "should recognize a glob with a regexp" do
+      it "should recognize with a regexp" do
         route = @router.add('/test/*variable/anymore').matching(:variable => /^\d+$/).to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567/anymore'))
         response.route.should == route
@@ -219,15 +219,15 @@ describe "HttpRouter#recognize" do
     
   end
   
-  context("interstitial variables") do
-    it "should recognize interstitial variables" do
+  context("with interstitial variables") do
+    it "should recognize" do
       route = @router.add('/one-:variable-time').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/one-value-time'))
       response.route.should == route
       response.params_as_hash[:variable].should == 'value'
     end
 
-    it "should recognize interstitial variables with a regex" do
+    it "should recognize with a regex" do
       route = @router.add('/one-:variable-time').matching(:variable => /^\d+/).to(:test)
       @router.recognize(Rack::MockRequest.env_for('/one-value-time')).should be_nil
       response = @router.recognize(Rack::MockRequest.env_for('/one-123-time'))
@@ -235,7 +235,7 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:variable].should == '123'
     end
     
-    it "should recognize interstitial variable when there is an extension" do
+    it "should recognize when there is an extension" do
       route = @router.add('/hey.:greed.html').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.greedyboy.html'))
       response.route.should == route
@@ -244,8 +244,8 @@ describe "HttpRouter#recognize" do
     
   end
 
-  context("dynamic greedy paths") do
-    it "should recognize greedy variables" do
+  context("with dynamic greedy paths") do
+    it "should recognize" do
       route = @router.add('/:variable').matching(:variable => /\d+/).to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/123'))
       response.route.should == route
@@ -255,12 +255,23 @@ describe "HttpRouter#recognize" do
       response.should be_nil
     end
 
-    it "should capture the trailing slash in a greedy variable" do
+    it "should continue on with normal if regex fails to match" do
+      @router.add("/:test/number").matching(:test => /\d+/).to(:test_number)
+      target = @router.add("/:test/anything").to(:test_anything)
+      @router.recognize(Rack::MockRequest.env_for('/123/anything')).route.should == target
+    end
+
+    it "should capture the trailing slash" do
       route = @router.add("/:test").matching(:test => /.*/).to(:test)
       @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test/'
     end
 
-    it "should capture the extension in a greedy variable" do
+    it "should require the match to begin at the beginning" do
+      route = @router.add("/:test").matching(:test => /\d+/).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/a123')).should be_nil
+    end
+
+    it "should capture the extension" do
       route = @router.add("/:test").matching(:test => /.*/).to(:test)
       @router.recognize(Rack::MockRequest.env_for('/test.html')).params.first.should == 'test.html'
     end
