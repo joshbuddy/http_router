@@ -26,9 +26,17 @@ class HttpRouter
     require File.join('ext', 'rack', 'rack_mapper')
   end
 
-  def initialize(options = nil, &block)
+  def initialize(*args, &block)
+    if args.first.is_a?(Hash)
+      default_app = nil
+      options = args.first
+    else
+      default_app = args.first
+      options = args.last
+    end
+
     @options                 = options
-    @default_app             = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
+    @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @routes                  = []
@@ -61,7 +69,10 @@ class HttpRouter
   end
 
   def add(path, options = nil)
-    route = Route.new(self, path.dup).with_options(options)
+    add_route Route.new(self, path.dup).with_options(options)
+  end
+
+  def add_route(route)
     @routes << route
     route
   end
@@ -148,15 +159,14 @@ class HttpRouter
     Glob.new(self, *args)
   end
 
-  def dup
-    dup_router = HttpRouter.new(@options, &@init_block)
-    @routes.each do |r|
-      new_route = r.dup
-      new_route.router = dup_router
-      dup_router.routes << new_route
-      new_route.compile(true)
+  def clone
+    cloned_router = HttpRouter.new(@default_app, @options, &@init_block)
+    @routes.each do |route|
+      new_route = route.clone
+      new_route.instance_variable_set(:@router, cloned_router)
+      
     end
-    dup_router
+    cloned_router
   end
 
   private

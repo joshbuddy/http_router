@@ -1,7 +1,7 @@
 class HttpRouter
   class Route
-    attr_reader :dest, :paths
-    attr_accessor :trailing_slash_ignore, :partially_match, :default_values, :router
+    attr_reader :dest, :paths, :path
+    attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(base, path)
       @router = base
@@ -33,16 +33,19 @@ class HttpRouter
       end
     end
 
+    def as_options
+      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name}
+    end
+
+    def clone
+      Route.new(@router, @original_path.dup).with_options(as_options)
+    end
+
     def with_options(options)
-      if options && options[:matching]
-        default(options[:matching])
-      end
-      if options && options[:conditions]
-        condition(options[:conditions])
-      end
-      if options && options[:default_values]
-        default(options[:default_values])
-      end
+      name(options[:name]) if options && options[:name]
+      matching(options[:matching]) if options && options[:matching]
+      condition(options[:conditions]) if options && options[:conditions]
+      default(options[:default_values]) if options && options[:default_values]
       self
     end
 
@@ -97,9 +100,7 @@ class HttpRouter
       match.each do |var_name, matchers|
         matchers = Array(matchers)
         matchers.each do |m|
-          @matches_with.key?(var_name) ?
-            raise :
-            @matches_with[var_name] = m
+          @matches_with.key?(var_name) ? raise : @matches_with[var_name] = m
         end
       end
       self
