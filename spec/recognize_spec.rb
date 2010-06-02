@@ -19,6 +19,15 @@ describe "HttpRouter#recognize" do
       end
     end
 
+    context("with escaped ()'s") do
+      it "should recognize ()" do
+        route = @router.add('/test\(:variable\)').to(:test)
+        response = @router.recognize(Rack::MockRequest.env_for('/test(hello)'))
+        response.route.should == route
+        response.params.first.should == 'hello'
+      end
+    end
+
     context("partial matching") do
       it "should match partially or completely" do
         route = @router.add("/test*").to(:test)

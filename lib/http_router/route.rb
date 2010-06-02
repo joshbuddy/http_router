@@ -165,7 +165,6 @@ class HttpRouter
     
     def static(root)
       guard_compiled
-      raise AlreadyCompiledException.new if compiled?
       if File.directory?(root)
         partial.to ::Rack::File.new(root)
       else
@@ -230,41 +229,12 @@ class HttpRouter
       path[-2, 2] == '/?' && path.slice!(-2, 2)
     end
 
-    def compile_optionals(path)
-      start_index = 0
-      end_index = 1
-
-      paths = [""]
-      chars = path.split('')
-
-      chars.each do |c|
-        case c
-          when '('
-            # over current working set, double paths
-            (start_index...end_index).each do |path_index|
-              paths << paths[path_index].dup
-            end
-            start_index = end_index
-            end_index = paths.size
-          when ')'
-            start_index -= end_index - start_index
-          else
-            (start_index...end_index).each do |path_index|
-              paths[path_index] << c
-            end
-        end
-      end
-      paths
-    end
-
     def compile_paths
-      paths = compile_optionals(@path)
+      paths = HttpRouter::OptionalCompiler.new(@path).paths
       paths.map do |path|
         original_path = path.dup
-        index = -1
         split_path = router.split(path)
         new_path = split_path.map do |part|
-          index += 1
           case part
           when /^:([a-zA-Z_0-9]+)$/
             v_name = $1.to_sym

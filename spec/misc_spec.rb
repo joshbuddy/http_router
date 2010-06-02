@@ -34,7 +34,6 @@ describe "HttpRouter" do
     it "should raise on unsupported request methods" do
       proc {@router.add("/").condition(:flibberty => 'gibet').compile}.should raise_error(HttpRouter::UnsupportedRequestConditionError)
     end
-
   end
 
   context "dupping" do
@@ -45,9 +44,10 @@ describe "HttpRouter" do
       }
       r2 = r1.dup
       r2.add('/test2').to(:test2)
+      r2.routes.size.should == 2
+      
       r1.recognize(Rack::MockRequest.env_for('/test2')).should be_nil
       r2.recognize(Rack::MockRequest.env_for('/test2')).should_not be_nil
-      
       r1.named_routes[:test_route].should == r1.routes.first
       r2.named_routes[:test_route].should == r2.routes.first
     end

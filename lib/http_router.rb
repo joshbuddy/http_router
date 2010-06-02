@@ -3,13 +3,14 @@ require 'rack'
 require 'ext/rack/uri_escape'
 
 class HttpRouter
-  autoload :Node,     'http_router/node'
-  autoload :Root,     'http_router/root'
-  autoload :Variable, 'http_router/variable'
-  autoload :Glob,     'http_router/glob'
-  autoload :Route,    'http_router/route'
-  autoload :Response, 'http_router/response'
-  autoload :Path,     'http_router/path'
+  autoload :Node,             'http_router/node'
+  autoload :Root,             'http_router/root'
+  autoload :Variable,         'http_router/variable'
+  autoload :Glob,             'http_router/glob'
+  autoload :Route,            'http_router/route'
+  autoload :Response,         'http_router/response'
+  autoload :Path,             'http_router/path'
+  autoload :OptionalCompiler, 'http_router/optional_compiler'
 
   UngeneratableRouteException      = Class.new(RuntimeError)
   MissingParameterException        = Class.new(RuntimeError)
@@ -26,13 +27,13 @@ class HttpRouter
   end
 
   def initialize(options = nil, &block)
-    @options = options
-    @default_app = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
+    @options                 = options
+    @default_app             = options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
-    @routes = []
-    @named_routes = {}
-    @init_block = block
+    @routes                  = []
+    @named_routes            = {}
+    @init_block              = block
     reset!
     instance_eval(&block) if block
   end
