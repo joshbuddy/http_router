@@ -3,8 +3,8 @@ class HttpRouter
     attr_reader :dest, :paths, :path
     attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
-    def initialize(base, path)
-      @router = base
+    def initialize(router, path)
+      @router = router
       path[0,0] = '/' unless path[0] == ?/
       @path = path
       @original_path = path.dup

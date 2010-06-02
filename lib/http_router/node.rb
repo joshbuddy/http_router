@@ -3,8 +3,8 @@ class HttpRouter
     attr_accessor :value, :variable, :catchall
     attr_reader :linear, :lookup, :request_node, :arbitrary_node
 
-    def initialize(base)
-      @router = base
+    def initialize(router)
+      @router = router
       reset!
     end
 

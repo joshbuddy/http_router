@@ -2,8 +2,8 @@ class HttpRouter
   class Variable
     attr_reader :name, :matches_with
 
-    def initialize(base, name, matches_with = nil)
-      @router = base
+    def initialize(router, name, matches_with = nil)
+      @router = router
       @name = name
       @matches_with = matches_with
     end
