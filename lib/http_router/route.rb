@@ -230,7 +230,7 @@ class HttpRouter
       @partially_match
     end
 
-    # Generates a URL for this route. See HttpRouter#
+    # Generates a URL for this route. See HttpRouter#url for how the arguments for this are structured.
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options ||= {} if default_values
