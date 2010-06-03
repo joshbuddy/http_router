@@ -149,7 +149,6 @@ class HttpRouter
     # Or
     #   router.add("/:test").matching(:test => /\d+/).name(:test).to { |env| Rack::Response.new("hi there").finish }
     def to(dest = nil, &block)
-      guard_compiled
       compile
       @dest = dest || block
       self
@@ -198,7 +197,6 @@ class HttpRouter
   
     # Sets the destination of this route to redirect to an arbitrary URL.
     def redirect(path, status = 302)
-      guard_compiled
       raise(ArgumentError, "Status has to be an integer between 300 and 399") unless (300..399).include?(status)
       to { |env|
         params = env['router.params']
@@ -211,7 +209,6 @@ class HttpRouter
     
     # Sets the destination of this route to serve static files from either a directory or a single file.
     def static(root)
-      guard_compiled
       if File.directory?(root)
         partial.to ::Rack::File.new(root)
       else
