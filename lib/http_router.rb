@@ -93,6 +93,8 @@ class HttpRouter
   #
   # As well, paths can end with two optional parts, <tt>*</tt> and <tt>/?</tt>. If it ends with a <tt>*</tt>, it will match partially, returning the part of the path unmatched in the PATH_INFO value of the env. The part matched to will be returned in the SCRIPT_NAME. If it ends with <tt>/?</tt>, then a trailing / on the path will be optionally matched for that specific route. As trailing /'s are ignored by default, you probably don't actually want to use this option that frequently.
   # 
+  # Routes can also contain optional parts. There are surrounded with <tt>( )</tt>'s. If you need to match on a bracket in the route itself, you can escape the parentheses with a backslash.
+  #
   # The second argument, options, is an optional hash that can modify the route in further ways. See HttpRouter::Route#with_options for details. Typically, you want to add further options to the route by calling additional methods on it. See HttpRouter::Route for further details.
   #
   # Returns the route object.
