@@ -15,12 +15,12 @@ This is very new code. Lots of stuff probably doesn't work right. I will likely 
 * Request condition support.
 * Partial matches.
 * Supports interstitial variables (e.g. /my-:variable-brings.all.the.boys/yard).
-* Very fast and small code base (~600 loc).
+* Very fast and small code base (~1,000 loc).
 * Sinatra compatibility.
 
 == Usage
 
-Please see the examples directory for a bunch of awesome rackup file examples, with tonnes of commentary.
+Please see the examples directory for a bunch of awesome rackup file examples, with tonnes of commentary. As well, the rdocs should provide a lot of useful specifics and exact usage.
 
 === <tt>HttpRouter.new</tt>
 
@@ -29,6 +29,7 @@ Takes the following options:
 * <tt>:default_app</tt> - The default #call made on non-matches. Defaults to a 404 generator.
 * <tt>:ignore_trailing_slash</tt> - Ignores the trailing slash when matching. Defaults to true.
 * <tt>:redirect_trailing_slash</tt> - Redirect on trailing slash matches to non-trailing slash paths. Defaults to false.
+* <tt>:middleware</tt> - Perform matching without deferring to matched route. Defaults to false.
 
 === <tt>#add(name, options)</tt>
 
