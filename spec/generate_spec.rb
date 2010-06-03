@@ -129,5 +129,13 @@ describe "HttpRouter#generate" do
         @router.url(:test, 123).should == "/123?page=1"
       end
     end
+
+    context "with a matching" do
+      it "should raise an exception when the route is invalid" do
+        @router.add("/:var").matching(:var => /\d+/).name(:test).compile
+        proc{@router.url(:test, 'asd')}.should raise_error(HttpRouter::InvalidRouteException)
+      end
+    end
+
   end
 end

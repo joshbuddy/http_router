@@ -16,6 +16,8 @@ class HttpRouter
   UngeneratableRouteException      = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
   MissingParameterException        = Class.new(RuntimeError)
+  # Raised when a Route is generated that isn't valid.
+  InvalidRouteException            = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to too many parameters being passed in.
   TooManyParametersException       = Class.new(RuntimeError)
   # Raised when an already inserted Route has more conditions added.

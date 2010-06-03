@@ -9,13 +9,11 @@ class HttpRouter
     end
 
     def reset!
-      @linear = nil
-      @lookup = nil
-      @catchall = nil
+      @linear, @lookup, @catchall = nil, nil, nil
     end
 
     def add(val)
-      if val.is_a?(Variable)
+      if val.respond_to?(:matches?)
         if val.matches_with
           add_to_linear(val)
         else

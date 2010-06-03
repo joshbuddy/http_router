@@ -1,13 +1,22 @@
 require 'cgi'
 class HttpRouter
   class Path
-    attr_reader :parts
-    attr_accessor :route
-    def initialize(path, parts)
-      @path, @parts = path, parts
+    attr_reader :parts, :route
+    def initialize(route, path, parts)
+      @route, @path, @parts = route, path, parts
       if duplicate_variable_names = variable_names.dup.uniq!
         raise AmbiguousVariableException.new("You have duplicate variable name present: #{duplicate_variable_names.join(', ')}")
       end
+
+      @path_validation_regex = path.split(/([:\*][a-zA-Z0-9_]+)/).map{ |part|
+        case part[0]
+        when ?:, ?*
+          route.matches_with[part[1, part.size].to_sym] || '.*?' 
+        else
+          Regexp.quote(part)
+        end
+      }.join
+      @path_validation_regex = Regexp.new("^#{@path_validation_regex}$")
 
       eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException.new(\"missing parameter #{$1}\"))}" }
       instance_eval "
@@ -36,6 +45,7 @@ class HttpRouter
 
     def url(args, options)
       path = raw_url(args, options)
+      raise InvalidRouteException.new if path !~ @path_validation_regex
       raise TooManyParametersException.new unless args.empty?
       Rack::Utils.uri_escape!(path)
       generate_querystring(path, options)

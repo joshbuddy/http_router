@@ -208,7 +208,7 @@ describe "HttpRouter#recognize" do
         response.params.should == [['one', 'two', 'three']]
       end
       it "should recognize with a regexp" do
-        route = @router.add('/test/*variable/anymore').matching(:variable => /^\d+$/).to(:test)
+        route = @router.add('/test/*variable/anymore').matching(:variable => /\d+/).to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567/anymore'))
         response.route.should == route
         response.params.should == [['123', '345', '567']]
@@ -228,7 +228,7 @@ describe "HttpRouter#recognize" do
     end
 
     it "should recognize with a regex" do
-      route = @router.add('/one-:variable-time').matching(:variable => /^\d+/).to(:test)
+      route = @router.add('/one-:variable-time').matching(:variable => /\d+/).to(:test)
       @router.recognize(Rack::MockRequest.env_for('/one-value-time')).should be_nil
       response = @router.recognize(Rack::MockRequest.env_for('/one-123-time'))
       response.route.should == route

@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :dest, :paths, :path
+    attr_reader :dest, :paths, :path, :matches_with
     attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(router, path)
@@ -183,7 +183,6 @@ class HttpRouter
           end
         end
         @paths.each do |path|
-          path.route = self
           current_node = router.root.add_path(path)
           working_set = current_node.add_request_methods(@conditions)
           working_set.map!{|node| node.add_arbitrary(@arbitrary)}
@@ -294,7 +293,7 @@ class HttpRouter
           end
         end
         new_path.flatten!
-        Path.new(original_path, new_path)
+        Path.new(self, original_path, new_path)
       end
     end
 
