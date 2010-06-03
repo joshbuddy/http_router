@@ -15,3 +15,11 @@ begin
   CodeStats::Tasks.new
 rescue LoadError
 end
+
+require 'rake/rdoctask'
+desc "Generate documentation"
+Rake::RDocTask.new do |rd|
+  rd.main = "README.rdoc"
+  rd.rdoc_files.include("README.rdoc", "lib/**/*.rb")
+  rd.rdoc_dir = 'rdoc'
+end

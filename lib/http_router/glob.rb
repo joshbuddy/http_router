@@ -1,6 +1,5 @@
 class HttpRouter
   class Glob < Variable
-
     def matches?(parts, whole_path)
       @matches_with.nil? or (!parts.empty? and match = @matches_with.match(parts.first) and match.begin(0))
     end

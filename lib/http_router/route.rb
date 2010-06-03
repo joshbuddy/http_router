@@ -16,15 +16,6 @@ class HttpRouter
       @default_values = {}
     end
 
-    def significant_variable_names
-      unless @significant_variable_names
-        @significant_variable_names = @paths.map { |p| p.variable_names }
-        @significant_variable_names.flatten!
-        @significant_variable_names.uniq!
-      end
-      @significant_variable_names
-    end
-
     def method_missing(method, *args, &block)
       if RequestNode::RequestMethods.include?(method)
         condition(method => args)
@@ -33,14 +24,22 @@ class HttpRouter
       end
     end
 
+    # Returns the options used to create this route.
     def as_options
       {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name}
     end
 
+    # Creates a deep uncompiled copy of this route.
     def clone
       Route.new(@router, @original_path.dup).with_options(as_options)
     end
 
+    # Uses an option hash to apply conditions to a Route.
+    # The following keys are supported.
+    # *name -- Maps to #name method.
+    # *matching -- Maps to #matching method.
+    # *conditions -- Maps to #conditions method.
+    # *default_value -- Maps to #default_value method.
     def with_options(options)
       name(options[:name]) if options && options[:name]
       matching(options[:matching]) if options && options[:matching]
@@ -49,41 +48,65 @@ class HttpRouter
       self
     end
 
+    # Sets the name of the route
+    # Returns +self+.
     def name(name)
       @name = name
       router.named_routes[@name] = self if @name && compiled?
       self
     end
 
+    # Sets a default value for the route
+    # Returns +self+.
+    #
+    # Example
+    #   router = HttpRouter.new
+    #   router.add("/:test").default(:test => 'foo').name(:test).compile
+    #   router.url(:test)
+    #   # ==> "/foo"
+    #   router.url(:test, 'override')
+    #   # ==> "/override"
     def default(v)
       @default_values.merge!(v)
       self
     end
 
+    # Causes this route to recognize the GET and HEAD request methods. Returns +self+.
     def get
       request_method('GET', 'HEAD')
     end
     
+    # Causes this route to recognize the POST request method. Returns +self+.
     def post
       request_method('POST')
     end
     
+    # Causes this route to recognize the HEAD request method. Returns +self+.
     def head
       request_method('HEAD')
     end
     
+    # Causes this route to recognize the PUT request method. Returns +self+.
     def put
       request_method('PUT')
     end
     
+    # Causes this route to recognize the DELETE request method. Returns +self+.
     def delete
       request_method('DELETE')
     end
     
+    # Causes this route to recognize the GET request method. Returns +self+.
     def only_get
-      request_method('DELETE')
+      request_method('GET')
     end
       
+    # Sets a request condition for the route
+    # Returns +self+.
+    #
+    # Example
+    #   router = HttpRouter.new
+    #   router.add("/:test").condition(:host => 'www.example.org').name(:test).compile
     def condition(conditions)
       guard_compiled
       conditions.each do |k,v|
@@ -95,6 +118,12 @@ class HttpRouter
     end
     alias_method :conditions, :condition
 
+    # Sets a regex matcher for a variable
+    # Returns +self+.
+    #
+    # Example
+    #   router = HttpRouter.new
+    #   router.add("/:test").matching(:test => /\d+/).name(:test).compile
     def matching(match)
       guard_compiled
       match.each do |var_name, matchers|
@@ -106,32 +135,47 @@ class HttpRouter
       self
     end
 
+    # Returns the current route's name.
     def named
       @name
     end
 
+    # Sets the destination of the route. Receives either a block, or a proc.
+    # Returns +self+.
+    #
+    # Example
+    #   router = HttpRouter.new
+    #   router.add("/:test").matching(:test => /\d+/).name(:test).to(proc{ |env| Rack::Response.new("hi there").finish })
+    # Or
+    #   router.add("/:test").matching(:test => /\d+/).name(:test).to { |env| Rack::Response.new("hi there").finish }
     def to(dest = nil, &block)
+      guard_compiled
       compile
       @dest = dest || block
       self
     end
 
+    # Sets partial matching on this route. Defaults to +true+. Returns +self+.
     def partial(match = true)
       @partially_match = match
       self
     end
 
+    # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object and must return true for the Route to be matched. Returns +self+.
     def arbitrary(proc = nil, &block)
       @arbitrary << (proc || block)
       self
     end
   
+    # Compile state for route. Returns +true+ or +false+.
     def compiled?
       !@paths.nil?
     end
   
-    def compile(force = false)
-      if force || @paths.nil?
+    # Compiles the route and inserts it into the tree. This is called automatically when you add a destination via #to to the route. Until a route
+    # is compiled, it will not be recognized.
+    def compile
+      if @paths.nil?
         router.named_routes[@name] = self if @name
         @paths = compile_paths
         @paths.each_with_index do |p1, i|
@@ -152,6 +196,7 @@ class HttpRouter
       self
     end
   
+    # Sets the destination of this route to redirect to an arbitrary URL.
     def redirect(path, status = 302)
       guard_compiled
       raise(ArgumentError, "Status has to be an integer between 300 and 399") unless (300..399).include?(status)
@@ -164,6 +209,7 @@ class HttpRouter
       self
     end
     
+    # Sets the destination of this route to serve static files from either a directory or a single file.
     def static(root)
       guard_compiled
       if File.directory?(root)
@@ -174,14 +220,17 @@ class HttpRouter
       self
     end
 
+    # The current state of trailing / ignoring on this route. Returns +true+ or +false+.
     def trailing_slash_ignore?
       @trailing_slash_ignore
     end
 
+    # The current state of partial matching on this route. Returns +true+ or +false+.
     def partially_match?
       @partially_match
     end
 
+    # Generates a URL for this route. See HttpRouter#
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options ||= {} if default_values
@@ -280,6 +329,15 @@ class HttpRouter
 
     def guard_compiled
       raise AlreadyCompiledException.new if compiled?
+    end
+
+    def significant_variable_names
+      unless @significant_variable_names
+        @significant_variable_names = @paths.map { |p| p.variable_names }
+        @significant_variable_names.flatten!
+        @significant_variable_names.uniq!
+      end
+      @significant_variable_names
     end
   end
 end
