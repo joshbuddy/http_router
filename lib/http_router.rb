@@ -1,17 +1,16 @@
 $LOAD_PATH << File.dirname(__FILE__)
 require 'rack'
 require 'ext/rack/uri_escape'
+require 'http_router/node'
+require 'http_router/root'
+require 'http_router/variable'
+require 'http_router/glob'
+require 'http_router/route'
+require 'http_router/response'
+require 'http_router/path'
+require 'http_router/optional_compiler'
 
 class HttpRouter
-  autoload :Node,             'http_router/node'
-  autoload :Root,             'http_router/root'
-  autoload :Variable,         'http_router/variable'
-  autoload :Glob,             'http_router/glob'
-  autoload :Route,            'http_router/route'
-  autoload :Response,         'http_router/response'
-  autoload :Path,             'http_router/path'
-  autoload :OptionalCompiler, 'http_router/optional_compiler'
-
   # Raised when a Route is not able to be generated.
   UngeneratableRouteException      = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
@@ -110,7 +109,7 @@ class HttpRouter
     route
   end
 
-  # Adds a path that only responds to the request methods +GET+ and +HEAD+.
+  # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
   def get(path, options = nil)
@@ -136,13 +135,6 @@ class HttpRouter
   # Returns the route object.
   def delete(path, options = nil)
     add(path, options).delete
-  end
-
-  # Adds a path that only responds to the request method +GET+.
-  #
-  # Returns the route object.
-  def only_get(path, options = nil)
-    add(path, options).only_get
   end
 
   # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.

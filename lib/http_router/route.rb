@@ -71,7 +71,7 @@ class HttpRouter
       self
     end
 
-    # Causes this route to recognize the GET and HEAD request methods. Returns +self+.
+    # Causes this route to recognize the GET request method. Returns +self+.
     def get
       request_method('GET', 'HEAD')
     end
@@ -96,11 +96,6 @@ class HttpRouter
       request_method('DELETE')
     end
     
-    # Causes this route to recognize the GET request method. Returns +self+.
-    def only_get
-      request_method('GET')
-    end
-      
     # Sets a request condition for the route
     # Returns +self+.
     #
