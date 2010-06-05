@@ -73,7 +73,7 @@ class HttpRouter
 
     # Causes this route to recognize the GET request method. Returns +self+.
     def get
-      request_method('GET', 'HEAD')
+      request_method('GET')
     end
     
     # Causes this route to recognize the POST request method. Returns +self+.
