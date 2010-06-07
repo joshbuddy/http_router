@@ -5,7 +5,7 @@ class HttpRouter
       @start_index = 0
       @end_index = 1
       @paths = [""]
-      @chars = path.chars.to_a
+      @chars = path.split('')
       while !@chars.empty?
         case @chars.first
           when '('  then @chars.shift and double_paths

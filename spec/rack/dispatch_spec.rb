@@ -89,6 +89,7 @@ describe "HttpRouter route dispatching" do
       end
 
       it "should dispatch a HEAD request" do
+        pending
         response = route_set.call_with_mock_request("/sample", "HEAD")
         response.body.should eql("Hello World!")
       end
