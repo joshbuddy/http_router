@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe "Rack interface extensions for Usher::Route" do
   before(:each) do
     @route_set = HttpRouter.new

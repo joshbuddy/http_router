@@ -1,5 +1,5 @@
-$LOAD_PATH << File.dirname(__FILE__)
 require 'rack'
+require 'url_mount'
 require 'ext/rack/uri_escape'
 require 'http_router/node'
 require 'http_router/root'
@@ -29,6 +29,7 @@ class HttpRouter
   AmbiguousVariableException       = Class.new(RuntimeError)
 
   attr_reader :named_routes, :routes, :root
+  attr_accessor :url_mount
 
   # Monkey-patches Rack::Builder to use HttpRouter.
   # See examples/rack_mapper.rb
@@ -83,7 +84,7 @@ class HttpRouter
   def default(app)
     @default_app = app
   end
-  
+
   # Adds a path to be recognized.
   #
   # To assign a part of the path to a specific variable, use :variable_name within the route.
@@ -93,7 +94,7 @@ class HttpRouter
   # For example, <tt>add('/path/*id')</tt> would match <tt>/path/123/456/789</tt>, with the variable <tt>:id</tt> having the value <tt>["123", "456", "789"]</tt>.
   #
   # As well, paths can end with two optional parts, <tt>*</tt> and <tt>/?</tt>. If it ends with a <tt>*</tt>, it will match partially, returning the part of the path unmatched in the PATH_INFO value of the env. The part matched to will be returned in the SCRIPT_NAME. If it ends with <tt>/?</tt>, then a trailing / on the path will be optionally matched for that specific route. As trailing /'s are ignored by default, you probably don't actually want to use this option that frequently.
-  # 
+  #
   # Routes can also contain optional parts. There are surrounded with <tt>( )</tt>'s. If you need to match on a bracket in the route itself, you can escape the parentheses with a backslash.
   #
   # The second argument, options, is an optional hash that can modify the route in further ways. See HttpRouter::Route#with_options for details. Typically, you want to add further options to the route by calling additional methods on it. See HttpRouter::Route for further details.
@@ -144,7 +145,7 @@ class HttpRouter
 
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
   # This first value must be either the Route object or the name of the route.
-  # 
+  #
   # Example:
   #   router = HttpRouter.new
   #   router.add('/:foo.:format).name(:test).compile
@@ -167,7 +168,7 @@ class HttpRouter
     end
   end
 
-  # Rack compatible #call. If matching route is found, and +dest+ value responds to #call, processing will pass to the matched route. Otherwise, 
+  # Rack compatible #call. If matching route is found, and +dest+ value responds to #call, processing will pass to the matched route. Otherwise,
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>. The HttpRouter::Response object will be available under the key <tt>router.response</tt> if
   # a response is available.
@@ -192,7 +193,7 @@ class HttpRouter
       @default_app.call(env)
     end
   end
-  
+
   # Returns a new node
   def node(*args)
     Node.new(self, *args)
@@ -211,7 +212,7 @@ class HttpRouter
   def variable(*args)
     Variable.new(self, *args)
   end
-  
+
   # Returns a new glob
   def glob(*args)
     Glob.new(self, *args)
@@ -219,10 +220,19 @@ class HttpRouter
 
   # Creates a deep-copy of the router.
   def clone
-    cloned_router = HttpRouter.new(@default_app, @options, &@init_block)
+    cloned_router = HttpRouter.new(@default_app, @options)
     @routes.each do |route|
-      new_route = route.clone
-      new_route.instance_variable_set(:@router, cloned_router)
+      new_route = route.clone(cloned_router)
+      cloned_router.add_route(new_route).compile
+      new_route.name(route.named) if route.named
+
+      if route.dest
+        begin
+          new_route.to route.dest.clone
+        rescue
+          new_route.to route.dest
+        end
+      end
     end
     cloned_router
   end

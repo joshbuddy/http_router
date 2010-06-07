@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe "HttpRouter as middleware" do
   before(:each) do
     @builder = Rack::Builder.new do
@@ -17,4 +19,4 @@ describe "HttpRouter as middleware" do
     @builder.call(Rack::MockRequest.env_for('/test')).last.join.should == 'test'
   end
 end
-  
+

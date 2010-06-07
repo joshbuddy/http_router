@@ -30,8 +30,8 @@ class HttpRouter
     end
 
     # Creates a deep uncompiled copy of this route.
-    def clone
-      Route.new(@router, @original_path.dup).with_options(as_options)
+    def clone(new_router)
+      Route.new(new_router, @original_path.dup).with_options(as_options)
     end
 
     # Uses an option hash to apply conditions to a Route.
@@ -75,27 +75,27 @@ class HttpRouter
     def get
       request_method('GET')
     end
-    
+
     # Causes this route to recognize the POST request method. Returns +self+.
     def post
       request_method('POST')
     end
-    
+
     # Causes this route to recognize the HEAD request method. Returns +self+.
     def head
       request_method('HEAD')
     end
-    
+
     # Causes this route to recognize the PUT request method. Returns +self+.
     def put
       request_method('PUT')
     end
-    
+
     # Causes this route to recognize the DELETE request method. Returns +self+.
     def delete
       request_method('DELETE')
     end
-    
+
     # Sets a request condition for the route
     # Returns +self+.
     #
@@ -146,6 +146,13 @@ class HttpRouter
     def to(dest = nil, &block)
       compile
       @dest = dest || block
+
+      if @dest.respond_to?(:url_mount=)
+        urlmount = UrlMount.new(@original_path, @default_values)
+        urlmount.url_mount = router.url_mount if router.url_mount
+        @dest.url_mount = urlmount
+      end
+
       self
     end
 
@@ -160,12 +167,12 @@ class HttpRouter
       @arbitrary << (proc || block)
       self
     end
-  
+
     # Compile state for route. Returns +true+ or +false+.
     def compiled?
       !@paths.nil?
     end
-  
+
     # Compiles the route and inserts it into the tree. This is called automatically when you add a destination via #to to the route. Until a route
     # is compiled, it will not be recognized.
     def compile
@@ -188,7 +195,7 @@ class HttpRouter
       end
       self
     end
-  
+
     # Sets the destination of this route to redirect to an arbitrary URL.
     def redirect(path, status = 302)
       raise(ArgumentError, "Status has to be an integer between 300 and 399") unless (300..399).include?(status)
@@ -200,7 +207,7 @@ class HttpRouter
       }
       self
     end
-    
+
     # Sets the destination of this route to serve static files from either a directory or a single file.
     def static(root)
       if File.directory?(root)
@@ -232,11 +239,18 @@ class HttpRouter
         matching_path(args, options)
       end
       raise UngeneratableRouteException.new unless path
-      path.url(args, options)
+
+      mount_point = nil
+      if !router.url_mount.nil?
+        mount_point = router.url_mount.url(options)
+      end
+
+      result = path.url(args, options)
+      mount_point.nil? ? result : File.join(mount_point, result)
     end
 
     private
-    
+
     attr_reader :router
 
     def matching_path(params, other_hash = nil)
@@ -245,7 +259,7 @@ class HttpRouter
       else
         if params.is_a?(Array)
           significant_keys = other_hash && significant_variable_names & other_hash.keys
-          @paths.find { |path| 
+          @paths.find { |path|
             var_count = significant_keys ? params.size + significant_keys.size : params.size
             path.variables.size == var_count
           }
@@ -261,7 +275,7 @@ class HttpRouter
         end
       end
     end
-    
+
     def extract_partial_match(path)
       path[-1] == ?* && path.slice!(-1)
     end

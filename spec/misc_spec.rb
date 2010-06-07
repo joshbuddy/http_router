@@ -1,3 +1,4 @@
+require 'spec_helper'
 describe "HttpRouter" do
   before(:each) do
     @router = HttpRouter.new
@@ -43,17 +44,17 @@ describe "HttpRouter" do
         add('/test').name(:test_route).to :test
       }
       r2 = r1.clone
-      
+
       r2.add('/test2').name(:test).to(:test2)
       r2.routes.size.should == 2
-      
+
       r1.recognize(Rack::MockRequest.env_for('/test2')).should be_nil
       r2.recognize(Rack::MockRequest.env_for('/test2')).should_not be_nil
       r1.named_routes[:test_route].should == r1.routes.first
       r2.named_routes[:test_route].should == r2.routes.first
 
       r1.add('/another').name(:test).to(:test2)
-      
+
       r1.routes.size.should == r2.routes.size
       r1.url(:test).should == '/another'
       r2.url(:test).should == '/test2'

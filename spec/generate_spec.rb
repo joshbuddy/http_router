@@ -1,3 +1,4 @@
+require 'spec_helper'
 describe "HttpRouter#generate" do
   before(:each) do
     @router = HttpRouter.new
@@ -32,7 +33,7 @@ describe "HttpRouter#generate" do
       @router.add("/:var").name(:test).compile
       @router.url(:test, 'test', :query => 'string').should == '/test?query=string'
     end
-    
+
     it "should generate with multiple dynamics" do
       @router.add("/:var/:baz").name(:test).compile
       @router.url(:test, 'one', 'two').should == '/one/two'
@@ -49,7 +50,7 @@ describe "HttpRouter#generate" do
         @router.add("/test.:format").name(:test).compile
         @router.url(:test, :format => 'html').should == '/test.html'
       end
-      
+
       it "should generate with format as a symbol" do
         @router.add("/test.:format").name(:test).compile
         @router.url(:test, :format => :html).should == '/test.html'
@@ -60,24 +61,24 @@ describe "HttpRouter#generate" do
         @router.url(:test, 'html').should == '/test.html'
         @router.url(:test).should == '/test'
       end
-      
+
       it "should generate a dynamic path and a format" do
         @router.add("/:var1.:format").name(:test).compile
         @router.url(:test, 'var', :format => 'html').should == '/var.html'
       end
-      
+
       it "should generate a dynamic path and an optional format" do
         @router.add("/:var1(.:format)").name(:test).compile
         @router.url(:test, 'var').should == '/var'
         @router.url(:test, 'var', :format => 'html').should == '/var.html'
       end
-      
+
       it "should generate multiple dynamics and a format" do
         @router.add("/:foo/:bar.:format").name(:test).compile
         @router.url(:test, 'var', 'baz', 'html').should == '/var/baz.html'
         @router.url(:test, :foo => 'var', :bar => 'baz', :format => 'html').should == '/var/baz.html'
       end
-      
+
       it "should generate multiple dynamics and an optional format" do
         @router.add("/:foo/:bar(.:format)").name(:test).compile
         @router.url(:test, 'var', 'baz').should == '/var/baz'
@@ -137,5 +138,90 @@ describe "HttpRouter#generate" do
       end
     end
 
+    context "url mounting" do
+      context "nested routes" do
+        before(:each) do
+          @r1 = HttpRouter.new
+          @r2 = HttpRouter.new
+          @r2.add("/bar").name(:test).compile
+        end
+
+        it "should set the url mount on a child route" do
+          route = @r1.add("/foo").to(@r2)
+          @r2.url_mount.url.should == "/foo"
+          @r2.url(:test).should == "/foo/bar"
+        end
+
+        it "should set any default values on the url mount" do
+          route = @r1.add("/foo/:bar").default(:bar => "baz").to(@r2)
+          @r2.url(:test).should == "/foo/baz/bar"
+          @r2.url(:test, :bar => "haha").should == "/foo/haha/bar"
+        end
+
+        it "should use multiple variables" do
+          @r1.add("/foo/:bar/:baz").default(:bar => "bar").to(@r2)
+          @r2.url(:test, :baz => "baz").should == "/foo/bar/baz/bar"
+        end
+
+        it "should not steal parameters from the defaults it doesn't need" do
+          route = @r1.add("/foo/:bar").default(:bar => "baz").to(@r2)
+          @r2.url(:test, :bang => "ers").should == "/foo/baz/bar?bang=ers"
+          @r2.url(:test, :bar => "haha", :bang => "ers").should == "/foo/haha/bar?bang=ers"
+        end
+
+        it "should generate on a path with an optional variable" do
+          @r1.add("/foo(/:bar)").to(@r2)
+          @r2.add("/hey(/:there)").name(:test).compile
+          @r2.url(:test).should == "/foo/hey"
+          @r2.url(:test, :bar => "bar").should == "/foo/bar/hey"
+          @r2.url(:test, :bar => "bar", :there => "there").should == "/foo/bar/hey/there"
+        end
+
+        it "should nest 3 times deeply" do
+          @r3 = HttpRouter.new
+          @r1.add("/foo(/:bar)").default(:bar => "barry").to(@r2)
+          @r2.add("/hi").name(:hi).compile
+          @r2.add("/mounted").to(@r3)
+          @r3.add("/endpoint").name(:endpoint).compile
+
+          @r2.url(:hi).should == "/foo/barry/hi"
+          @r3.url(:endpoint).should == "/foo/barry/mounted/endpoint"
+          @r3.url(:endpoint, :bar => "flower").should == "/foo/flower/mounted/endpoint"
+        end
+
+        it "should allow me to set the host via a default" do
+          @r1.add("/mounted").default(:host => "example.com").to(@r2)
+          @r2.url(:test).should == "http://example.com/mounted/bar"
+        end
+
+        it "should allow me to set the host via an option" do
+          @r1.add("/mounted").to(@r2)
+          @r2.url(:test).should == "/mounted/bar"
+          @r2.url(:test, :host => "example.com").should == "http://example.com/mounted/bar"
+        end
+
+        it "should allow me to set the scheme via an option" do
+          @r1.add("/mounted").to(@r2)
+          @r2.url(:test).should == "/mounted/bar"
+          @r2.url(:test, :scheme => "https", :host => "example.com").should == "https://example.com/mounted/bar"
+        end
+
+        it "should clone my nested structure" do
+          @r3 = HttpRouter.new
+          @r1.add("/first").to(@r2)
+          @r2.add("/second").to(@r3)
+          r1 = @r1.clone
+          @r1.routes.first.should_not be_nil
+          r2 = r1.routes.first.dest
+          r2.should_not be_nil
+          @r1.routes.first.dest.object_id.should == @r2.object_id
+          r2.object_id.should_not == @r2.object_id
+          r2.routes.should have(2).route
+          r3 = r2.routes.last.dest
+          r3.should be_an_instance_of(HttpRouter)
+          r3.object_id.should_not == @r3.object_id
+        end
+      end
+    end
   end
 end

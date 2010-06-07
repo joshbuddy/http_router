@@ -1,4 +1,8 @@
-require 'rack'
+$LOAD_PATH.unshift(File.dirname(__FILE__))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+require 'http_router'
+require 'spec'
+require 'spec/autorun'
 
 module CallWithMockRequestMixin
   def call_with_mock_request(url = "/sample", method = "GET", params = Hash.new)

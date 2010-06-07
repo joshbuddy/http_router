@@ -1,3 +1,4 @@
+require 'spec_helper'
 describe "HttpRouter#recognize" do
   before(:each) do
     @router = HttpRouter.new
@@ -10,7 +11,7 @@ describe "HttpRouter#recognize" do
         @router.recognize(Rack::MockRequest.env_for(path)).route.should == route
       end
     end
-    
+
     context("with optional parts") do
       it "work either way" do
         route = @router.add("/test(/optional)").to(:test)
@@ -199,7 +200,7 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:format].should be_nil
       response.params_as_hash[:test].should == 'hey'
     end
-    
+
     context "with globs" do
       it "should recognize" do
         route = @router.add('/test/*variable').to(:test)
@@ -216,9 +217,9 @@ describe "HttpRouter#recognize" do
         response.should be_nil
       end
     end
-    
+
   end
-  
+
   context("with interstitial variables") do
     it "should recognize" do
       route = @router.add('/one-:variable-time').to(:test)
@@ -234,14 +235,14 @@ describe "HttpRouter#recognize" do
       response.route.should == route
       response.params_as_hash[:variable].should == '123'
     end
-    
+
     it "should recognize when there is an extension" do
       route = @router.add('/hey.:greed.html').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.greedyboy.html'))
       response.route.should == route
       response.params_as_hash[:greed].should == 'greedyboy'
     end
-    
+
   end
 
   context("with dynamic greedy paths") do

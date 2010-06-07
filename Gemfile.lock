@@ -1,0 +1,41 @@
+--- 
+dependencies: 
+  url_mount: 
+    group: 
+    - :default
+    version: ">= 0.2.1"
+  rake: 
+    group: 
+    - :development
+    version: ">= 0"
+  rspec: 
+    group: 
+    - :development
+    version: ">= 0"
+  rack: 
+    group: 
+    - :default
+    version: ">= 1.0"
+  sinatra: 
+    group: 
+    - :development
+    version: ">= 0"
+specs: 
+- rake: 
+    version: 0.8.7
+- rack: 
+    version: 1.1.0
+- rspec: 
+    version: 1.3.0
+- sinatra: 
+    version: "1.0"
+- url_mount: 
+    version: 0.2.1
+    source: 0
+hash: 5b54ba131824c3d113eddf8f11326af9e0624f69
+sources: 
+- Path: 
+    path: !ruby/object:Pathname 
+      path: /Users/dneighman/Projects/url_mount
+- Rubygems: 
+    uri: http://gemcutter.org

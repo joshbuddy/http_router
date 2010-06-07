@@ -21,7 +21,8 @@ Gem::Specification.new do |s|
   s.test_files = `git ls-files spec`.split("\n")
 
   # dependencies
-  s.add_dependency "rack", ">= 1.0.0"
+  s.add_dependency "rack",      ">= 1.0.0"
+  s.add_dependency "url_mount", ">=0.2"
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION

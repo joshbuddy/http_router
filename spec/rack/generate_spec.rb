@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 route_set = HttpRouter.new
 route_set.extend(CallWithMockRequestMixin)
 
@@ -9,12 +11,12 @@ describe "HttpRouter route generation" do
     route_set.add("/named/simple/:named_simple_var").name(:simple).compile
     route_set.add("/named/optional(/:named_optional_var)").name(:optional).compile
   end
-  
+
   describe "named routes" do
     it "should generate a fixed path" do
       route_set.url(:fixed).should == "/fixed"
     end
-    
+
     it "should generate a named path route" do
       route_set.url(:simple, :named_simple_var => "the_var").should == "/named/simple/the_var"
     end

@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 route_set = HttpRouter.new
 route_set.extend(CallWithMockRequestMixin)
 

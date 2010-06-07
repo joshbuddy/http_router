@@ -1,3 +1,4 @@
+require 'spec_helper'
 require "sinatra"
 require "http_router/interface/sinatra"
 
@@ -79,28 +80,28 @@ describe "HttpRouter (for Sinatra) route recognition" do
   describe "mapping functionality" do
 
     it "should map a basic route" do
-      @app.get('/hi', :name => :hi) { generate(:hi) } 
+      @app.get('/hi', :name => :hi) { generate(:hi) }
       response = @app.call_with_mock_request('/hi')
       response.status.should == 200
       response.body.should == "/hi"
     end
 
     it "should map a basic route ignoring trailing delimiters" do
-      @app.get('/hi', :name => :hi) { generate(:hi) } 
+      @app.get('/hi', :name => :hi) { generate(:hi) }
       response = @app.call_with_mock_request('/hi/')
       response.status.should == 200
       response.body.should == "/hi"
     end
 
     it "should map a basic route with params" do
-      @app.get('/hi/:id', :name => :hi) { generate(:hi, :id => 18) } 
+      @app.get('/hi/:id', :name => :hi) { generate(:hi, :id => 18) }
       response = @app.call_with_mock_request('/hi/1')
       response.status.should == 200
       response.body.should == "/hi/18"
     end
 
     it "should map route with params" do
-      @app.get('/hi-:id', :name => :hi) { generate(:hi, :id => 18) } 
+      @app.get('/hi-:id', :name => :hi) { generate(:hi, :id => 18) }
       response = @app.call_with_mock_request('/hi-1')
       response.status.should == 200
       response.body.should == "/hi-18"
