@@ -108,6 +108,7 @@ class HttpRouter
         @conditions.key?(k) ?
           @conditions[k] << v :
           @conditions[k] = Array(v)
+        @conditions[k].flatten!
       end
       self
     end
