@@ -152,6 +152,14 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'POST')).dest.should == :any_post2
     end
 
+    it "should match on scheme" do
+      @router.get("/test").scheme('http').to(:http)
+      @router.get("/test").scheme('https').to(:https)
+      @router.recognize(Rack::MockRequest.env_for('http://example.org/test')).dest.should == :http
+      @router.recognize(Rack::MockRequest.env_for('https://example.org/test')).dest.should == :https
+      @router.recognize(Rack::MockRequest.env_for('https://example.org/test', :method => 'POST')).matched?.should be_false
+    end
+
   end
 
   context("with dynamic paths") do
