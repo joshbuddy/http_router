@@ -147,13 +147,11 @@ class HttpRouter
     def to(dest = nil, &block)
       compile
       @dest = dest || block
-
       if @dest.respond_to?(:url_mount=)
         urlmount = UrlMount.new(@original_path, @default_values)
         urlmount.url_mount = router.url_mount if router.url_mount
         @dest.url_mount = urlmount
       end
-
       self
     end
 
