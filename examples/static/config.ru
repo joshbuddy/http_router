@@ -5,8 +5,8 @@ require 'http_router'
 base = File.expand_path(File.dirname(__FILE__))
 
 run HttpRouter.new {
-  get('/favicon.ico').static("#{base}/favicon.ico")
-  get('/images').static("#{base}/images")
+  get('/favicon.ico').static("#{base}/favicon.ico")  # from a single file
+  get('/images').static("#{base}/images")            # or from a directory
 }
 
 # crapbook-pro:~ joshua$ curl -I http://localhost:3000/favicon.ico
