@@ -40,6 +40,12 @@ class HttpRouter
     require File.join('ext', 'rack', 'rack_mapper')
   end
 
+  # Monkey-patches Rack::Builder to use HttpRouter.
+  # See examples/rack_mapper.rb
+  def self.override_rack_urlmap!
+    require File.join('ext', 'rack', 'rack_urlmap')
+  end
+
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
   # If there is a proc first, then it's used as the default app in the case of a non-match.
