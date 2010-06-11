@@ -138,8 +138,15 @@ class HttpRouter
     end
 
     def find_on_parts(request, parts, params)
-      unless parts.empty?
+      if parts and !parts.empty?
         whole_path = parts.join('/')
+        if parts.size == 1 and parts.first == ''
+          potential_match = find_on_parts(request, [], params)
+          if potential_match and (router.ignore_trailing_slash? or potential_match.value && potential_match.value.route.trailing_slash_ignore?)
+            parts.shift
+            return potential_match
+          end
+        end
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
@@ -163,9 +170,6 @@ class HttpRouter
         elsif @catchall
           params << @catchall.variable.consume(parts, whole_path)
           return @catchall.find_on_parts(request, parts, params)
-        elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
-          parts.shift
-          return find_on_parts(request, parts, params)
         end
       end
       if request_node
