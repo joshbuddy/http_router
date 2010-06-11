@@ -9,6 +9,7 @@ require 'http_router/route'
 require 'http_router/response'
 require 'http_router/path'
 require 'http_router/optional_compiler'
+require 'http_router/parts'
 
 class HttpRouter
   # Raised when a Route is not able to be generated.
@@ -238,7 +239,7 @@ class HttpRouter
   end
 
   def split(path)
-    (path[0] == ?/ ? path[1, path.size] : path).split('/')
+    Parts.new(path)
   end
 
   private

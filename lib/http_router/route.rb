@@ -108,6 +108,7 @@ class HttpRouter
         @conditions.key?(k) ?
           @conditions[k] << v :
           @conditions[k] = Array(v)
+        @conditions[k].flatten!
       end
       self
     end
@@ -318,7 +319,7 @@ class HttpRouter
             scan_regex = if next_index == part_segments.size
               matcher || /^[^\/]+/
             else
-              /^#{matcher || '.*?'}(?=#{Regexp.quote(part_segments[next_index])})/
+              /^#{matcher || '[^\/]*?'}(?=#{Regexp.quote(part_segments[next_index])})/
             end
             router.variable(v_name, scan_regex)
           else

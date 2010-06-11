@@ -1,4 +1,3 @@
-require 'cgi'
 class HttpRouter
   class Path
     attr_reader :parts, :route
@@ -58,9 +57,9 @@ class HttpRouter
         params.each do |k,v|
           case v
           when Array
-            v.each { |v_part| uri << '&' << CGI.escape(k.to_s) << '%5B%5D=' << CGI.escape(v_part.to_s) }
+            v.each { |v_part| uri << '&' << Rack::Utils.escape(k.to_s) << '%5B%5D=' << Rack::Utils.escape(v_part.to_s) }
           else
-            uri << '&' << CGI.escape(k.to_s) << '=' << CGI.escape(v.to_s)
+            uri << '&' << Rack::Utils.escape(k.to_s) << '=' << Rack::Utils.escape(v.to_s)
           end
         end
         uri[uri_size] = ??

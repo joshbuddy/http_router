@@ -138,18 +138,24 @@ class HttpRouter
     end
 
     def find_on_parts(request, parts, params)
-      unless parts.empty?
-        whole_path = parts.join('/')
+      if parts and !parts.empty?
+        if parts.size == 1 and parts.first == ''
+          potential_match = find_on_parts(request, [], params)
+          if potential_match and (router.ignore_trailing_slash? or potential_match.value && potential_match.value.route.trailing_slash_ignore?)
+            parts.shift
+            return potential_match
+          end
+        end
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
           next_node = @linear.find do |(tester, node)|
-            if tester.respond_to?(:matches?) and tester.matches?(parts, whole_path)
+            if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
-              params << tester.consume(dupped_parts, whole_path)
+              params << tester.consume(match, dupped_parts)
               parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
-            elsif tester.respond_to?(:match) and match = tester.match(whole_path) and match.begin(0) == 0
-              dupped_parts = router.split(whole_path[match[0].size, whole_path.size])
+            elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
+              dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
               parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
             else
               nil
@@ -161,11 +167,8 @@ class HttpRouter
           parts.shift
           return match.find_on_parts(request, parts, params)
         elsif @catchall
-          params << @catchall.variable.consume(parts, whole_path)
+          params << @catchall.variable.consume(nil, parts)
           return @catchall.find_on_parts(request, parts, params)
-        elsif parts.size == 1 && parts.first == '' && (value && value.route.trailing_slash_ignore? || router.ignore_trailing_slash?)
-          parts.shift
-          return find_on_parts(request, parts, params)
         end
       end
       if request_node
