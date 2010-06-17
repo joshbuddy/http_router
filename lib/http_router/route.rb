@@ -26,7 +26,7 @@ class HttpRouter
 
     # Returns the options used to create this route.
     def as_options
-      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name}
+      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name, :partial => @partially_match}
     end
 
     # Creates a deep uncompiled copy of this route.
@@ -45,6 +45,7 @@ class HttpRouter
       matching(options[:matching]) if options && options[:matching]
       condition(options[:conditions]) if options && options[:conditions]
       default(options[:default_values]) if options && options[:default_values]
+      partial(options[:partial]) if options && options[:partial]
       self
     end
 

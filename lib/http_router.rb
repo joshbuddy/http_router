@@ -236,7 +236,6 @@ class HttpRouter
       new_route = route.clone(cloned_router)
       cloned_router.add_route(new_route).compile
       new_route.name(route.named) if route.named
-      new_route.partial if route.partially_match?
 
       if route.dest
         begin
@@ -246,8 +245,6 @@ class HttpRouter
         end
       end
     end
-
-    cloned_router.default(@default_app) if @default_app
     cloned_router
   end
 
