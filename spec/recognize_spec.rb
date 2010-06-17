@@ -37,6 +37,7 @@ describe "HttpRouter#recognize" do
         response.route.should == route
         response.remaining_path.should == '/optional'
       end
+
     end
 
     context("with proc acceptance") do

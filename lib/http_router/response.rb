@@ -31,14 +31,14 @@ class HttpRouter
       def route
         path.route
       end
-    
+
       def dest
         route.dest
       end
       alias_method :destination, :dest
-    
+
       def partial_match?
-        remaining_path
+        remaining_path || route.partially_match?
       end
     end
   end
