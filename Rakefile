@@ -20,3 +20,9 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_files.include("README.rdoc", "lib/**/*.rb")
   rd.rdoc_dir = 'rdoc'
 end
+
+
+# automatically added Tumbler tasks
+
+require 'tumbler'
+Tumbler.use_rake_tasks

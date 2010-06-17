@@ -1,0 +1,4 @@
+gem_name "http_router"
+
+version_file 'lib/http_router/version.rb'
+changelog_file "CHANGELOG"

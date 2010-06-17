@@ -12,6 +12,7 @@ require 'http_router/response'
 require 'http_router/path'
 require 'http_router/optional_compiler'
 require 'http_router/parts'
+require 'http_router/version'
 
 class HttpRouter
   # Raised when a Route is not able to be generated.
