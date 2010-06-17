@@ -35,6 +35,14 @@ describe "HttpRouter route dispatching" do
       response = @route_set.call_with_mock_request
       @app.env["router.params"].should == {}
     end
+
+    it "should write router.params for default values" do
+      @route_set.add("/foobar", :default_values => {:hi => :there}).compile
+      response = @route_set.call_with_mock_request("/foobar")
+      env = Rack::MockRequest.env_for("/foobar")
+      @route_set.call(env)
+      env['router.params'].should == {:hi => :there}
+    end
   end
 
   describe "HTTP POST" do

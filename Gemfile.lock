@@ -28,7 +28,7 @@ specs:
 - rake: 
     version: 0.8.7
 - rack: 
-    version: 1.1.0
+    version: 1.2.1
 - rbench: 
     version: 0.2.3
 - rspec: 
