@@ -1,0 +1,14 @@
+== 0.2.5
+
+* Walk entire tree looking for possible request_methods to return on 405 if a match isn't achieved. (Joshua Hull, 3e8631f)
+* upgraded deps + spec running (Joshua Hull, fcefce9)
+* simplified route cloning (Joshua Hull, 4b0ff59)
+* added partial matching to route cloning (Joshua Hull, d1a57d8)
+* Merge branch 'master' of github.com:joshbuddy/http_router (Joshua Hull, 7f42a27)
+* convert to Tumbler (Joshua Hull, 295e6a2)
+* Updates cloning (Daniel Neighman, 37178bf)
+* add urlmap replacement (Joshua Hull, 2868044)
+* added scheme example (Joshua Hull, f23da20)
+* comments (Joshua Hull, 8474276)
+* static example (Joshua Hull, df54ee0)
+
