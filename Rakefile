@@ -7,6 +7,10 @@ Spec::Rake::SpecTask.new(:spec) do |t|
   t.spec_files = FileList['spec/**/*_spec.rb']
 end
 
+task 'tumbler:preflight' do
+  Rake::Task["spec"].invoke
+end
+
 begin
   require 'code_stats'
   CodeStats::Tasks.new
