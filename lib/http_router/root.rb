@@ -10,16 +10,18 @@ class HttpRouter
       parts = router.split(path)
       parts << '' if path[path.size - 1] == ?/
       params = []
+      alternate_request_methods = []
       process_response(
-        find_on_parts(request, parts, params),
+        find_on_parts(request, parts, params, alternate_request_methods),
         parts,
         params, 
-        request
+        request,
+        alternate_request_methods
       )
     end
     
     private
-    def process_response(node, parts, params, request)
+    def process_response(node, parts, params, request, alternate_request_methods)
       if node.respond_to?(:matched?) && !node.matched?
         node
       elsif node && node.value
@@ -32,7 +34,11 @@ class HttpRouter
           nil
         end
       else
-        nil
+        if alternate_request_methods.empty?
+          nil
+        else
+          Response.unmatched(405, {"Allow" => alternate_request_methods.join(", ")})
+        end
       end
     end
   end

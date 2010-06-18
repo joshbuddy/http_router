@@ -11,7 +11,7 @@ dependencies:
   tumbler: 
     group: 
     - :development
-    version: ">= 0.0.6"
+    version: ">= 0.0.11"
   rspec: 
     group: 
     - :development
@@ -50,10 +50,10 @@ specs:
 - versionomy: 
     version: 0.4.0
 - tumbler: 
-    version: 0.0.6
+    version: 0.0.11
 - url_mount: 
     version: 0.2.1
-hash: 3e1dfdbf9cd7a55dc9a4751d1e8eb4d3b65bd7da
+hash: df813dada9b96e269c9f2dc81627e29f1dcec5f4
 sources: 
 - Rubygems: 
     uri: http://gemcutter.org

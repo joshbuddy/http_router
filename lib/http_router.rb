@@ -111,7 +111,7 @@ class HttpRouter
   #
   # Returns the route object.
   def add(path, options = nil)
-    add_route Route.new(self, path.dup).with_options(options)
+    add_route route(path.dup).with_options(options)
   end
 
   # Adds a route to be recognized. This must be a HttpRouter::Route object. Returns the route just added.
@@ -227,6 +227,11 @@ class HttpRouter
   # Returns a new glob
   def glob(*args)
     Glob.new(self, *args)
+  end
+
+  # Returns a new glob
+  def route(*args)
+    Route.new(self, *args)
   end
 
   # Creates a deep-copy of the router.

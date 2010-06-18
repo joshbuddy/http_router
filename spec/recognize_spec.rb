@@ -5,7 +5,7 @@ describe "HttpRouter#recognize" do
   end
 
   context("with static paths") do
-    ['/', '/test', '/test/time', '/one/more/what', '/test.html'].each do |path|
+    ['/', '/test', '/test/time', '/one/more/what', '/test.html', '/.html'].each do |path|
       it "should recognize #{path.inspect}" do
         route = @router.add(path).to(path)
         @router.recognize(Rack::MockRequest.env_for(path)).route.should == route
@@ -125,6 +125,21 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).headers['Allow'].should == "POST"
     end
 
+    it "should recognize with optional parts and correctly return a 405 when the method isn't found" do
+      @router.get("/test(.:format)").to(:get)
+      @router.post("/test(.:format)").to(:post)
+      @router.delete("/test(.:format)").to(:delete)
+      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'POST')).destination.should == :post
+      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).destination.should == :get
+      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'DELETE')).destination.should == :delete
+      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).status.should == 405
+      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).headers['Allow'].should == "DELETE, GET, POST"
+      @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'POST')).destination.should == :post
+      @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'GET')).destination.should == :get
+      @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'DELETE')).destination.should == :delete
+      @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'PUT')).status.should == 405
+    end
+
     it "should recognize deeply" do
       @router.post("/test").to(:test_post)
       @router.post("/test/post").to(:test_post_post)
@@ -186,6 +201,16 @@ describe "HttpRouter#recognize" do
       response.route.should == route
       response.params_as_hash[:format].should == 'html'
       response = @router.recognize(Rack::MockRequest.env_for('/test'))
+      response.route.should == route
+      response.params_as_hash[:format].should be_nil
+    end
+
+    it "should recognize '/(.:format)'" do
+      route = @router.add('/(.:format)').to(:test)
+      response = @router.recognize(Rack::MockRequest.env_for('/.html'))
+      response.route.should == route
+      response.params_as_hash[:format].should == 'html'
+      response = @router.recognize(Rack::MockRequest.env_for('/'))
       response.route.should == route
       response.params_as_hash[:format].should be_nil
     end

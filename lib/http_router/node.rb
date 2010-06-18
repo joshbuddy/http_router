@@ -137,10 +137,10 @@ class HttpRouter
       current_nodes
     end
 
-    def find_on_parts(request, parts, params)
+    def find_on_parts(request, parts, params, alternate_request_methods)
       if parts and !parts.empty?
         if parts.size == 1 and parts.first == ''
-          potential_match = find_on_parts(request, [], params)
+          potential_match = find_on_parts(request, [], params, alternate_request_methods)
           if potential_match and (router.ignore_trailing_slash? or potential_match.value && potential_match.value.route.trailing_slash_ignore?)
             parts.shift
             return potential_match
@@ -153,10 +153,10 @@ class HttpRouter
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
               params << tester.consume(match, dupped_parts)
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params, alternate_request_methods)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
               dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params, alternate_request_methods)
             else
               nil
             end
@@ -165,14 +165,14 @@ class HttpRouter
         end
         if match = @lookup && @lookup[parts.first]
           parts.shift
-          return match.find_on_parts(request, parts, params)
+          return match.find_on_parts(request, parts, params, alternate_request_methods)
         elsif @catchall
           params << @catchall.variable.consume(nil, parts)
-          return @catchall.find_on_parts(request, parts, params)
+          return @catchall.find_on_parts(request, parts, params, alternate_request_methods)
         end
       end
       if request_node
-        request_node.find_on_request_methods(request)
+        request_node.find_on_request_methods(request, alternate_request_methods)
       elsif arbitrary_node
         arbitrary_node.find_on_arbitrary(request)
       elsif @value
@@ -207,19 +207,19 @@ class HttpRouter
     RequestMethods =  [:request_method, :host, :port, :scheme]
     attr_accessor :request_method
 
-    def find_on_request_methods(request)
+    def find_on_request_methods(request, alternate_request_methods)
       if @request_method
         request_value = request.send(request_method)
         if @linear && !@linear.empty?
           next_node = @linear.find do |(regexp, node)|
             regexp === request_value
           end
-          next_node &&= next_node.find_on_request_methods(request)
+          next_node &&= next_node.find_on_request_methods(request, alternate_request_methods)
           return next_node if next_node
         end
-        if @lookup and next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request))
+        if @lookup and next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request, alternate_request_methods))
           return next_node
-        elsif next_node = (@catchall && @catchall.find_on_request_methods(request))
+        elsif next_node = (@catchall && @catchall.find_on_request_methods(request, alternate_request_methods))
           return next_node
         end
       end
@@ -229,7 +229,10 @@ class HttpRouter
       elsif @value
         self
       else
-        current_node = request_method == :request_method ? Response.unmatched(405, {"Allow" => @lookup.keys.join(", ")}) : nil
+        if request_method == :request_method
+          alternate_request_methods.concat(@lookup.keys)
+        end
+        nil
       end
     end
 
