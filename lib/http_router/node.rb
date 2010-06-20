@@ -98,34 +98,30 @@ class HttpRouter
           
           for current_node_index in (0...current_nodes.size)
             current_node = current_nodes.at(current_node_index)
-            if request_options.key?(method)  #we care about the method
-              unless current_node.request_method
-                current_node.request_method = method
+            unless current_node.request_method
+              current_node.request_method = method
+            end
+            case RequestNode::RequestMethods.index(method) <=> RequestNode::RequestMethods.index(current_node.request_method)
+            when 0 #use this node
+              if request_options[method].is_a?(Regexp)
+                new_node = router.request_node
+                current_nodes[current_node_index] = new_node
+                current_node.create_linear
+                current_node.linear << [request_options[method], new_node]
+              elsif request_options[method].is_a?(Array)
+                current_node.create_lookup
+                current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= router.request_node}
+              else
+                current_node.create_lookup
+                current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= router.request_node)
               end
-              case RequestNode::RequestMethods.index(method) <=> RequestNode::RequestMethods.index(current_node.request_method)
-              when 0 #use this node
-                if request_options[method].is_a?(Regexp)
-                  new_node = router.request_node
-                  current_nodes[current_node_index] = new_node
-                  current_node.create_linear
-                  current_node.linear << [request_options[method], new_node]
-                elsif request_options[method].is_a?(Array)
-                  current_node.create_lookup
-                  current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= router.request_node}
-                else
-                  current_node.create_lookup
-                  current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= router.request_node)
-                end
-              when 1 #this node is farther ahead
-                current_nodes[current_node_index] = (current_node.catchall ||= router.request_node)
-              when -1 #this method is more important than the current node
-                next_node = current_node.dup
-                current_node.reset!
-                current_node.request_method = method
-                redo
-              end
-            else
-              current_node.catchall ||= router.request_node
+            when 1 #this node is farther ahead
+              current_nodes[current_node_index] = (current_node.catchall ||= router.request_node)
+            when -1 #this method is more important than the current node
+              next_node = current_node.dup
+              current_node.reset!
+              current_node.request_method = method
+              redo
             end
           end
           current_nodes.flatten!
