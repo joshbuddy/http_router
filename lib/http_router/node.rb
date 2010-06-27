@@ -148,7 +148,7 @@ class HttpRouter
           next_node = @linear.find do |(tester, node)|
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
-              params << tester.consume(match, dupped_parts)
+              params.push((val = tester.consume(match, dupped_parts) and val.is_a?(Array)) ? val.map{|v| Rack::Utils.uri_unescape(v)} : Rack::Utils.uri_unescape(val))
               parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params, alternate_request_methods)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
               dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
@@ -163,7 +163,7 @@ class HttpRouter
           parts.shift
           return match.find_on_parts(request, parts, params, alternate_request_methods)
         elsif @catchall
-          params << @catchall.variable.consume(nil, parts)
+          params.push((val = @catchall.variable.consume(nil, parts) and val.is_a?(Array)) ? val.map{|v| Rack::Utils.uri_unescape(v)} : Rack::Utils.uri_unescape(val))
           return @catchall.find_on_parts(request, parts, params, alternate_request_methods)
         end
       end

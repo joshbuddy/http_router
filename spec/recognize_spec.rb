@@ -99,15 +99,6 @@ describe "HttpRouter#recognize" do
     end
   end
 
-  context "with variables" do
-    it "should recognize" do
-      @router.add("/foo").to(:test1)
-      @router.add("/foo/:id").to(:test2)
-      @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
-      @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
-    end
-  end
-
   context "with missing leading /" do
     it "should recognize" do
       @router.add("foo").to(:test1)
@@ -179,7 +170,22 @@ describe "HttpRouter#recognize" do
   end
 
   context("with dynamic paths") do
+    it "should recognize /foo/:id and /foo" do
+      @router.add("/foo/:id").to(:test2)
+      @router.add("/foo").to(:test1)
+      @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
+      @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
+    end
+
     it "should recognize '/:variable'" do
+      route = @router.add('/:variable').to(:test)
+      response = @router.recognize(Rack::MockRequest.env_for('/%E6%AE%BA%E3%81%99'))
+      response.route.should == route
+      response.params.should == ["\346\256\272\343\201\231"]
+      response.params_as_hash[:variable].should == "\346\256\272\343\201\231"
+    end
+
+    it "should recognize '/:variable' and URI unescape variables" do
       route = @router.add('/:variable').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/value'))
       response.route.should == route
@@ -242,6 +248,7 @@ describe "HttpRouter#recognize" do
         response.route.should == route
         response.params.should == [['one', 'two', 'three']]
       end
+
       it "should recognize with a regexp" do
         route = @router.add('/test/*variable/anymore').matching(:variable => /\d+/).to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567/anymore'))

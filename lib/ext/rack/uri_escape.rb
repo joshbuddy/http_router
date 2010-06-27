@@ -18,7 +18,7 @@ end unless Rack::Utils.respond_to?(:uri_escape!)
 
 module Rack::Utils
   def uri_unescape(s)
-    gsub(/((?:%[0-9a-fA-F]{2})+)/n){
+    s.to_s.gsub(/((?:%[0-9a-fA-F]{2})+)/n){
       [$1.delete('%')].pack('H*')
     }
   end
