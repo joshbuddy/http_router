@@ -1,3 +1,8 @@
+== 0.3.0
+
+* Unescape param values (Joshua Hull, d7a6a1f)
+* Removed useless test in request method adding (Joshua Hull, bcaade2)
+
 == 0.2.5
 
 * Walk entire tree looking for possible request_methods to return on 405 if a match isn't achieved. (Joshua Hull, 3e8631f)
