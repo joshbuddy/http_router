@@ -121,6 +121,7 @@ class HttpRouter
               next_node = current_node.dup
               current_node.reset!
               current_node.request_method = method
+              current_node.catchall ||= next_node
               redo
             end
           end

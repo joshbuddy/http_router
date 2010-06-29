@@ -157,6 +157,18 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).route.named.should == :test_catchall
     end
 
+    it "should try multiple request method restrictions in both orders" do
+      @router.add("/test").host('host2').to(:host2)
+      @router.add("/test").post.to(:post)
+      @router.add("/test").host('host2').get.to(:host2_get)
+      @router.add("/test").post.host('host2').to(:host2_post)
+
+      @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'PUT')).dest.should == :host2
+      @router.recognize(Rack::MockRequest.env_for('http://host1/test', :method => 'POST')).dest.should == :post
+      @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'GET')).dest.should == :host2_get
+      @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'POST')).dest.should == :host2_post
+    end
+
     it "should try both specific and non-specifc routes" do
       @router.post("/test").host('host1').to(:post_host1)
       @router.add("/test").host('host2').to(:any_post2)
