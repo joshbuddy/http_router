@@ -124,7 +124,11 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'GET')).destination.should == :get
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'DELETE')).destination.should == :delete
       @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).status.should == 405
-      @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).headers['Allow'].should == "DELETE, GET, POST"
+      methods = @router.recognize(Rack::MockRequest.env_for('/test', :method => 'PUT')).headers['Allow'].split(/,\s+/)
+      methods.should include('DELETE')
+      methods.should include('GET')
+      methods.should include('POST')
+      methods.size.should == 3
       @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'POST')).destination.should == :post
       @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'GET')).destination.should == :get
       @router.recognize(Rack::MockRequest.env_for('/test.html', :method => 'DELETE')).destination.should == :delete
