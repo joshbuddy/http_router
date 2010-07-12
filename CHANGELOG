@@ -1,3 +1,7 @@
+== 0.3.2
+
+* Made the sinatra extension Ruby 1.9.2 compatible (Matt Aimonetti, 05fb162)
+
 == 0.3.1
 
 * Node transplant in request tree building not working in all cases. (Joshua Hull, f82ae82)
