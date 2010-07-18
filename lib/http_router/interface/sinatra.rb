@@ -73,6 +73,10 @@ class HttpRouter
             invoke_hook(:route_added, verb, path, block)
 
             route = router.add(path)
+
+            matching = options.delete(:matching)
+            route.matching(matching) unless matching.nil?
+
             route.request_method(verb)
             route.host(options.delete(:host)) if options.key?(:host)
             

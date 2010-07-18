@@ -118,6 +118,33 @@ describe "HttpRouter (for Sinatra) route recognition" do
     end
   end
 
+  describe "matching by regexp" do
+    before :each do
+      @app.get('/numbers/:digits', :matching => { :digits => /\d+/ }) { params[:digits] }
+    end
+
+    describe "when regexp is matched" do
+      before :each do
+        @response = @app.call_with_mock_request('/numbers/2010')
+      end
+
+      it "should map successfully" do
+        @response.status.should == 200
+        @response.body.should == "2010"
+      end
+    end
+
+    describe "when regexp is not matched" do
+      before :each do
+        @response = @app.call_with_mock_request('/numbers/boobs')
+      end
+
+      it "should not map" do
+        @response.status.should == 404
+      end
+    end
+  end
+
   describe "not found" do
 
     it "should correctly generate a not found page without images" do
