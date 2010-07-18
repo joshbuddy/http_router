@@ -229,7 +229,7 @@ class HttpRouter
     Glob.new(self, *args)
   end
 
-  # Returns a new glob
+  # Returns a new route
   def route(*args)
     Route.new(self, *args)
   end
