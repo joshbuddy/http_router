@@ -63,25 +63,21 @@ class HttpRouter
 
             define_method "#{verb} #{path}", &block
             unbound_method = instance_method("#{verb} #{path}")
-            block =
-              if block.arity != 0
-                proc { unbound_method.bind(self).call(*@block_params) }
-              else
-                proc { unbound_method.bind(self).call }
-              end
+            block = block.arity.zero? ?
+              proc { unbound_method.bind(self).call } :
+              proc { unbound_method.bind(self).call(*@block_params) }
 
             invoke_hook(:route_added, verb, path, block)
 
             route = router.add(path)
 
-            matching = options.delete(:matching)
-            route.matching(matching) unless matching.nil?
+            route.matching(options[:matching]) if options.key?(:matching)
 
             route.request_method(verb)
-            route.host(options.delete(:host)) if options.key?(:host)
+            route.host(options[:host]) if options.key?(:host)
             
-            route.to(block)
             route.name(name) if name
+            route.to(block)
             route
           end
 
