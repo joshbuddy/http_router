@@ -7,10 +7,6 @@ Spec::Rake::SpecTask.new(:spec) do |t|
   t.spec_files = FileList['spec/**/*_spec.rb']
 end
 
-task 'tumbler:preflight' do
-  Rake::Task["spec"].invoke
-end
-
 begin
   require 'code_stats'
   CodeStats::Tasks.new
@@ -25,8 +21,6 @@ Rake::RDocTask.new do |rd|
   rd.rdoc_dir = 'rdoc'
 end
 
+require 'ext/gem_rake'
 
-# automatically added Tumbler tasks
-
-require 'tumbler'
-Tumbler.use_rake_tasks
+Bundler::GemHelper.install_tasks

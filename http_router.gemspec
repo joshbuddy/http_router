@@ -7,8 +7,9 @@ Gem::Specification.new do |s|
   s.version = HttpRouter::VERSION
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Joshua Hull"]
-  s.date = '2010-07-12'
-  s.description = %q{A kick-ass HTTP router for use in Rack & Sinatra}
+  s.date = HttpRouter::RELEASE_DATE
+  s.summary = "A kick-ass HTTP router for use in Rack & Sinatra"
+  s.description = "This library allows you to recognize and build URLs in a Rack application. As well it contains an interface for use within Sinatra."
   s.email = %q{joshbuddy@gmail.com}
   s.extra_rdoc_files = ['README.rdoc']
   s.files = `git ls-files`.split("\n")
@@ -16,8 +17,8 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
-  s.summary = %q{A kick-ass HTTP router for use in Rack & Sinatra}
   s.test_files = `git ls-files`.split("\n").select{|f| f =~ /^spec/}
+  s.rubyforge_project = 'http_router'
 
   # dependencies
   s.add_runtime_dependency 'rack',        '>=1.0'
