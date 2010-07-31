@@ -39,6 +39,8 @@ Maps a route. The format for variables in paths is:
 
 Everything else is treated literally. Optional parts are surrounded by brackets. Partially matching paths have a trailing <tt>*</tt>. Optional trailing slash matching is done with <tt>/?</tt>.
 
+As well, you can escape the following characters with a backslash: <tt>( ) : *</tt>
+
 Once you have a route object, use <tt>HttpRouter::Route#to</tt> to add a destination and <tt>HttpRouter::Route#name</tt> to name it.
 
 e.g.
