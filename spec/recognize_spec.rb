@@ -209,6 +209,13 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:variable].should == 'value'
     end
 
+    it "should recognize using match_path" do
+      route = @router.add('/:test').match_path(%r{^/(test123|\d+)}).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/test123')).params_as_hash[:test].should == 'test123'
+      @router.recognize(Rack::MockRequest.env_for('/123')).params_as_hash[:test].should == '123'
+      @router.recognize(Rack::MockRequest.env_for('/test321')).should be_nil
+    end
+
     it "should recognize '/test.:format'" do
       route = @router.add('/test.:format').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/test.html'))
