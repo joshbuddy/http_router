@@ -20,12 +20,22 @@ describe "HttpRouter#recognize" do
       end
     end
 
-    context("with escaped ()'s") do
+    context("with escaping") do
       it "should recognize ()" do
         route = @router.add('/test\(:variable\)').to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test(hello)'))
         response.route.should == route
         response.params.first.should == 'hello'
+      end
+
+      it "should recognize :" do
+        route = @router.add('/test\:variable').to(:test)
+        @router.recognize(Rack::MockRequest.env_for('/test:variable')).dest.should == :test
+      end
+
+      it "should recognize *" do
+        route = @router.add('/test\*variable').to(:test)
+        @router.recognize(Rack::MockRequest.env_for('/test*variable')).dest.should == :test
       end
     end
 
