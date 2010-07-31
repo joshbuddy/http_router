@@ -166,7 +166,7 @@ class HttpRouter
 
     # Convenient regexp matching on an entire path. Returns +self+
     def match_path(matcher)
-      arbitrary{|env| matcher === env.path_info}
+      arbitrary{|env| match = matcher.match(env.path_info); !match.nil? and match.begin(0) == 0 and match[0].size == env.path_info.size}
     end
 
     # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object and must return true for the Route to be matched. Returns +self+.
