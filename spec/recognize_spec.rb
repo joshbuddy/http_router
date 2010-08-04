@@ -179,6 +179,13 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('http://host2/test', :method => 'POST')).dest.should == :host2_post
     end
 
+    it "should be able to use regexp in request method conditions" do
+      @router.get("/test").host(/host1/).to(:with_regexp)
+      @router.get("/test").to(:without_regexp)
+      @router.recognize(Rack::MockRequest.env_for('http://host2/test')).dest.should == :without_regexp
+      @router.recognize(Rack::MockRequest.env_for('http://host2.host1.com/test')).dest.should == :with_regexp
+    end
+
     it "should try both specific and non-specifc routes" do
       @router.post("/test").host('host1').to(:post_host1)
       @router.add("/test").host('host2').to(:any_post2)

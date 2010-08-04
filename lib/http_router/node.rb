@@ -103,17 +103,16 @@ class HttpRouter
             end
             case RequestNode::RequestMethods.index(method) <=> RequestNode::RequestMethods.index(current_node.request_method)
             when 0 #use this node
-              if request_options[method].is_a?(Regexp)
-                new_node = router.request_node
-                current_nodes[current_node_index] = new_node
-                current_node.create_linear
-                current_node.linear << [request_options[method], new_node]
-              elsif request_options[method].is_a?(Array)
-                current_node.create_lookup
-                current_nodes[current_node_index] = request_options[method].map{|val| current_node.lookup[val] ||= router.request_node}
-              else
-                current_node.create_lookup
-                current_nodes[current_node_index] = (current_node.lookup[request_options[method]] ||= router.request_node)
+              Array(request_options[method]).each_with_index do |request_value, index|
+                if request_value.is_a?(Regexp)
+                  new_node = router.request_node
+                  current_nodes[index == 0 ? current_node_index : current_nodes.length] = new_node
+                  current_node.create_linear
+                  current_node.linear << [request_value, new_node]
+                else
+                  current_node.create_lookup
+                  current_nodes[index == 0 ? current_node_index : current_nodes.length] = (current_node.lookup[request_value] ||= router.request_node)
+                end
               end
             when 1 #this node is farther ahead
               current_nodes[current_node_index] = (current_node.catchall ||= router.request_node)
@@ -201,7 +200,7 @@ class HttpRouter
   end
   
   class RequestNode < Node
-    RequestMethods =  [:request_method, :host, :port, :scheme]
+    RequestMethods =  [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string]
     attr_accessor :request_method
 
     def find_on_request_methods(request, alternate_request_methods)
@@ -211,7 +210,7 @@ class HttpRouter
           next_node = @linear.find do |(regexp, node)|
             regexp === request_value
           end
-          next_node &&= next_node.find_on_request_methods(request, alternate_request_methods)
+          next_node &&= next_node.last.find_on_request_methods(request, alternate_request_methods)
           return next_node if next_node
         end
         if @lookup and next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request, alternate_request_methods))
