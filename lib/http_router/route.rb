@@ -42,14 +42,12 @@ class HttpRouter
     # *default_value -- Maps to #default_value method.
     def with_options(options)
       if options
-        name(options[:name])              if options[:name]
-        matching(options[:matching])      if options[:matching]
-        condition(options[:conditions])   if options[:conditions]
-        default(options[:default_values]) if options[:default_values]
-        partial(options[:partial])        if options[:partial]
-        if options[:arbitrary]
-          Array(options[:arbitrary]).each{|a| arbitrary(&a)}
-        end
+        name(options[:name])                               if options[:name]
+        matching(options[:matching])                       if options[:matching]
+        condition(options[:conditions])                    if options[:conditions]
+        default(options[:default_values])                  if options[:default_values]
+        partial(options[:partial])                         if options[:partial]
+        Array(options[:arbitrary]).each{|a| arbitrary(&a)} if options[:arbitrary]
       end
       self
     end
