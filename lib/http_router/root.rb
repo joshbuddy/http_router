@@ -1,5 +1,9 @@
 class HttpRouter
   class Root < Node
+    class AlternativeRequestMethods < Array
+      attr_accessor :request_method_found
+    end
+    
     def add_path(path)
       node = path.parts.inject(self) { |node, part| node.add(part) }
       node
@@ -10,7 +14,8 @@ class HttpRouter
       parts = router.split(path)
       parts << '' if path[path.size - 1] == ?/
       params = []
-      alternate_request_methods = []
+      alternate_request_methods = AlternativeRequestMethods.new
+      alternate_request_methods.request_method_found = false
       process_response(
         find_on_parts(request, parts, params, alternate_request_methods),
         parts,
@@ -34,10 +39,10 @@ class HttpRouter
           nil
         end
       else
-        if alternate_request_methods.empty?
+        if alternate_request_methods.request_method_found or alternate_request_methods.empty?
           nil
         else
-          Response.unmatched(405, {"Allow" => alternate_request_methods.join(", ")})
+          Response.unmatched(405, {"Allow" => alternate_request_methods.uniq.join(", ")})
         end
       end
     end

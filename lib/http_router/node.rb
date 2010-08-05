@@ -205,29 +205,37 @@ class HttpRouter
 
     def find_on_request_methods(request, alternate_request_methods)
       if @request_method
+        request_method_satisfied = false
         request_value = request.send(request_method)
         if @linear && !@linear.empty?
           next_node = @linear.find do |(regexp, node)|
             regexp === request_value
           end
+          request_method_satisfied = true if next_node
           next_node &&= next_node.last.find_on_request_methods(request, alternate_request_methods)
           return next_node if next_node
         end
-        if @lookup and next_node = (@lookup[request_value] && @lookup[request_value].find_on_request_methods(request, alternate_request_methods))
-          return next_node
-        elsif next_node = (@catchall && @catchall.find_on_request_methods(request, alternate_request_methods))
-          return next_node
+        if @lookup and next_node = @lookup[request_value]
+          request_method_satisfied = true
+          next_node = next_node.find_on_request_methods(request, alternate_request_methods)
+          return next_node if next_node
+        end
+        if @catchall
+          request_method_satisfied = true
+          next_node = @catchall.find_on_request_methods(request, alternate_request_methods)
+          return next_node if next_node
+        end
+        if @request_method == :request_method
+          alternate_request_methods.concat(@lookup.keys)
+          alternate_request_methods.request_method_found ||= request_method_satisfied
         end
       end
-      
+
       if @arbitrary_node
         @arbitrary_node.find_on_arbitrary(request)
       elsif @value
         self
       else
-        if request_method == :request_method
-          alternate_request_methods.concat(@lookup.keys)
-        end
         nil
       end
     end

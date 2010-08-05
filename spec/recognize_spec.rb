@@ -82,7 +82,6 @@ describe "HttpRouter#recognize" do
         response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8081/test'))
         response.dest.should == :test3
       end
-
     end
 
     context("with trailing slashes") do
