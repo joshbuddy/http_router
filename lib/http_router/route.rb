@@ -26,7 +26,7 @@ class HttpRouter
 
     # Returns the options used to create this route.
     def as_options
-      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name, :partial => @partially_match}
+      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name, :partial => @partially_match, :arbitrary => @arbitrary}
     end
 
     # Creates a deep uncompiled copy of this route.
@@ -47,6 +47,9 @@ class HttpRouter
         condition(options[:conditions])   if options[:conditions]
         default(options[:default_values]) if options[:default_values]
         partial(options[:partial])        if options[:partial]
+        if options[:arbitrary]
+          Array(options[:arbitrary]).each{|a| arbitrary(&a)}
+        end
       end
       self
     end
@@ -171,6 +174,7 @@ class HttpRouter
 
     # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object and must return true for the Route to be matched. Returns +self+.
     def arbitrary(proc = nil, &block)
+      guard_compiled
       @arbitrary << (proc || block)
       self
     end
