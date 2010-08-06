@@ -10,7 +10,7 @@ This is very new code. Lots of stuff probably doesn't work right. I will likely 
 
 == Features
 
-* Supports variables, and globbing.
+* Supports variables, and globbing, both named and unnamed.
 * Regex support for variables.
 * Request condition support.
 * Partial matches.

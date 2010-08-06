@@ -293,6 +293,10 @@ class HttpRouter
       path[-2, 2] == '/?' && path.slice!(-2, 2)
     end
 
+    def anonymous_variable(pos)
+      "$#{pos}"
+    end
+
     def compile_paths
       paths = HttpRouter::OptionalCompiler.new(@path).paths
       paths.map do |path|
@@ -305,11 +309,11 @@ class HttpRouter
         new_path = split_path.map do |part|
           r = case part
           when /^:([a-zA-Z_0-9]*)$/
-            v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
+            v_name = ($1.empty? ? anonymous_variable(counter += 1) : $1).to_sym
             router.variable(v_name, @matches_with[v_name])
           when /^\*([a-zA-Z_0-9]*)$/
             if index != split_path.size - 1
-              v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
+              v_name = ($1.empty? ? anonymous_variable(counter += 1) : $1).to_sym
               splitting_indexes << variable_counter
               remaining_path_parts = split_path[index + 1, split_path.size]
               look_ahead_variable = remaining_path_parts.find{|p| p[0] == ?: || p[0] == ?*}
@@ -317,7 +321,7 @@ class HttpRouter
               remaining_path_parts.index(look_ahead_variable) if look_ahead_variable
               router.variable(v_name, /^(#{@matches_with[v_name] || '[^\/]*?'}\/)+(?=#{Regexp.quote(remaining_matcher)})/)
             else
-              v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
+              v_name = ($1.empty? ? anonymous_variable(counter += 1) : $1).to_sym
               router.glob(v_name, @matches_with[v_name])
             end
           else
