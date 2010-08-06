@@ -209,6 +209,19 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
     end
 
+    it "should recognize /foo/: and map it to $1" do
+      @router.add("/foo/:").to(:test2)
+      @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
+      @router.recognize(Rack::MockRequest.env_for('/foo/id')).params_as_hash[:$1].should == 'id'
+    end
+
+    it "should recognize /foo/:/: and map it to $1 and $2" do
+      @router.add("/foo/:/:").to(:test2)
+      @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).dest.should == :test2
+      @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).params_as_hash[:$1].should == 'id'
+      @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).params_as_hash[:$2].should == 'what'
+    end
+
     it "should recognize '/:variable'" do
       route = @router.add('/:variable').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/%E6%AE%BA%E3%81%99'))
@@ -290,6 +303,13 @@ describe "HttpRouter#recognize" do
         response.params.should == [['one', 'two', 'three']]
       end
 
+      it "should recognize" do
+        route = @router.add('/test/*variable/test').to(:test)
+        response = @router.recognize(Rack::MockRequest.env_for('/test/one/two/three/test'))
+        response.route.should == route
+        response.params.should == [['one', 'two', 'three']]
+      end
+
       it "should recognize with a regexp" do
         route = @router.add('/test/*variable/anymore').matching(:variable => /\d+/).to(:test)
         response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567/anymore'))
@@ -297,6 +317,19 @@ describe "HttpRouter#recognize" do
         response.params.should == [['123', '345', '567']]
         response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567'))
         response.should be_nil
+      end
+
+      it "should recognize /foo/*/test and map it to $1" do
+        @router.add("/foo/*/test").to(:test2)
+        @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/test')).dest.should == :test2
+        @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/test')).params_as_hash[:$1].should == ['id1', 'id2']
+      end
+
+      it "should recognize /foo/*/what/: and map it to $1 and $2" do
+        @router.add("/foo/*/what/:").to(:test2)
+        @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).dest.should == :test2
+        @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).params_as_hash[:$1].should == ['id1', 'id2']
+        @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).params_as_hash[:$2].should == 'more'
       end
     end
 

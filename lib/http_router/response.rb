@@ -21,6 +21,7 @@ class HttpRouter
       def initialize(path, params, matched_path, remaining_path = nil)
         raise if matched_path.nil?
         super
+        path.splitting_indexes and path.splitting_indexes.each{|i| params[i] = params[i].split('/')}
         @params_as_hash = path.variable_names.zip(params).inject({}) {|h, (k,v)| h[k] = v; h }
       end
 

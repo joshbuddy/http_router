@@ -296,22 +296,39 @@ class HttpRouter
     def compile_paths
       paths = HttpRouter::OptionalCompiler.new(@path).paths
       paths.map do |path|
+        splitting_indexes = []
+        variable_counter = 0
+        counter = 0
         original_path = path.dup
         split_path = router.split(path)
+        index = 0
         new_path = split_path.map do |part|
-          case part
-          when /^:([a-zA-Z_0-9]+)$/
-            v_name = $1.to_sym
+          r = case part
+          when /^:([a-zA-Z_0-9]*)$/
+            v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
             router.variable(v_name, @matches_with[v_name])
-          when /^\*([a-zA-Z_0-9]+)$/
-            v_name = $1.to_sym
-            router.glob(v_name, @matches_with[v_name])
+          when /^\*([a-zA-Z_0-9]*)$/
+            if index != split_path.size - 1
+              v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
+              splitting_indexes << variable_counter
+              remaining_path_parts = split_path[index + 1, split_path.size]
+              look_ahead_variable = remaining_path_parts.find{|p| p[0] == ?: || p[0] == ?*}
+              remaining_matcher = split_path[index + 1, look_ahead_variable ? remaining_path_parts.index(look_ahead_variable) : split_path.size].join('/')
+              remaining_path_parts.index(look_ahead_variable) if look_ahead_variable
+              router.variable(v_name, /^(#{@matches_with[v_name] || '[^\/]*?'}\/)+(?=#{Regexp.quote(remaining_matcher)})/)
+            else
+              v_name = ($1.empty? ? '$' + (counter += 1).to_s : $1).to_sym
+              router.glob(v_name, @matches_with[v_name])
+            end
           else
             generate_interstitial_parts(part)
           end
+          variable_counter += Array(r).select{|part| part.is_a?(Variable)}.size
+          index += 1
+          r
         end
         new_path.flatten!
-        Path.new(self, original_path, new_path)
+        Path.new(self, original_path, new_path, splitting_indexes.empty? ? nil : splitting_indexes)
       end
     end
 

@@ -1,8 +1,8 @@
 class HttpRouter
   class Path
-    attr_reader :parts, :route
-    def initialize(route, path, parts)
-      @route, @path, @parts = route, path, parts
+    attr_reader :parts, :route, :splitting_indexes
+    def initialize(route, path, parts, splitting_indexes)
+      @route, @path, @parts, @splitting_indexes = route, path, parts, splitting_indexes
       if duplicate_variable_names = variable_names.dup.uniq!
         raise AmbiguousVariableException.new("You have duplicate variable name present: #{duplicate_variable_names.join(', ')}")
       end
