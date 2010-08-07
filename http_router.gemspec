@@ -23,10 +23,11 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'rack',        '>=1.0'
   s.add_runtime_dependency 'url_mount',   '>=0.2.1'
   s.add_development_dependency 'rspec'
+  s.add_development_dependency 'code_stats'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'sinatra'
   s.add_development_dependency 'rbench'
-  s.add_development_dependency 'tumbler', ">= 0.0.11"
+  s.add_development_dependency 'bundler', ">= 1.0.0.rc4"
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
