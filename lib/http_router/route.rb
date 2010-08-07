@@ -301,23 +301,23 @@ class HttpRouter
       paths = HttpRouter::OptionalCompiler.new(@path).paths
       paths.map do |path|
         splitting_indexes = []
-        variable_counter = 0
+        variable_position = 0
         counter = 0
         original_path = path.dup
         split_path = router.split(path)
-        index = 0
+        position = 0
         new_path = split_path.map do |part|
-          r = case part
+          processed_parts = case part
           when /^:([a-zA-Z_0-9]*)$/
             v_name = ($1.empty? ? anonymous_variable(counter += 1) : $1).to_sym
             router.variable(v_name, @matches_with[v_name])
           when /^\*([a-zA-Z_0-9]*)$/
-            if index != split_path.size - 1
+            if position != split_path.size - 1
               v_name = ($1.empty? ? anonymous_variable(counter += 1) : $1).to_sym
-              splitting_indexes << variable_counter
-              remaining_path_parts = split_path[index + 1, split_path.size]
+              splitting_indexes << variable_position
+              remaining_path_parts = split_path[position + 1, split_path.size]
               look_ahead_variable = remaining_path_parts.find{|p| p[0] == ?: || p[0] == ?*}
-              remaining_matcher = split_path[index + 1, look_ahead_variable ? remaining_path_parts.index(look_ahead_variable) : split_path.size].join('/')
+              remaining_matcher = split_path[position + 1, look_ahead_variable ? remaining_path_parts.index(look_ahead_variable) : split_path.size].join('/')
               remaining_path_parts.index(look_ahead_variable) if look_ahead_variable
               router.variable(v_name, /^(#{@matches_with[v_name] || '[^\/]*?'}\/)+(?=#{Regexp.quote(remaining_matcher)})/)
             else
@@ -327,9 +327,9 @@ class HttpRouter
           else
             generate_interstitial_parts(part)
           end
-          variable_counter += Array(r).select{|part| part.is_a?(Variable)}.size
-          index += 1
-          r
+          variable_position += Array(processed_parts).select{|part| part.is_a?(Variable)}.size
+          position += 1
+          processed_parts
         end
         new_path.flatten!
         Path.new(self, original_path, new_path, splitting_indexes.empty? ? nil : splitting_indexes)
