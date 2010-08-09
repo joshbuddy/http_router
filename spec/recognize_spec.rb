@@ -40,12 +40,20 @@ describe "HttpRouter#recognize" do
     end
 
     context("with partial matching") do
-      it "should match partially or completely" do
-        route = @router.add("/test*").to(:test)
-        @router.recognize(Rack::MockRequest.env_for('/test')).route.should == route
-        response = @router.recognize(Rack::MockRequest.env_for('/test/optional'))
-        response.route.should == route
-        response.remaining_path.should == '/optional'
+      before(:each) do
+        route = @router.add("/test*").to{|env| []}
+      end
+      
+      it "should match partially" do
+        route = @router.add("/test*").to{|env| env['PATH_INFO'].should == '/optional'; [200, {}, []]}
+        response = @router.call(Rack::MockRequest.env_for('/test/optional'))
+        response[0].should == 200
+      end
+
+      it "should match partially and use / for rest if the route matched completely" do
+        route = @router.add("/test*").to{|env| env['PATH_INFO'].should == '/'; [200, {}, []]}
+        response = @router.call(Rack::MockRequest.env_for('/test'))
+        response[0].should == 200
       end
 
     end

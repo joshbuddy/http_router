@@ -39,7 +39,7 @@ class HttpRouter
       alias_method :destination, :dest
 
       def partial_match?
-        remaining_path || route.partially_match?
+        route.partially_match?
       end
     end
   end

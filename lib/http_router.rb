@@ -190,10 +190,10 @@ class HttpRouter
     else
       env['router'] = self
       if response = recognize(request) and !@middleware
-        if response.matched? && response.route.dest && response.route.dest.respond_to?(:call)
+        if response.matched? && response.route.dest
           process_params(env, response)
           consume_path!(request, response) if response.partial_match?
-          return response.route.dest.call(env)
+          return response.route.dest.call(env) if response.route.dest.respond_to?(:call)
         elsif !response.matched?
           return [response.status, response.headers, []]
         end
@@ -260,7 +260,7 @@ class HttpRouter
 
   def consume_path!(request, response)
     request.env["SCRIPT_NAME"] = (request.env["SCRIPT_NAME"] + response.matched_path)
-    request.env["PATH_INFO"] = response.remaining_path || ""
+    request.env["PATH_INFO"] = response.remaining_path.nil? || response.remaining_path == '' ? '/' : response.remaining_path
   end
 
   def process_params(env, response)
