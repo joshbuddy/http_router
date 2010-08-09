@@ -133,10 +133,10 @@ class HttpRouter
       current_nodes
     end
 
-    def find_on_parts(request, parts, params, alternate_request_methods)
+    def find_on_parts(request, parts, params)
       if parts and !parts.empty?
         if parts.size == 1 and parts.first == ''
-          potential_match = find_on_parts(request, [], params, alternate_request_methods)
+          potential_match = find_on_parts(request, [], params)
           if potential_match and (router.ignore_trailing_slash? or potential_match.value && potential_match.value.route.trailing_slash_ignore?)
             parts.shift
             return potential_match
@@ -149,10 +149,10 @@ class HttpRouter
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
               params.push((val = tester.consume(match, dupped_parts) and val.is_a?(Array)) ? val.map{|v| Rack::Utils.uri_unescape(v)} : Rack::Utils.uri_unescape(val))
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params, alternate_request_methods)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
               dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params, alternate_request_methods)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
             else
               nil
             end
@@ -161,14 +161,14 @@ class HttpRouter
         end
         if match = @lookup && @lookup[parts.first]
           parts.shift
-          return match.find_on_parts(request, parts, params, alternate_request_methods)
+          return match.find_on_parts(request, parts, params)
         elsif @catchall
           params.push((val = @catchall.variable.consume(nil, parts) and val.is_a?(Array)) ? val.map{|v| Rack::Utils.uri_unescape(v)} : Rack::Utils.uri_unescape(val))
-          return @catchall.find_on_parts(request, parts, params, alternate_request_methods)
+          return @catchall.find_on_parts(request, parts, params)
         end
       end
       if request_node
-        request_node.find_on_request_methods(request, alternate_request_methods)
+        request_node.find_on_request_methods(request)
       elsif arbitrary_node
         arbitrary_node.find_on_arbitrary(request)
       elsif @value
@@ -203,7 +203,7 @@ class HttpRouter
     RequestMethods =  [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string]
     attr_accessor :request_method
 
-    def find_on_request_methods(request, alternate_request_methods)
+    def find_on_request_methods(request)
       if @request_method
         request_method_satisfied = false
         request_value = request.send(request_method)
@@ -212,22 +212,18 @@ class HttpRouter
             regexp === request_value
           end
           request_method_satisfied = true if next_node
-          next_node &&= next_node.last.find_on_request_methods(request, alternate_request_methods)
+          next_node &&= next_node.last.find_on_request_methods(request)
           return next_node if next_node
         end
         if @lookup and next_node = @lookup[request_value]
           request_method_satisfied = true
-          next_node = next_node.find_on_request_methods(request, alternate_request_methods)
+          next_node = next_node.find_on_request_methods(request)
           return next_node if next_node
         end
         if @catchall
           request_method_satisfied = true
-          next_node = @catchall.find_on_request_methods(request, alternate_request_methods)
+          next_node = @catchall.find_on_request_methods(request)
           return next_node if next_node
-        end
-        if @request_method == :request_method
-          alternate_request_methods.concat(@lookup.keys)
-          alternate_request_methods.request_method_found ||= request_method_satisfied
         end
       end
 

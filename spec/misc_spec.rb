@@ -9,7 +9,7 @@ describe "HttpRouter" do
       route = @router.add('/:test', :conditions => {:request_method => %w{HEAD GET}, :host => 'host1'}, :default_values => {:page => 1}, :matching => {:test => /\d+/}, :name => :foobar).to :test
       @router.recognize(Rack::MockRequest.env_for('http://host2/variable', :method => 'POST')).should be_nil
       @router.recognize(Rack::MockRequest.env_for('http://host1/variable', :method => 'POST')).should be_nil
-      @router.recognize(Rack::MockRequest.env_for('http://host2/123',      :method => 'POST')).matched?.should be_false
+      @router.recognize(Rack::MockRequest.env_for('http://host2/123',      :method => 'POST')).should be_nil
       @router.recognize(Rack::MockRequest.env_for('http://host1/123',      :method => 'POST')).matched?.should be_false
       @router.recognize(Rack::MockRequest.env_for('http://host1/123',      :method => 'GET' )).route.dest.should == :test
       @router.url(:foobar, '123').should == '/123?page=1'
