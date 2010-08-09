@@ -1,7 +1,5 @@
 class HttpRouter
   class Root < Node
-    HttpRequestMethods = %w(HEAD GET HEAD POST DELETE PUT)
-    
     class AlternativeRequestMethods < Array
       attr_accessor :request_method_found
     end
@@ -35,19 +33,16 @@ class HttpRouter
         else
           nil
         end
-      else
-        alternate_methods = (HttpRequestMethods - [request.request_method]).select do |alternate_method|
+      elsif !router.request_methods_specified.empty?
+        alternate_methods = (router.request_methods_specified - [request.request_method]).select do |alternate_method|
           test_request = request.dup
           test_request.env['REQUEST_METHOD'] = alternate_method
           node = find_on_parts(test_request, get_parts(request), [])
           node && node.value
         end
-
-        if alternate_methods.empty?
-          nil
-        else
-          Response.unmatched(405, {"Allow" => alternate_methods.join(", ")})
-        end
+        alternate_methods.empty? ? nil : Response.unmatched(405, {"Allow" => alternate_methods.join(", ")})
+      else
+        nil
       end
     end
   end

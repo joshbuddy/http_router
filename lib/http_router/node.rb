@@ -110,6 +110,7 @@ class HttpRouter
                   current_node.create_linear
                   current_node.linear << [request_value, new_node]
                 else
+                  router.request_methods_specified << request_value if method == :request_method
                   current_node.create_lookup
                   current_nodes[index == 0 ? current_node_index : current_nodes.length] = (current_node.lookup[request_value] ||= router.request_node)
                 end

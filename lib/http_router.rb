@@ -30,7 +30,7 @@ class HttpRouter
   # Raised when there is a potential conflict of variable names within your Route.
   AmbiguousVariableException       = Class.new(RuntimeError)
 
-  attr_reader :named_routes, :routes, :root
+  attr_reader :named_routes, :routes, :root, :request_methods_specified
   attr_accessor :url_mount
 
   # Monkey-patches Rack::Builder to use HttpRouter.
@@ -56,14 +56,15 @@ class HttpRouter
   def initialize(*args, &block)
     default_app, options = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
 
-    @options                 = options
-    @default_app             = default_app || options && options[:default_app] || proc{|env| Rack::Response.new("Not Found", 404).finish }
-    @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
-    @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
-    @middleware              = options && options.key?(:middleware) ? options[:middleware] : false
-    @routes                  = []
-    @named_routes            = {}
-    @init_block              = block
+    @options                   = options
+    @default_app               = default_app || options && options[:default_app] || proc{|env| Rack::Response.new("Not Found", 404).finish }
+    @ignore_trailing_slash     = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
+    @redirect_trailing_slash   = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
+    @middleware                = options && options.key?(:middleware) ? options[:middleware] : false
+    @request_methods_specified = Set.new
+    @routes                    = []
+    @named_routes              = {}
+    @init_block                = block
     reset!
     if block
       instance_eval(&block)
