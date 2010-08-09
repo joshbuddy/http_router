@@ -1,5 +1,3 @@
-$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
-
 require 'rack'
 require 'url_mount'
 require 'ext/rack/uri_escape'
