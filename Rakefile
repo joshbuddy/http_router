@@ -19,4 +19,4 @@ Rake::RDocTask.new do |rd|
 end
 
 Bundler::GemHelper.install_tasks
-CodeStats::Tasks.new
+CodeStats::Tasks.new(:reporting_depth => 3)

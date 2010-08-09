@@ -14,7 +14,7 @@ This is very new code. Lots of stuff probably doesn't work right. I will likely 
 * Regex support for variables.
 * Request condition support.
 * Partial matches.
-* Supports interstitial variables (e.g. /my-:variable-brings.all.the.boys/yard).
+* Supports interstitial variables (e.g. /my-:variable-brings.all.the.boys/yard) and unnamed variable /one/:/two
 * Very fast and small code base (~1,000 loc).
 * Sinatra compatibility.
 
