@@ -1,5 +1,8 @@
 require 'rubygems'
 require 'rbench'
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+
 require 'lib/http_router'
 
 u = HttpRouter.new
