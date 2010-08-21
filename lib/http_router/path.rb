@@ -46,7 +46,7 @@ class HttpRouter
       path = raw_url(args, options)
       raise InvalidRouteException.new if path !~ @path_validation_regex
       raise TooManyParametersException.new unless args.empty?
-      Rack::Utils.uri_escape!(path)
+      HttpRouter.uri_escape!(path)
       generate_querystring(path, options)
       path
     end

@@ -1,6 +1,6 @@
 require 'rack'
+require 'set'
 require 'url_mount'
-require 'ext/rack/uri_escape'
 require 'http_router/node'
 require 'http_router/root'
 require 'http_router/variable'
@@ -55,7 +55,6 @@ class HttpRouter
   # * :middleware -- On recognition, store the route Response in env['router.response'] and always call the default app. Defaults to +false+.
   def initialize(*args, &block)
     default_app, options = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
-
     @options                   = options
     @default_app               = default_app || options && options[:default_app] || proc{|env| Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash     = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
@@ -254,6 +253,14 @@ class HttpRouter
 
   def split(path)
     Parts.new(path)
+  end
+
+  def self.uri_escape!(s)
+    s.to_s.gsub!(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) { "%#{$1.unpack('H2'*$1.size).join('%').upcase}" }
+  end
+
+  def self.uri_unescape(s)
+    s.to_s.gsub(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
   end
 
   private
