@@ -407,5 +407,43 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/test.html')).params.first.should == 'test.html'
     end
 
+    # BUG: http://gist.github.com/554909
+    context "when there is an additional route for the case of regex matching failure" do
+      before :each do
+        @matched = @router.add("/:common_variable/:matched").matching(:matched => /\d+/).to(:something)
+        @unmatched = @router.add("/:common_variable/:unmatched").to(:something_unmatched)
+      end
+
+      it "should use main route if pattern is matched" do
+        response = @router.recognize(Rack::MockRequest.env_for('/common/123'))
+        response.route.should == @matched
+        response.params.should == ['common', '123']
+      end
+
+      it "should use additional route if pattern is not matched" do
+        response = @router.recognize(Rack::MockRequest.env_for('/common/other'))
+        response.route.should == @unmatched
+        response.params.should == ['common', 'other']
+      end
+
+      context "when delimiter is not a slash" do
+        before :each do
+          @matched = @router.add("/:common_variable.:matched").matching(:matched => /\d+/).to(:something)
+          @unmatched = @router.add("/:common_variable.:unmatched").to(:something_unmatched)
+        end
+
+        it "should use main route if pattern is matched" do
+          response = @router.recognize(Rack::MockRequest.env_for('/common.123'))
+          response.route.should == @matched
+          response.params.should == ['common', '123']
+        end
+
+        it "should use additional route if pattern is not matched" do
+          response = @router.recognize(Rack::MockRequest.env_for('/common.other'))
+          response.route.should == @unmatched
+          response.params.should == ['common', 'other']
+        end
+      end
+    end
   end
 end
