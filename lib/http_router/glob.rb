@@ -1,7 +1,8 @@
 class HttpRouter
   class Glob < Variable
     def matches?(parts)
-      @matches_with.nil? or (!parts.empty? and match = @matches_with.match(parts.first) and match.begin(0)) ? match : nil
+      return if @matches_with.nil? or parts.empty? or !match.begin(0)
+      @matches_with.match(parts.first)
     end
 
     def consume(match, parts)

@@ -88,7 +88,7 @@ class HttpRouter
     end
     
     def generate_request_method_tree(request_options)
-      raise(UnsupportedRequestConditionError.new) if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
+      raise UnsupportedRequestConditionError if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
       current_nodes = [self]
       RequestNode::RequestMethods.each do |method|
         if request_options.key?(method) # so, the request method we care about it ..
@@ -136,13 +136,9 @@ class HttpRouter
 
     def find_on_parts(request, parts, params)
       if parts and !parts.empty?
-        if parts.size == 1 and parts.first == ''
-          potential_match = find_on_parts(request, [], params)
-          if potential_match and (router.ignore_trailing_slash? or potential_match.value && potential_match.value.route.trailing_slash_ignore?)
-            parts.shift
-            return potential_match
-          end
-        end
+        potential = potential_match(request, parts, params)
+        parts.shift and return potential if potential
+        
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
@@ -168,15 +164,7 @@ class HttpRouter
           return @catchall.find_on_parts(request, parts, params)
         end
       end
-      if request_node
-        request_node.find_on_request_methods(request)
-      elsif arbitrary_node
-        arbitrary_node.find_on_arbitrary(request)
-      elsif @value
-        self
-      else
-        nil
-      end
+      request_node and request_node.find_on_request_methods(request) or resolve_node(request)
     end
 
     def create_linear
@@ -186,6 +174,27 @@ class HttpRouter
     def create_lookup
       @lookup ||= {}
     end
+    
+    protected
+      def resolve_node(request)
+        if arbitrary_node
+          arbitrary_node.find_on_arbitrary(request)
+        elsif @value
+          self
+        else
+          nil
+        end
+      end
+    
+      def potential_match(request, parts, params)
+        if parts.size == 1 and parts.first == ''
+          potential = find_on_parts(request, [], params)
+          if potential and (router.ignore_trailing_slash? or potential.value && potential.value.route.trailing_slash_ignore?)
+            return potential
+          end
+        end
+        nil
+      end
   end
 
   class ArbitraryNode < Node
@@ -204,39 +213,26 @@ class HttpRouter
     RequestMethods =  [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string]
     attr_accessor :request_method
 
-    def find_on_request_methods(request)
-      if @request_method
-        request_method_satisfied = false
+    def find_on_request_methods(request)    
+      next_node = if @request_method
         request_value = request.send(request_method)
-        if @linear && !@linear.empty?
-          next_node = @linear.find do |(regexp, node)|
-            regexp === request_value
-          end
-          request_method_satisfied = true if next_node
-          next_node &&= next_node.last.find_on_request_methods(request)
-          return next_node if next_node
-        end
-        if @lookup and next_node = @lookup[request_value]
-          request_method_satisfied = true
-          next_node = next_node.find_on_request_methods(request)
-          return next_node if next_node
-        end
-        if @catchall
-          request_method_satisfied = true
-          next_node = @catchall.find_on_request_methods(request)
-          return next_node if next_node
-        end
+        linear_node(request, request_value) or lookup_node(request, request_value) or catchall_node(request)
       end
-
-      if @arbitrary_node
-        @arbitrary_node.find_on_arbitrary(request)
-      elsif @value
-        self
-      else
-        nil
-      end
+      next_node or resolve_node(request)
     end
-
+    private
+      def linear_node(request, request_value)
+        if @linear && !@linear.empty?
+          node = @linear.find { |(regexp, node)| regexp === request_value }
+          node.last.find_on_request_methods(request) if node
+        end
+      end
+      def lookup_node(request, request_value)
+        @lookup[request_value].find_on_request_methods(request) if @lookup and @lookup[request_value]
+      end
+      def catchall_node(request)
+        @catchall.find_on_request_methods(request) if @catchall
+      end
   end
   
 end
