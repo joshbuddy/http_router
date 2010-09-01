@@ -3,9 +3,9 @@ class HttpRouter
     attr_reader :parts, :route, :splitting_indexes
     def initialize(route, path, parts, splitting_indexes)
       @route, @path, @parts, @splitting_indexes = route, path, parts, splitting_indexes
-      if duplicate_variable_names = variable_names.dup.uniq!
-        raise AmbiguousVariableException.new("You have duplicate variable name present: #{duplicate_variable_names.join(', ')}")
-      end
+      
+      duplicate_variable_names = variable_names.dup.uniq!
+      raise AmbiguousVariableException, "You have duplicate variable name present: #{duplicate_variable_names.join(', ')}" if duplicate_variable_names
 
       @path_validation_regex = path.split(/([:\*][a-zA-Z0-9_]+)/).map{ |part|
         case part[0]
@@ -17,7 +17,7 @@ class HttpRouter
       }.join
       @path_validation_regex = Regexp.new("^#{@path_validation_regex}$")
 
-      eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException.new(\"missing parameter #{$1}\"))}" }
+      eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException, \"missing parameter #{$1}\")}" }
       instance_eval "
       def raw_url(args,options)
         \"#{eval_path}\"
@@ -44,8 +44,8 @@ class HttpRouter
 
     def url(args, options)
       path = raw_url(args, options)
-      raise InvalidRouteException.new if path !~ @path_validation_regex
-      raise TooManyParametersException.new unless args.empty?
+      raise InvalidRouteException if path !~ @path_validation_regex
+      raise TooManyParametersException unless args.empty?
       HttpRouter.uri_escape!(path)
       generate_querystring(path, options)
       path

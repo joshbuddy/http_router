@@ -190,7 +190,7 @@ class HttpRouter
         @paths = compile_paths
         @paths.each_with_index do |p1, i|
           @paths[i+1, @paths.size].each do |p2|
-            raise AmbiguousRouteException.new if p1 === p2
+            raise AmbiguousRouteException if p1 === p2
           end
         end
         @paths.each do |path|
@@ -207,7 +207,7 @@ class HttpRouter
 
     # Sets the destination of this route to redirect to an arbitrary URL.
     def redirect(path, status = 302)
-      raise(ArgumentError, "Status has to be an integer between 300 and 399") unless (300..399).include?(status)
+      raise ArgumentError, "Status has to be an integer between 300 and 399" unless (300..399).include?(status)
       to { |env|
         params = env['router.params']
         response = ::Rack::Response.new
@@ -247,7 +247,7 @@ class HttpRouter
       else
         matching_path(args, options)
       end
-      raise UngeneratableRouteException.new unless path
+      raise UngeneratableRouteException unless path
 
       mount_point = nil
       if !router.url_mount.nil?
@@ -363,7 +363,7 @@ class HttpRouter
     end
 
     def guard_compiled
-      raise AlreadyCompiledException.new if compiled?
+      raise AlreadyCompiledException if compiled?
     end
 
     def significant_variable_names

@@ -170,7 +170,7 @@ class HttpRouter
       when Symbol
         url(@named_routes[route], *args)
       when nil
-        raise UngeneratableRouteException.new
+        raise UngeneratableRouteException
       else
         route.url(*args)
     end
