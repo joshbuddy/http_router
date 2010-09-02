@@ -136,9 +136,7 @@ class HttpRouter
 
     def find_on_parts(request, parts, params)
       if parts and !parts.empty?
-        potential = potential_match(request, parts, params)
-        parts.shift and return potential if potential
-        
+        return potential if potential = potential_match(request, parts, params)
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
@@ -157,9 +155,14 @@ class HttpRouter
           return response if response
         end
         if match = @lookup && @lookup[parts.first]
-          parts.shift
-          return match.find_on_parts(request, parts, params)
-        elsif @catchall
+          part = parts.shift
+          if match = match.find_on_parts(request, parts, params)
+            return match
+          else
+            parts.unshift(part)
+          end
+        end
+        if @catchall
           params.push((val = @catchall.variable.consume(nil, parts) and val.is_a?(Array)) ? val.map{|v| HttpRouter.uri_unescape(v)} : HttpRouter.uri_unescape(val))
           return @catchall.find_on_parts(request, parts, params)
         end
@@ -190,7 +193,8 @@ class HttpRouter
         if parts.size == 1 and parts.first == ''
           potential = find_on_parts(request, [], params)
           if potential and (router.ignore_trailing_slash? or potential.value && potential.value.route.trailing_slash_ignore?)
-            return potential
+            parts.shift
+            potential
           end
         end
         nil
@@ -199,13 +203,8 @@ class HttpRouter
 
   class ArbitraryNode < Node
     def find_on_arbitrary(request)
-      if @linear && !@linear.empty?
-        next_node = @linear.find do |(procs, node)|
-          procs.all?{|p| p.call(request)}
-        end
-        return next_node.last if next_node
-      end
-      @catchall
+      next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| procs.all?{|p| p.call(request)} }
+      next_node && next_node.last || @catchall
     end
   end
   

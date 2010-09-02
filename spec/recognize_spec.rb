@@ -223,6 +223,13 @@ describe "HttpRouter#recognize" do
       @router.recognize(Rack::MockRequest.env_for('/foo/id')).params_as_hash[:$1].should == 'id'
     end
 
+    it "should use a static part as a variable if no further match is available" do
+      @router.add("/foo/foo").to(:test1)
+      @router.add("/:foo/foo2").to(:test2)
+      @router.recognize(Rack::MockRequest.env_for('/foo/foo')).dest.should == :test1
+      @router.recognize(Rack::MockRequest.env_for('/foo/foo2')).dest.should == :test2
+    end
+
     it "should recognize /foo/:/: and map it to $1 and $2" do
       @router.add("/foo/:/:").to(:test2)
       @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).dest.should == :test2
