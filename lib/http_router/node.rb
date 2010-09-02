@@ -140,19 +140,25 @@ class HttpRouter
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
+          dupped_params = nil
           next_node = @linear.find do |(tester, node)|
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
-              params.push((val = tester.consume(match, dupped_parts) and val.is_a?(Array)) ? val.map{|v| HttpRouter.uri_unescape(v)} : HttpRouter.uri_unescape(val))
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
+              dupped_params = params.dup
+              dupped_params.push((val = tester.consume(match, dupped_parts) and val.is_a?(Array)) ? val.map{|v| HttpRouter.uri_unescape(v)} : HttpRouter.uri_unescape(val))
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
               dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, params)
+              dupped_params = params.dup
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params)
             else
               nil
             end
           end
-          return response if response
+          if response
+            params.replace(dupped_params)
+            return response
+          end
         end
         if match = @lookup && @lookup[parts.first]
           part = parts.shift
