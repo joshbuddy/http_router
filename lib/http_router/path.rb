@@ -35,10 +35,9 @@ class HttpRouter
 
     def compare_parts(p1, p2)
       case p1
-      when Glob then p2.is_a?(Glob)
+      when Glob     then p2.is_a?(Glob)
       when Variable then p2.is_a?(Variable)
-      else
-        p1 == p2
+      else               p1 == p2
       end
     end
 
