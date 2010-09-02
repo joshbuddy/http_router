@@ -1,4 +1,3 @@
-$LOAD_PATH << File.join(File.dirname(__FILE__), '..', '..')
 require 'http_router'
 
 class HttpRouter
