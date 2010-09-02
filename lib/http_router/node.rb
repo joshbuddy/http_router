@@ -209,9 +209,8 @@ class HttpRouter
   end
   
   class RequestNode < Node
-    RequestMethods =  [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string]
+    RequestMethods = [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string].freeze
     attr_accessor :request_method
-
     def find_on_request_methods(request)    
       next_node = if @request_method
         request_value = request.send(request_method)
