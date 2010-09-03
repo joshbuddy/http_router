@@ -109,9 +109,19 @@ describe "HttpRouter#recognize" do
         route = @router.add("/test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).should be_nil
       end
+
       it "should not capture normally" do
         route = @router.add("/:test").to(:test)
         @router.recognize(Rack::MockRequest.env_for('/test/')).params.first.should == 'test'
+      end
+      
+      it "should recognize trailing slashes when there are other more specific routes near by" do
+        @router = HttpRouter.new
+        route = @router.add("/foo").to(:foo)
+        route = @router.add("/foo/:bar/:id").to(:foo_bar)
+        @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :foo
+        @router.recognize(Rack::MockRequest.env_for('/foo/')).dest.should == :foo
+        @router.recognize(Rack::MockRequest.env_for('/foo/5/10')).dest.should == :foo_bar
       end
     end
   end

@@ -136,7 +136,9 @@ class HttpRouter
 
     def find_on_parts(request, parts, params)
       if parts and !parts.empty?
-        return potential if potential = potential_match(request, parts, params)
+        if potential = potential_match(request, parts, params)
+          return potential
+        end
         if @linear && !@linear.empty?
           response = nil
           dupped_parts = nil
@@ -197,10 +199,10 @@ class HttpRouter
     
       def potential_match(request, parts, params)
         if parts.size == 1 and parts.first == ''
-          potential = find_on_parts(request, [], params)
+          potential = find_on_parts(request, nil, params)
           if potential and (router.ignore_trailing_slash? or potential.value && potential.value.route.trailing_slash_ignore?)
             parts.shift
-            potential
+            return potential
           end
         end
         nil
