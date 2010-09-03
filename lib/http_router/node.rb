@@ -198,14 +198,12 @@ class HttpRouter
       end
     
       def potential_match(request, parts, params)
-        if parts.size == 1 and parts.first == ''
-          potential = find_on_parts(request, nil, params)
-          if potential and (router.ignore_trailing_slash? or potential.value && potential.value.route.trailing_slash_ignore?)
-            parts.shift
-            return potential
-          end
+        if parts.size == 1 and parts.first == '' and potential = find_on_parts(request, nil, params) and (router.ignore_trailing_slash? or (potential.value and potential.value.route.trailing_slash_ignore?))
+          parts.shift
+          potential
+        else
+          nil
         end
-        nil
       end
   end
 
