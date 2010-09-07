@@ -259,8 +259,8 @@ class HttpRouter
     s.to_s.gsub!(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) { "%#{$1.unpack('H2'*$1.size).join('%').upcase}" }
   end
 
-  def self.uri_unescape(s)
-    s.to_s.gsub(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
+  def self.uri_unescape!(s)
+    s.to_s.gsub!(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
   end
 
   private

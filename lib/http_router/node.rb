@@ -134,6 +134,11 @@ class HttpRouter
       current_nodes
     end
 
+    def escape_val(val)
+      val.is_a?(Array) ? val.each{|v| HttpRouter.uri_unescape!(v)} : HttpRouter.uri_unescape!(val)
+      val
+    end
+
     def find_on_parts(request, parts, params)
       if parts and !parts.empty?
         if potential = potential_match(request, parts, params)
@@ -147,7 +152,7 @@ class HttpRouter
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
               dupped_parts = parts.dup
               dupped_params = params.dup
-              dupped_params.push((val = tester.consume(match, dupped_parts) and val.is_a?(Array)) ? val.map{|v| HttpRouter.uri_unescape(v)} : HttpRouter.uri_unescape(val))
+              dupped_params << escape_val(tester.consume(match, dupped_parts))
               parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
               dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
@@ -171,7 +176,7 @@ class HttpRouter
           end
         end
         if @catchall
-          params.push((val = @catchall.variable.consume(nil, parts) and val.is_a?(Array)) ? val.map{|v| HttpRouter.uri_unescape(v)} : HttpRouter.uri_unescape(val))
+          params << escape_val(@catchall.variable.consume(nil, parts))
           return @catchall.find_on_parts(request, parts, params)
         end
       end
