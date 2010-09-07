@@ -336,6 +336,10 @@ class HttpRouter
       end
     end
 
+    def significant_variable_names
+      @significant_variable_names ||= @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
+    end
+
     def generate_interstitial_parts(part)
       part_segments = part.scan(/:[a-zA-Z_0-9]+|[^:]+/)
       if part_segments.size > 1
@@ -366,13 +370,5 @@ class HttpRouter
       raise AlreadyCompiledException if compiled?
     end
 
-    def significant_variable_names
-      unless @significant_variable_names
-        @significant_variable_names = @paths.map { |p| p.variable_names }
-        @significant_variable_names.flatten!
-        @significant_variable_names.uniq!
-      end
-      @significant_variable_names
-    end
   end
 end
