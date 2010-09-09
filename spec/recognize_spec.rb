@@ -383,6 +383,21 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:greed].should == 'greedyboy'
     end
 
+    it "should distinguish between very similar looking routes" do
+      @router.add('/:var1').to(:test1)
+      @router.add('/:var1-:var2').to(:test2)
+      @router.add('/:var1-:var2-:var3').to(:test3)
+      @router.add('/:var1-:var2-:var3-:var4').to(:test4)
+      @router.add('/:var1-:var2-:var3-:var4-:var5').to(:test5)
+      @router.add('/:var1-:var2-:var3-:var4-:var5-:var6').to(:test6)
+      @router.recognize(Rack::MockRequest.env_for('/one')).dest.should == :test1
+      @router.recognize(Rack::MockRequest.env_for('/one-value')).dest.should == :test2
+      p @router.recognize(Rack::MockRequest.env_for('/one-value-time')).params_as_hash
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time')).dest.should == :test3
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time-one')).dest.should == :test4
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time-one-variable')).dest.should == :test5
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time-one-value-time')).dest.should == :test6
+    end
   end
 
   context("with dynamic greedy paths") do

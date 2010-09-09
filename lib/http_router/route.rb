@@ -258,6 +258,10 @@ class HttpRouter
       mount_point.nil? ? result : File.join(mount_point, result)
     end
 
+    def significant_variable_names
+      @significant_variable_names ||= @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
+    end
+
     private
 
     attr_reader :router
@@ -336,15 +340,12 @@ class HttpRouter
       end
     end
 
-    def significant_variable_names
-      @significant_variable_names ||= @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
-    end
-
     def generate_interstitial_parts(part)
       part_segments = part.scan(/:[a-zA-Z_0-9]+|[^:]+/)
+      priority = 0
       if part_segments.size > 1
         index = 0
-        part_segments.map do |seg|
+        segs = part_segments.map do |seg|
           new_seg = if seg[0] == ?:
             next_index = index + 1
             v_name = seg[1, seg.size].to_sym
@@ -352,8 +353,9 @@ class HttpRouter
             scan_regex = if next_index == part_segments.size
               matcher || /^[^\/]+/
             else
-              /^#{matcher || '[^\/]*?'}(?=#{Regexp.quote(part_segments[next_index])})/
+              /^#{matcher || '[^\/]+?'}(?=#{Regexp.quote(part_segments[next_index])})/
             end
+            priority += 1
             router.variable(v_name, scan_regex)
           else
             /^#{Regexp.quote(seg)}/
@@ -361,6 +363,8 @@ class HttpRouter
           index += 1
           new_seg
         end
+        segs.each { |seg| seg.priority = priority if seg.respond_to?(:priority=) }
+        segs
       else
         part
       end

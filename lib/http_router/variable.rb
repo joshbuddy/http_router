@@ -1,11 +1,13 @@
 class HttpRouter
   class Variable
     attr_reader :name, :matches_with
+    attr_accessor :priority
 
     def initialize(router, name, matches_with = nil)
       @router = router
       @name = name
       @matches_with = matches_with
+      @priority = 0
     end
 
     def matches?(parts)

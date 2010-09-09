@@ -45,13 +45,25 @@ class HttpRouter
  
     def add_to_linear(val)
       create_linear
-      if @linear.assoc(val)
+      n = if @linear.assoc(val)
         @linear.assoc(val).last
       else
         new_node = router.node
         @linear << [val, new_node]
         new_node
       end
+      @linear.sort!{|a, b|
+        if a.first.respond_to?(:priority) and b.first.respond_to?(:priority)
+          b.first.priority <=> a.first.priority
+        elsif a.first.respond_to?(:priority)
+          -1
+        elsif b.first.respond_to?(:priority)
+          1
+        else
+          0
+        end
+      }
+      n
     end
    
     def add_arbitrary(procs)
