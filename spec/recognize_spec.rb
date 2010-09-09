@@ -392,7 +392,6 @@ describe "HttpRouter#recognize" do
       @router.add('/:var1-:var2-:var3-:var4-:var5-:var6').to(:test6)
       @router.recognize(Rack::MockRequest.env_for('/one')).dest.should == :test1
       @router.recognize(Rack::MockRequest.env_for('/one-value')).dest.should == :test2
-      p @router.recognize(Rack::MockRequest.env_for('/one-value-time')).params_as_hash
       @router.recognize(Rack::MockRequest.env_for('/one-value-time')).dest.should == :test3
       @router.recognize(Rack::MockRequest.env_for('/one-value-time-one')).dest.should == :test4
       @router.recognize(Rack::MockRequest.env_for('/one-value-time-one-variable')).dest.should == :test5
