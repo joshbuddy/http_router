@@ -248,14 +248,9 @@ class HttpRouter
         matching_path(args, options)
       end
       raise UngeneratableRouteException unless path
-
-      mount_point = nil
-      if !router.url_mount.nil?
-        mount_point = router.url_mount.url(options)
-      end
-
+      mount_point = router.url_mount && router.url_mount.url(options)
       result = path.url(args, options)
-      mount_point.nil? ? result : File.join(mount_point, result)
+      mount_point ? File.join(mount_point, result) : result
     end
 
     def significant_variable_names
