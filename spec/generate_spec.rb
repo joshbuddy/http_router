@@ -131,6 +131,13 @@ describe "HttpRouter#generate" do
       end
     end
 
+    context "with nil values" do
+      it "shouldn't use nil values" do
+        @router.add("/url(/:var)").name(:test).compile
+        @router.url(:test, :var => nil).should == "/url"
+      end
+    end
+
     context "with a matching" do
       it "should raise an exception when the route is invalid" do
         @router.add("/:var").matching(:var => /\d+/).name(:test).compile

@@ -240,8 +240,8 @@ class HttpRouter
     # Generates a URL for this route. See HttpRouter#url for how the arguments for this are structured.
     def url(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
-      options ||= {} if default_values
-      options = default_values.merge(options) if default_values && options
+      options = options.nil? ? default_values.dup : default_values.merge(options) if default_values
+      options.delete_if{ |k,v| v.nil? } if options
       path = if args.empty?
         matching_path(options)
       else
