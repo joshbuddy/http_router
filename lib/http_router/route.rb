@@ -170,7 +170,7 @@ class HttpRouter
       arbitrary{|env, params, dest| match = matcher.match(env.path_info); !match.nil? and match.begin(0) == 0 and match[0].size == env.path_info.size}
     end
 
-    # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object and must return true for the Route to be matched. Returns +self+.
+    # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object, a Hash of the params, and the destination for this route. The proc must return true if the Route is matched. Returns +self+.
     def arbitrary(proc = nil, &block)
       guard_compiled
       @arbitrary << (proc || block)
