@@ -25,6 +25,10 @@ class HttpRouter
       "
     end
 
+    def hashify_params(params)
+      variable_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h }
+    end
+
     def ===(other_path)
       return false if @parts.size != other_path.parts.size
       @parts.each_with_index {|p,i| 

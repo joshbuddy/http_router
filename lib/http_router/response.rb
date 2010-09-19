@@ -22,7 +22,7 @@ class HttpRouter
         raise if matched_path.nil?
         super
         path.splitting_indexes and path.splitting_indexes.each{|i| params[i] = params[i].split('/')}
-        @params_as_hash = path.variable_names.zip(params).inject({}) {|h, (k,v)| h[k] = v; h }
+        @params_as_hash = path.hashify_params(params)
       end
 
       def matched?
