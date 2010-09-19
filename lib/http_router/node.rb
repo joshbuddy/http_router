@@ -192,7 +192,7 @@ class HttpRouter
           return @catchall.find_on_parts(request, parts, params)
         end
       end
-      request_node and request_node.find_on_request_methods(request) or resolve_node(request)
+      request_node and request_node.find_on_request_methods(request, params) or resolve_node(request, params)
     end
 
     def create_linear
@@ -204,9 +204,9 @@ class HttpRouter
     end
     
     protected
-      def resolve_node(request)
+      def resolve_node(request, params)
         if arbitrary_node
-          arbitrary_node.find_on_arbitrary(request)
+          arbitrary_node.find_on_arbitrary(request, params)
         elsif @value
           self
         else
@@ -220,34 +220,37 @@ class HttpRouter
   end
 
   class ArbitraryNode < Node
-    def find_on_arbitrary(request)
-      next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| procs.all?{|p| p.call(request)} }
-      next_node && next_node.last || @catchall
+    def find_on_arbitrary(request, params)
+      next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| 
+        params_hash = node.value.hashify_params(params)
+        procs.all?{|p| p.call(request, params_hash, node.value.route.dest)}
+      }
+      next_node ? next_node.last : @catchall
     end
   end
   
   class RequestNode < Node
     RequestMethods = [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string].freeze
     attr_accessor :request_method
-    def find_on_request_methods(request)    
+    def find_on_request_methods(request, params)    
       next_node = if @request_method
         request_value = request.send(request_method)
-        linear_node(request, request_value) or lookup_node(request, request_value) or catchall_node(request)
+        linear_node(request, params, request_value) or lookup_node(request, params, request_value) or catchall_node(request, params)
       end
-      next_node or resolve_node(request)
+      next_node or resolve_node(request, params)
     end
     private
-      def linear_node(request, request_value)
+      def linear_node(request, params, request_value)
         if @linear && !@linear.empty?
           node = @linear.find { |(regexp, node)| regexp === request_value }
-          node.last.find_on_request_methods(request) if node
+          node.last.find_on_request_methods(request, params) if node
         end
       end
-      def lookup_node(request, request_value)
-        @lookup[request_value].find_on_request_methods(request) if @lookup and @lookup[request_value]
+      def lookup_node(request, params, request_value)
+        @lookup[request_value].find_on_request_methods(request, params) if @lookup and @lookup[request_value]
       end
-      def catchall_node(request)
-        @catchall.find_on_request_methods(request) if @catchall
+      def catchall_node(request, params)
+        @catchall.find_on_request_methods(request, params) if @catchall
       end
   end
   
