@@ -195,15 +195,15 @@ class HttpRouter
       request_node and request_node.find_on_request_methods(request, params) or resolve_node(request, params)
     end
 
-    def create_linear
-      @linear ||= []
-    end
-
-    def create_lookup
-      @lookup ||= {}
-    end
-    
     protected
+      def create_linear
+        @linear ||= []
+      end
+
+      def create_lookup
+        @lookup ||= {}
+      end
+    
       def resolve_node(request, params)
         if arbitrary_node
           arbitrary_node.find_on_arbitrary(request, params)
@@ -232,7 +232,7 @@ class HttpRouter
   class RequestNode < Node
     RequestMethods = [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string].freeze
     attr_accessor :request_method
-    def find_on_request_methods(request, params)    
+    def find_on_request_methods(request, params)
       next_node = if @request_method
         request_value = request.send(request_method)
         linear_node(request, params, request_value) or lookup_node(request, params, request_value) or catchall_node(request, params)

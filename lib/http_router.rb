@@ -148,7 +148,7 @@ class HttpRouter
 
   # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
   def recognize(env)
-    response = @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
+    @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
   end
 
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
@@ -167,12 +167,9 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-      when Symbol
-        url(@named_routes[route], *args)
-      when nil
-        raise UngeneratableRouteException
-      else
-        route.url(*args)
+    when Symbol then url(@named_routes[route], *args)
+    when nil    then raise UngeneratableRouteException
+    else             route.url(*args)
     end
   end
 
@@ -239,7 +236,6 @@ class HttpRouter
       new_route = route.clone(cloned_router)
       cloned_router.add_route(new_route).compile
       new_route.name(route.named) if route.named
-
       if route.dest
         begin
           new_route.to route.dest.clone
