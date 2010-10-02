@@ -58,6 +58,16 @@ describe "HttpRouter#recognize" do
 
     end
 
+    context("with multiple partial matching") do
+      it "should match partially" do
+        @router.add("/test").partial.to{|env| [200, {}, ['/test',env['PATH_INFO']]]}
+        @router.add("/").partial.to{|env| [200, {}, ['/',env['PATH_INFO']]]}
+        @router.call(Rack::MockRequest.env_for('/test/optional')).last.should == ['/test', '/optional']
+        @router.call(Rack::MockRequest.env_for('/testing/optional')).last.should == ['/', '/testing/optional']
+      end
+    end
+
+
     context("with proc acceptance") do
       it "should match" do
         @router.add("/test").arbitrary(Proc.new{|req, params, dest| req.host == 'hellodooly' }).to(:test1)

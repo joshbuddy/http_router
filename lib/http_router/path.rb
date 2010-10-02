@@ -1,6 +1,6 @@
 class HttpRouter
   class Path
-    attr_reader :parts, :route, :splitting_indexes
+    attr_reader :parts, :route, :splitting_indexes, :path
     def initialize(route, path, parts, splitting_indexes)
       @route, @path, @parts, @splitting_indexes = route, path, parts, splitting_indexes
       
@@ -67,6 +67,10 @@ class HttpRouter
         end
         uri[uri_size] = ??
       end
+    end
+
+    def static?
+      variables.empty?
     end
 
     def variables

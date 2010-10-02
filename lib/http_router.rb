@@ -186,9 +186,20 @@ class HttpRouter
     else
       env['router'] = self
       if response = recognize(request) and !@middleware
-        if response.matched? && response.route.dest
+        if response.is_a?(Array)
+          call_env = env.dup
+          response.each do |match|
+            if match.route.dest.respond_to?(:call)
+              process_params(call_env, match)
+              consume_path!(call_env, match)
+              app_response = match.route.dest.call(call_env)
+              return app_response unless app_response.first == 404 or app_response.first == 410
+            else
+              return response
+            end
+          end
+        elsif response.matched? && response.route.dest
           process_params(env, response)
-          consume_path!(request, response) if response.partial_match?
           return response.route.dest.call(env) if response.route.dest.respond_to?(:call)
         elsif !response.matched?
           return [response.status, response.headers, []]
@@ -261,9 +272,9 @@ class HttpRouter
 
   private
 
-  def consume_path!(request, response)
-    request.env["SCRIPT_NAME"] = (request.env["SCRIPT_NAME"] + response.matched_path)
-    request.env["PATH_INFO"] = response.remaining_path.nil? || response.remaining_path == '' ? '/' : response.remaining_path
+  def consume_path!(env, response)
+    env["SCRIPT_NAME"] = (env["SCRIPT_NAME"] + response.matched_path)
+    env["PATH_INFO"] = response.remaining_path.nil? || response.remaining_path == '' ? '/' : response.remaining_path
   end
 
   def process_params(env, response)

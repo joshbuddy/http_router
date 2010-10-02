@@ -10,18 +10,18 @@ class HttpRouter
     end
 
     def find(request)
-      find_on_parts(request, get_parts(request)) do |node, parts, params|
-        return process_response(node, parts, params, request)
-      end
-      if !router.request_methods_specified.empty?
+      routes = []
+      node, parts, params = catch(:match) { find_on_parts(request, get_parts(request), [], routes) }
+      if !routes.empty?
+        routes.map { |node, parts, params| process_response(node, parts, params, request) }
+      elsif node
+        process_response(node, parts, params, request)
+      elsif !router.request_methods_specified.empty?
         alternate_methods = (router.request_methods_specified - [request.request_method]).select do |alternate_method|
           test_request = request.dup
           test_request.env['REQUEST_METHOD'] = alternate_method
-          node = nil
-          find_on_parts(test_request, get_parts(request)) do |n, parts, params|
-            node = n
-          end
-          node
+          routes = []
+          catch(:match) { find_on_parts(test_request, get_parts(request), [], routes) } || !routes.empty?
         end
         alternate_methods.empty? ? nil : Response.unmatched(405, {"Allow" => alternate_methods.join(", ")})
       else
