@@ -9,7 +9,7 @@ class HttpRouter
       ::Rack.class_eval("OriginalBuilder = Builder; HttpRouterBuilder = HttpRouter::Rack::Builder; remove_const :Builder; Builder = HttpRouterBuilder")
     end
 
-    # Monkey-patches Rack::Builder to use HttpRouter.
+    # Monkey-patches Rack::URLMap to use HttpRouter.
     # See examples/rack_mapper.rb
     def self.override_rack_urlmap!
       ::Rack.class_eval("OriginalURLMap = URLMap; HttpRouterURLMap = HttpRouter::Rack::URLMap; remove_const :URLMap; URLMap = HttpRouterURLMap")
