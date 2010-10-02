@@ -53,14 +53,10 @@ class HttpRouter
         new_node
       end
       @linear.sort!{|a, b|
-        if a.first.respond_to?(:priority) and b.first.respond_to?(:priority)
-          b.first.priority <=> a.first.priority
-        elsif a.first.respond_to?(:priority)
-          -1
-        elsif b.first.respond_to?(:priority)
-          1
-        else
-          0
+        if    a.first.respond_to?(:priority) and b.first.respond_to?(:priority) ; b.first.priority <=> a.first.priority
+        elsif a.first.respond_to?(:priority)                                    ; -1
+        elsif b.first.respond_to?(:priority)                                    ; 1
+        else                                                                    ; 0
         end
       }
       n
@@ -151,48 +147,45 @@ class HttpRouter
       val
     end
 
-    def find_on_parts(request, parts, params)
+    def find_on_parts(request, parts, params = [], &blk)
       if parts and !parts.empty?
-        if potential = potential_match(request, parts, params)
-          return potential
-        end
+        find_on_parts(request, nil, params) do |potential, match_parts, match_params|
+          yield potential, nil, match_params if router.ignore_trailing_slash? or (potential.value and potential.value.route.trailing_slash_ignore?)
+        end if parts.size == 1 and parts.first == '' 
         if @linear && !@linear.empty?
-          response = nil
-          dupped_parts = nil
-          dupped_params = nil
+          response, dupped_parts, dupped_params = nil, nil, nil
           next_node = @linear.find do |(tester, node)|
             if tester.respond_to?(:matches?) and match = tester.matches?(parts)
-              dupped_parts = parts.dup
-              dupped_params = params.dup
+              dupped_parts, dupped_params = parts.dup, params.dup
               dupped_params << escape_val(tester.consume(match, dupped_parts))
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params)
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params, &blk)
             elsif tester.respond_to?(:match) and match = tester.match(parts.whole_path) and match.begin(0) == 0
-              dupped_parts = router.split(parts.whole_path[match[0].size, parts.whole_path.size])
-              dupped_params = params.dup
-              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params)
+              dupped_parts, dupped_params = router.split(parts.whole_path[match[0].size, parts.whole_path.size]), params.dup
+              parts.replace(dupped_parts) if response = node.find_on_parts(request, dupped_parts, dupped_params, &blk)
             else
               nil
             end
           end
-          if response
-            params.replace(dupped_params)
-            return response
-          end
         end
         if match = @lookup && @lookup[parts.first]
-          part = parts.shift
-          if match = match.find_on_parts(request, parts, params)
-            return match
-          else
-            parts.unshift(part)
-          end
+          match.find_on_parts(request, parts[1, parts.size - 1], params, &blk)
         end
         if @catchall
-          params << escape_val(@catchall.variable.consume(nil, parts))
-          return @catchall.find_on_parts(request, parts, params)
+          dupped_parts, dupped_params = parts.dup, params.dup
+          dupped_params << escape_val(@catchall.variable.consume(nil, dupped_parts))
+          @catchall.find_on_parts(request, dupped_parts, dupped_params, &blk)
         end
       end
-      request_node and request_node.find_on_request_methods(request, params) or resolve_node(request, params)
+      if request_node
+        request_node.find_on_request_methods(request, parts, params, &blk)
+      elsif arbitrary_node
+        arbitrary_node.find_on_arbitrary(request, parts, params, &blk)
+      elsif @value
+        yield self, parts, params
+      else
+        nil
+      end
+      #  resolve_node(request, parts, params, &blk)
     end
 
     protected
@@ -203,54 +196,50 @@ class HttpRouter
       def create_lookup
         @lookup ||= {}
       end
-    
-      def resolve_node(request, params)
-        if arbitrary_node
-          arbitrary_node.find_on_arbitrary(request, params)
-        elsif @value
-          self
-        else
-          nil
-        end
-      end
-    
-      def potential_match(request, parts, params)
-        parts.size == 1 and parts.first == '' and potential = find_on_parts(request, nil, params) and (router.ignore_trailing_slash? or (potential.value and potential.value.route.trailing_slash_ignore?)) and parts.shift ? potential : nil
-      end
   end
 
   class ArbitraryNode < Node
-    def find_on_arbitrary(request, params)
+    def find_on_arbitrary(request, parts, params, &blk)
       next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| 
         params_hash = node.value.hashify_params(params)
         procs.all?{|p| p.call(request, params_hash, node.value.route.dest)}
       }
-      next_node ? next_node.last : @catchall
+      if next_node
+        yield next_node.last, parts, params
+      elsif @catchall
+        yield @catchall, parts, params
+      end
     end
   end
   
   class RequestNode < Node
     RequestMethods = [:request_method, :host, :port, :scheme, :user_agent, :ip, :fullpath, :query_string].freeze
     attr_accessor :request_method
-    def find_on_request_methods(request, params)
+    def find_on_request_methods(request, parts, params, &blk)
       next_node = if @request_method
         request_value = request.send(request_method)
-        linear_node(request, params, request_value) or lookup_node(request, params, request_value) or catchall_node(request, params)
+        linear_node(request, parts, params, request_value, &blk) or
+          lookup_node(request, parts, params, request_value, &blk) or
+          catchall_node(request, parts, params, request_value, &blk)
       end
-      next_node or resolve_node(request, params)
+      if next_node
+        yield next_node, parts, params
+      else
+        find_on_parts(request, parts, params, &blk)
+      end
     end
     private
-      def linear_node(request, params, request_value)
+      def linear_node(request, parts, params, request_value, &blk)
         if @linear && !@linear.empty?
           node = @linear.find { |(regexp, node)| regexp === request_value }
-          node.last.find_on_request_methods(request, params) if node
+          node.last.find_on_request_methods(request, parts, params, &blk) if node
         end
       end
-      def lookup_node(request, params, request_value)
-        @lookup[request_value].find_on_request_methods(request, params) if @lookup and @lookup[request_value]
+      def lookup_node(request, parts, params, request_value, &blk)
+        @lookup[request_value].find_on_request_methods(request, parts, params, &blk) if @lookup and @lookup[request_value]
       end
-      def catchall_node(request, params)
-        @catchall.find_on_request_methods(request, params) if @catchall
+      def catchall_node(request, parts, params, request_value, &blk)
+        @catchall.find_on_request_methods(request, parts, params, &blk) if @catchall
       end
   end
   

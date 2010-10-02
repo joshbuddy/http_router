@@ -10,10 +10,23 @@ class HttpRouter
     end
 
     def find(request)
-      params = []
-      parts = get_parts(request)
-      node = find_on_parts(request, parts, params)
-      process_response(node, parts, params, request)
+      find_on_parts(request, get_parts(request)) do |node, parts, params|
+        return process_response(node, parts, params, request)
+      end
+      if !router.request_methods_specified.empty?
+        alternate_methods = (router.request_methods_specified - [request.request_method]).select do |alternate_method|
+          test_request = request.dup
+          test_request.env['REQUEST_METHOD'] = alternate_method
+          node = nil
+          find_on_parts(test_request, get_parts(request)) do |n, parts, params|
+            node = n
+          end
+          node
+        end
+        alternate_methods.empty? ? nil : Response.unmatched(405, {"Allow" => alternate_methods.join(", ")})
+      else
+        nil
+      end
     end
 
     def get_parts(request)
@@ -24,25 +37,11 @@ class HttpRouter
 
     private
     def process_response(node, parts, params, request)
-      if node && node.value
-        if parts.empty?
-          Response.matched(node.value, params, request.path_info)
-        elsif node.value.route.partially_match?
-          rest = '/' << parts.join('/')
-          Response.matched(node.value, params, request.path_info[0, request.path_info.size - rest.size], rest)
-        else
-          nil
-        end
-      elsif !router.request_methods_specified.empty?
-        alternate_methods = (router.request_methods_specified - [request.request_method]).select do |alternate_method|
-          test_request = request.dup
-          test_request.env['REQUEST_METHOD'] = alternate_method
-          node = find_on_parts(test_request, get_parts(request), [])
-          node && node.value
-        end
-        alternate_methods.empty? ? nil : Response.unmatched(405, {"Allow" => alternate_methods.join(", ")})
-      else
-        nil
+      if parts.nil? || parts.empty?
+        Response.matched(node.value, params, request.path_info)
+      elsif node.value.route.partially_match?
+        rest = '/' << parts.join('/')
+        Response.matched(node.value, params, request.path_info[0, request.path_info.size - rest.size], rest)
       end
     end
   end
