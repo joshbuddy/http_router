@@ -11,6 +11,7 @@ require 'http_router/path'
 require 'http_router/optional_compiler'
 require 'http_router/parts'
 require 'http_router/version'
+require 'http_router/rack'
 
 class HttpRouter
   # Raised when a Route is not able to be generated.
@@ -33,18 +34,6 @@ class HttpRouter
   attr_reader :named_routes, :routes, :root, :request_methods_specified
   attr_accessor :url_mount
 
-  # Monkey-patches Rack::Builder to use HttpRouter.
-  # See examples/rack_mapper.rb
-  def self.override_rack_mapper!
-    require File.join('ext', 'rack', 'rack_mapper')
-  end
-
-  # Monkey-patches Rack::Builder to use HttpRouter.
-  # See examples/rack_mapper.rb
-  def self.override_rack_urlmap!
-    require File.join('ext', 'rack', 'rack_urlmap')
-  end
-
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
   # If there is a proc first, then it's used as the default app in the case of a non-match.
@@ -56,7 +45,7 @@ class HttpRouter
   def initialize(*args, &block)
     default_app, options = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options                   = options
-    @default_app               = default_app || options && options[:default_app] || proc{|env| Rack::Response.new("Not Found", 404).finish }
+    @default_app               = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash     = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash   = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @middleware                = options && options.key?(:middleware) ? options[:middleware] : false
@@ -148,7 +137,7 @@ class HttpRouter
 
   # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
   def recognize(env)
-    @root.find(env.is_a?(Hash) ? Rack::Request.new(env) : env)
+    @root.find(env.is_a?(Hash) ? ::Rack::Request.new(env) : env)
   end
 
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
@@ -178,9 +167,9 @@ class HttpRouter
   # be available under the key <tt>router.params</tt>. The HttpRouter::Response object will be available under the key <tt>router.response</tt> if
   # a response is available.
   def call(env)
-    request = Rack::Request.new(env)
+    request = ::Rack::Request.new(env)
     if redirect_trailing_slash? && (request.head? || request.get?) && request.path_info[-1] == ?/
-      response = Rack::Response.new
+      response = ::Rack::Response.new
       response.redirect(request.path_info[0, request.path_info.size - 1], 302)
       response.finish
     else

@@ -1,6 +1,6 @@
 # Replacement for {Rack::Builder} which using HttpRouter to map requests instead of a simple Hash.
 # As well, add convenience methods for the request methods.
-class Rack::Builder
+class HttpRouter::Rack::Builder < ::Rack::Builder
   def initialize(&block)
     super
   end
