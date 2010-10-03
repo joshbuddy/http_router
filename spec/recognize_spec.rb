@@ -100,6 +100,12 @@ describe "HttpRouter#recognize" do
         response = @router.recognize(Rack::MockRequest.env_for('http://lovelove:8081/test'))
         response.dest.should == :test3
       end
+
+      it "should pass params and dest" do
+        @router.add("/:test").get.arbitrary(Proc.new{|req, params, dest| params[:test] == 'test' and dest == :test1 }).to(:test1)
+        response = @router.recognize(Rack::MockRequest.env_for('/test'))
+        response.dest.should == :test1
+      end
     end
 
     context("with trailing slashes") do
