@@ -137,6 +137,12 @@ class HttpRouter
 
   # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
   def recognize(env)
+    response = recognize_full(env)
+    response.is_a?(Array) ? response.first : response
+  end
+
+  # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
+  def recognize_full(env)
     @root.find(env.is_a?(Hash) ? ::Rack::Request.new(env) : env)
   end
 
@@ -174,7 +180,7 @@ class HttpRouter
       response.finish
     else
       env['router'] = self
-      if response = recognize(request) and !@middleware
+      if response = recognize_full(request) and !@middleware
         if response.is_a?(Array)
           call_env = env.dup
           response.each do |match|
