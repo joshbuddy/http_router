@@ -151,7 +151,7 @@ class HttpRouter
       if parts and !parts.empty?
         if parts.size == 1 and parts.first == '' 
           potential, match_parts, match_params = catch(:match) { find_on_parts(request, nil, params) }
-          process_match(potential, nil, match_params, routes) if router.ignore_trailing_slash? or (potential.value and potential.value.route.trailing_slash_ignore?)
+          process_match(potential, nil, match_params, routes) if potential and potential.value and (router.ignore_trailing_slash? or potential.value.route.trailing_slash_ignore?)
         end 
         if @linear && !@linear.empty?
           response, dupped_parts, dupped_params = nil, nil, nil
