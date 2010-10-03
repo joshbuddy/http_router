@@ -141,7 +141,8 @@ class HttpRouter
     response.is_a?(Array) ? response.first : response
   end
 
-  # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
+  # Returns the HttpRouter::Response object if the env is matched, an array of HttpRouter::Response objects or otherwise, returns +nil+. If it
+  # returns an array, this represents a set of possible matches.
   def recognize_full(env)
     @root.find(env.is_a?(Hash) ? ::Rack::Request.new(env) : env)
   end
