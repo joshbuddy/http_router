@@ -392,6 +392,14 @@ describe "HttpRouter#recognize" do
       response.params_as_hash[:variable].should == '123'
     end
 
+    it "should recognize with a regex as part of the options" do
+      route = @router.add('/one-:variable-time', :variable => /\d+/).to(:test)
+      @router.recognize(Rack::MockRequest.env_for('/one-value-time')).should be_nil
+      response = @router.recognize(Rack::MockRequest.env_for('/one-123-time'))
+      response.route.should == route
+      response.params_as_hash[:variable].should == '123'
+    end
+
     it "should recognize when there is an extension" do
       route = @router.add('/hey.:greed.html').to(:test)
       response = @router.recognize(Rack::MockRequest.env_for('/hey.greedyboy.html'))
