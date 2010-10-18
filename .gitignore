@@ -4,3 +4,4 @@ pkg
 rdoc
 Gemfile.lock
 .rvmrc
+*.rbc

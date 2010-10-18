@@ -1,13 +1,12 @@
 require 'rubygems'
 require 'bundler'
-require 'spec'
 require 'code_stats'
-require 'spec/rake/spectask'
+require 'rspec/core/rake_task'
 
-Spec::Rake::SpecTask.new(:spec) do |t|
-  t.spec_opts ||= []
-  t.spec_opts << "--options" << "spec/spec.opts"
-  t.spec_files = FileList['spec/**/*_spec.rb']
+desc "Run specs"
+RSpec::Core::RakeTask.new do |t|
+  #t.rspec_opts = %w(--options spec/spec.opts)
+  #t.ruby_opts  = %w(-w)
 end
 
 require 'rake/rdoctask'

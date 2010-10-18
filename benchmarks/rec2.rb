@@ -2,7 +2,7 @@ require 'rubygems'
 require 'rbench'
 
 $LOAD_PATH.unshift File.join(File.dirname(__FILE__), '..', 'lib')
-require 'lib/http_router'
+require 'http_router'
 
 #require 'http_router'
 
@@ -34,33 +34,33 @@ simple_and_dynamic_env = Rack::MockRequest.env_for('/dynamic/anything')
 #simple_and_dynamic_env1 = Rack::MockRequest.env_for('/rails/controller/action/id')
 #simple_and_dynamic_env2 = Rack::MockRequest.env_for('/greedy/controller/action/id')
 #simple_and_dynamic_env3 = Rack::MockRequest.env_for('/greedy/hey.hello.html')
+5.times {
+  RBench.run(TIMES) do
 
-RBench.run(TIMES) do
+    report "2 levels, static" do
+      u.call(simple_env).first == 200 or raise
+    end
 
-  report "2 levels, static" do
-    u.call(simple_env).first == 200 or raise
+    report "4 levels, static" do
+      u.call(simple2_env).first == 200 or raise
+    end
+
+    #report "8 levels, static" do
+    #  u.call(simple3_env).first == 200 or raise
+    #end
+
+    report "4 levels, 1 dynamic" do
+      u.call(simple_and_dynamic_env).first == 200 or raise
+    end
+
+    #report "8 levels, 3 dynamic" do
+    #  u.call(simple_and_dynamic_env1).first == 200 or raise
+    #end
+    #
+    #report "4 levels, 1 greedy" do
+    #  u.call(simple_and_dynamic_env2).first == 200 or raise
+    #end
+
   end
-
-  report "4 levels, static" do
-    u.call(simple2_env).first == 200 or raise
-  end
-
-  #report "8 levels, static" do
-  #  u.call(simple3_env).first == 200 or raise
-  #end
-
-  report "4 levels, 1 dynamic" do
-    u.call(simple_and_dynamic_env).first == 200 or raise
-  end
-
-  #report "8 levels, 3 dynamic" do
-  #  u.call(simple_and_dynamic_env1).first == 200 or raise
-  #end
-  #
-  #report "4 levels, 1 greedy" do
-  #  u.call(simple_and_dynamic_env2).first == 200 or raise
-  #end
-
-end
-
+}
 puts `ps -o rss= -p #{Process.pid}`.to_i
