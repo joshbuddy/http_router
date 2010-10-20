@@ -278,7 +278,7 @@ class HttpRouter
       env['router.params'].merge!(response.route.default_values) if response.route.default_values
       env['router.params'].merge!(response.params_as_hash)
     else
-      env['router.params'] = response.route.default_values ? response.route.default_values.merge(response.params_as_hash) : response.params_as_hash
+      env['router.params'] = response.route.default_values ? response.route.default_values.merge(response.params_as_hash || {}) : response.params_as_hash
     end
   end
 

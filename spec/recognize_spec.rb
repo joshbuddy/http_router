@@ -55,7 +55,20 @@ describe "HttpRouter#recognize" do
         response = @router.call(Rack::MockRequest.env_for('/test'))
         response[0].should == 200
       end
+    end
 
+    context("with partial matching against root") do
+      before(:each) do
+        @router.add("/*").to(HttpRouter.new {
+            add('/').to{|env| [200, {}, []]}
+          }
+        )
+      end
+      
+      it "should match a / through two routers" do
+        response = @router.call(Rack::MockRequest.env_for('/'))
+        response[0].should == 200
+      end
     end
 
     context("with multiple partial matching") do
