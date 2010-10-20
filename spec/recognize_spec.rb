@@ -76,6 +76,7 @@ describe "HttpRouter#recognize" do
         @router.add("/test").partial.to{|env| [200, {}, ['/test',env['PATH_INFO']]]}
         @router.add("/").partial.to{|env| [200, {}, ['/',env['PATH_INFO']]]}
         @router.call(Rack::MockRequest.env_for('/test/optional')).last.should == ['/test', '/optional']
+        @router.call(Rack::MockRequest.env_for('/test/optional/')).last.should == ['/test', '/optional/']
         @router.call(Rack::MockRequest.env_for('/testing/optional')).last.should == ['/', '/testing/optional']
       end
     end
