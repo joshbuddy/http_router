@@ -210,7 +210,7 @@ class HttpRouter
   class ArbitraryNode < Node
     def find_on_arbitrary(request, parts, params, routes)
       next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| 
-        params_hash = node.value.hashify_params(params)
+        params_hash = node.value.hashify_params(params) || {}
         procs.all?{|p| p.call(request, params_hash, node.value.route.dest)}
       }
       if next_node
