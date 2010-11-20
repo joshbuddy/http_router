@@ -20,14 +20,15 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'http_router'
 
   # dependencies
-  s.add_runtime_dependency 'rack',        '>= 1.0.0'
-  s.add_runtime_dependency 'url_mount',   '~> 0.2.1'
-  s.add_development_dependency 'rspec',   '~> 2.0.0'
+  s.add_runtime_dependency 'rack',         '>= 1.0.0'
+  s.add_runtime_dependency 'url_mount',    '~> 0.2.1'
+  s.add_development_dependency 'minitest', '~> 2.0.0'
   s.add_development_dependency 'code_stats'
   s.add_development_dependency 'rake'
   s.add_development_dependency 'sinatra'
   s.add_development_dependency 'rbench'
-  s.add_development_dependency 'bundler', "~> 1.0.0"
+  s.add_development_dependency 'phocus'
+  s.add_development_dependency 'bundler',  '~> 1.0.0'
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION

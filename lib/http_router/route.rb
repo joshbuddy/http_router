@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :dest, :paths, :path, :matches_with
+    attr_reader :dest, :paths, :path, :matches_with, :original_path
     attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(router, path)
@@ -22,6 +22,10 @@ class HttpRouter
       else
         super
       end
+    end
+
+    def to_s
+      "#{@original_path} conditions: #{@conditions.inspect} default_values: #{@default_values.inspect} name: #{named.inspect}"
     end
 
     # Returns the options used to create this route.
@@ -199,8 +203,9 @@ class HttpRouter
           working_set = current_node.add_request_methods(@conditions)
           working_set.map!{|node| node.add_arbitrary(@arbitrary)}
           working_set.each do |current_node|
-            current_node.value = path
+            current_node.value ||= path
           end
+          path.variable_names.each{|vn| router.variable_names << vn} unless path.static?
         end
       end
       self
@@ -240,6 +245,11 @@ class HttpRouter
 
     # Generates a URL for this route. See HttpRouter#url for how the arguments for this are structured.
     def url(*args)
+      result, extra_params = url_with_params(*args)
+      router.append_querystring(result, extra_params)
+    end
+
+    def url_with_params(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options = options.nil? ? default_values.dup : default_values.merge(options) if default_values
       options.delete_if{ |k,v| v.nil? } if options
@@ -249,18 +259,14 @@ class HttpRouter
         matching_path(args, options)
       end
       raise UngeneratableRouteException unless path
+      result, params = path.url(args, options)
       mount_point = router.url_mount && router.url_mount.url(options)
-      result = path.url(args, options)
-      mount_point ? File.join(mount_point, result) : result
+      mount_point ? [File.join(mount_point, result), params] : [result, params]
     end
 
     def significant_variable_names
       @significant_variable_names ||= @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
     end
-
-    private
-
-    attr_reader :router
 
     def matching_path(params, other_hash = nil)
       if @paths.size == 1
@@ -284,6 +290,10 @@ class HttpRouter
         end
       end
     end
+
+    private
+
+    attr_reader :router
 
     def extract_partial_match(path)
       path[-1] == ?* && path.slice!(-1)
@@ -351,15 +361,15 @@ class HttpRouter
             else
               /^#{matcher || '[^\/]+?'}(?=#{Regexp.quote(part_segments[next_index])})/
             end
-            priority += 1
             router.variable(v_name, scan_regex)
           else
-            /^#{Regexp.quote(seg)}/
+            priority += seg.size
+            Static.new("^#{Regexp.quote(seg)}")
           end
           index += 1
           new_seg
         end
-        segs.each { |seg| seg.priority = priority if seg.respond_to?(:priority=) }
+        segs.each {|seg| seg.priority = priority}
         segs
       else
         part

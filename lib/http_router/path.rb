@@ -50,23 +50,7 @@ class HttpRouter
       raise InvalidRouteException if path !~ @path_validation_regex
       raise TooManyParametersException unless args.empty?
       HttpRouter.uri_escape!(path)
-      generate_querystring(path, options)
-      path
-    end
-
-    def generate_querystring(uri, params)
-      if params && !params.empty?
-        uri_size = uri.size
-        params.each do |k,v|
-          case v
-          when Array
-            v.each { |v_part| uri << '&' << ::Rack::Utils.escape(k.to_s) << '%5B%5D=' << ::Rack::Utils.escape(v_part.to_s) }
-          else
-            uri << '&' << ::Rack::Utils.escape(k.to_s) << '=' << ::Rack::Utils.escape(v.to_s)
-          end
-        end
-        uri[uri_size] = ??
-      end
+      [path, options]
     end
 
     def static?

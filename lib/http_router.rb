@@ -4,9 +4,10 @@ require 'url_mount'
 require 'http_router/node'
 require 'http_router/root'
 require 'http_router/variable'
+require 'http_router/static'
 require 'http_router/glob'
 require 'http_router/route'
-require 'http_router/response'
+#require 'http_router/response'
 require 'http_router/path'
 require 'http_router/optional_compiler'
 require 'http_router/parts'
@@ -31,7 +32,7 @@ class HttpRouter
   # Raised when there is a potential conflict of variable names within your Route.
   AmbiguousVariableException       = Class.new(RuntimeError)
 
-  attr_reader :named_routes, :routes, :root, :request_methods_specified
+  attr_reader :named_routes, :routes, :root, :request_methods_specified, :variable_names
   attr_accessor :url_mount
 
   # Creates a new HttpRouter.
@@ -41,18 +42,18 @@ class HttpRouter
   # * :default_app -- Default application used if there is a non-match on #call. Defaults to 404 generator.
   # * :ignore_trailing_slash -- Ignore a trailing / when attempting to match. Defaults to +true+.
   # * :redirect_trailing_slash -- On trailing /, redirect to the same path without the /. Defaults to +false+.
-  # * :middleware -- On recognition, store the route Response in env['router.response'] and always call the default app. Defaults to +false+.
   def initialize(*args, &block)
     default_app, options = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options                   = options
     @default_app               = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash     = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash   = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
-    @middleware                = options && options.key?(:middleware) ? options[:middleware] : false
     @request_methods_specified = Set.new
     @routes                    = []
     @named_routes              = {}
     @init_block                = block
+    @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
+    @variable_names            = Set.new
     reset!
     if block
       instance_eval(&block)
@@ -135,18 +136,6 @@ class HttpRouter
     add(path, options).delete
   end
 
-  # Returns the HttpRouter::Response object if the env is matched, otherwise, returns +nil+.
-  def recognize(env)
-    response = recognize_full(env)
-    response.is_a?(Array) ? response.first : response
-  end
-
-  # Returns the HttpRouter::Response object if the env is matched, an array of HttpRouter::Response objects or otherwise, returns +nil+. If it
-  # returns an array, this represents a set of possible matches.
-  def recognize_full(env)
-    @root.find(env.is_a?(Hash) ? ::Rack::Request.new(env) : env)
-  end
-
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
   # This first value must be either the Route object or the name of the route.
   #
@@ -163,9 +152,19 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-    when Symbol then url(@named_routes[route], *args)
-    when nil    then raise UngeneratableRouteException
-    else             route.url(*args)
+    when Symbol then @named_routes[route].url(*args)
+    when Route  then route.url(*args)
+    when nil    then @handle_unavailable_route.call(:url, *args)
+    else             
+    end
+  end
+
+  def url_with_params(route, *args)
+    case route
+    when Symbol then @named_routes[route].url_with_params(*args)
+    when Route  then route.url_with_params(*args)
+    when nil    then @handle_unavailable_route.call(:url_with_params, *args)
+    else             
     end
   end
 
@@ -181,29 +180,7 @@ class HttpRouter
       response.finish
     else
       env['router'] = self
-      if response = recognize_full(request) and !@middleware
-        if response.is_a?(Array)
-          call_env = env.dup
-          response.each do |match|
-            if match.route.dest.respond_to?(:call)
-              process_params(call_env, match)
-              consume_path!(call_env, match)
-              app_response = match.route.dest.call(call_env)
-              return app_response unless app_response.first == 404 or app_response.first == 410
-            else
-              return response
-            end
-          end
-        elsif response.matched? && response.route.dest
-          process_params(env, response)
-          return response.route.dest.call(env) if response.route.dest.respond_to?(:call)
-        elsif !response.matched?
-          return [response.status, response.headers, []]
-        end
-        process_params(env, response)
-      end
-      env['router.response'] = response
-      @default_app.call(env)
+      @root.call(request) || @default_app.call(request.env)
     end
   end
 
@@ -266,20 +243,19 @@ class HttpRouter
     s.to_s.gsub!(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
   end
 
-  private
-
-  def consume_path!(env, response)
-    env["SCRIPT_NAME"] = (env["SCRIPT_NAME"] + response.matched_path)
-    env["PATH_INFO"] = response.remaining_path.nil? || response.remaining_path == '' ? '/' : response.remaining_path
-  end
-
-  def process_params(env, response)
-    if env.key?('router.params')
-      env['router.params'].merge!(response.route.default_values) if response.route.default_values
-      env['router.params'].merge!(response.params_as_hash)
-    else
-      env['router.params'] = response.route.default_values ? response.route.default_values.merge(response.params_as_hash || {}) : response.params_as_hash
+  def append_querystring(uri, params)
+    if params && !params.empty?
+      uri_size = uri.size
+      params.each do |k,v|
+        case v
+        when Array
+          v.each { |v_part| uri << '&' << ::Rack::Utils.escape(k.to_s) << '%5B%5D=' << ::Rack::Utils.escape(v_part.to_s) }
+        else
+          uri << '&' << ::Rack::Utils.escape(k.to_s) << '=' << ::Rack::Utils.escape(v.to_s)
+        end
+      end
+      uri[uri_size] = ??
     end
+    uri
   end
-
 end

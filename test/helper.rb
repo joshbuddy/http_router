@@ -1,16 +1,27 @@
 require 'minitest/autorun'
+require 'phocus'
+
+class HttpRouter::Route
+  def default_destination
+    to{|env| Rack::Response.new("Routing to #{to_s}").finish}
+  end
+end
 
 class MiniTest::Unit::TestCase
-  def router(&blk)
-    @router ||= HttpRouter.new(&blk)
+  def router(*args, &blk)
+    @router ||= HttpRouter.new(*args, &blk)
     if blk
-      @router.routes.size ? @router.routes.first : @router.routes
+      @router.routes.each do |route|
+        route.default_destination if route.dest.nil?
+      end
+      @router.routes.size > 1 ? @router.routes : @router.routes.first
     else
       @router
     end
   end
 
   def assert_body(expect, response)
+    response = router.call(response) if response.is_a?(Hash)
     body = case expect
     when Array  then []
     when String then ""
@@ -20,21 +31,29 @@ class MiniTest::Unit::TestCase
     assert_equal expect, body
   end
   
+  def assert_header(header, response)
+    response = router.call(response) if response.is_a?(Hash)
+    header.each{|k, v| assert_equal v, response[1][k]}
+  end
+
+  def assert_status(status, response)
+    response = router.call(response) if response.is_a?(Hash)
+    assert_equal status, response.first
+  end
+
   def assert_route(route, request, params = nil, &blk)
+    route.to{|env| Rack::Response.new("Routing to #{route.to_s}").finish} if route && !route.compiled?
+    request = Rack::MockRequest.env_for(request) if request.is_a?(String)
+    response = @router.call(request)
     if route
       dest = "Routing to #{route.to_s}"
-      route.to{|env| Rack::Response.new(dest).finish}
-    end
-    env = request.is_a?(String) ? Rack::MockRequest.env_for(request) : request
-    response = @router.call(env)
-    if route
       assert_equal [dest], response.last.body
+      if params
+        assert_equal params.size, request['router.params'].size
+        params.each { |k, v| assert_equal v, request['router.params'][k] }
+      end
     else
       assert_equal 404, response.first
-    end
-    if params
-      assert_equal params.size, env['router.params'].size
-      params.each { |k, v| assert_equal v, env['router.params'][k] }
     end
   end
 end
