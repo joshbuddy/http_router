@@ -3,24 +3,30 @@ class HttpRouter
     attr_reader :parts, :route, :splitting_indexes, :path
     def initialize(route, path, parts, splitting_indexes)
       @route, @path, @parts, @splitting_indexes = route, path, parts, splitting_indexes
-      
       duplicate_variable_names = variable_names.dup.uniq!
       raise AmbiguousVariableException, "You have duplicate variable name present: #{duplicate_variable_names.join(', ')}" if duplicate_variable_names
-
-      @path_validation_regex = path.split(/([:\*][a-zA-Z0-9_]+)/).map{ |part|
-        case part[0]
+      regex_parts = path.split(/([:\*][a-zA-Z0-9_]+)/)
+      @path_validation_regex, code = '', ''
+      regex_parts.each_with_index{ |part, index|
+        new_part = case part[0]
         when ?:, ?*
-          route.matches_with[part[1, part.size].to_sym] || '.*?' 
+          if index != 0 && regex_parts[index - 1][-1] == ?\\
+            @path_validation_regex << Regexp.quote(part)
+            code << part
+          else
+            @path_validation_regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s
+            code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || raise(MissingParameterException, \"missing parameter :#{part[1, part.size]}\")}"
+          end
         else
-          Regexp.quote(part)
+          @path_validation_regex << Regexp.quote(part)
+          code << part
         end
-      }.join
+        new_part
+      }
       @path_validation_regex = Regexp.new("^#{@path_validation_regex}$")
-
-      eval_path = path.gsub(/[:\*]([a-zA-Z0-9_]+)/) {"\#{args.shift || (options && options.delete(:#{$1})) || raise(MissingParameterException, \"missing parameter #{$1}\")}" }
       instance_eval "
       def raw_url(args,options)
-        \"#{eval_path}\"
+        \"#{code}\"
       end
       "
     end

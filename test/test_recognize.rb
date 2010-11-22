@@ -1,5 +1,6 @@
 class TestRecognition < MiniTest::Unit::TestCase
   def test_simple
+    assert_route router.add(''),              '/'
     assert_route router.add('/'),             '/'
     assert_route router.add('/test'),         '/test'
     assert_route router.add('/test/one'),     '/test/one'

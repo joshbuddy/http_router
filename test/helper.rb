@@ -42,6 +42,10 @@ class MiniTest::Unit::TestCase
   end
 
   def assert_route(route, request, params = nil, &blk)
+    if route.is_a?(String)
+      router.reset!
+      route = router.add(route)
+    end
     route.to{|env| Rack::Response.new("Routing to #{route.to_s}").finish} if route && !route.compiled?
     request = Rack::MockRequest.env_for(request) if request.is_a?(String)
     response = @router.call(request)
@@ -51,9 +55,20 @@ class MiniTest::Unit::TestCase
       if params
         assert_equal params.size, request['router.params'].size
         params.each { |k, v| assert_equal v, request['router.params'][k] }
+      elsif !request['router.params'].nil? and !request['router.params'].empty?
+        raise "Wasn't expecting any parameters, got #{request['router.params'].inspect}"
       end
     else
       assert_equal 404, response.first
     end
+  end
+  
+  def assert_generate(path, route, *args)
+    if route.is_a?(String)
+      router.reset!
+      route = router.add(route).to(path.to_sym)
+    end
+    route.to{|env| Rack::Response.new("Routing to #{route.to_s}").finish} if route.respond_to?(:compiled?) && !route.compiled?
+    assert_equal path, router.url(route, *args)
   end
 end

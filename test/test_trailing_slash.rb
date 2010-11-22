@@ -23,6 +23,6 @@ class TestVariable < MiniTest::Unit::TestCase
     }
     assert_route more_general, '/foo'
     assert_route more_general, '/foo/'
-    assert_route more_specific, '/foo/5/10'
+    assert_route more_specific, '/foo/5/10', {:bar => '5', :id => '10'}
   end
 end

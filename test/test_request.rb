@@ -15,9 +15,9 @@ class TestRequest < MiniTest::Unit::TestCase
     assert_route get,    Rack::MockRequest.env_for('/test', :method => 'GET')
     assert_route post,   Rack::MockRequest.env_for('/test', :method => 'POST')
     assert_route delete, Rack::MockRequest.env_for('/test', :method => 'DELETE')
-    assert_route get,    Rack::MockRequest.env_for('/test.html', :method => 'GET')
-    assert_route post,   Rack::MockRequest.env_for('/test.html', :method => 'POST')
-    assert_route delete, Rack::MockRequest.env_for('/test.html', :method => 'DELETE')
+    assert_route get,    Rack::MockRequest.env_for('/test.html', :method => 'GET'),    {:format => 'html'}
+    assert_route post,   Rack::MockRequest.env_for('/test.html', :method => 'POST'),   {:format => 'html'}
+    assert_route delete, Rack::MockRequest.env_for('/test.html', :method => 'DELETE'), {:format => 'html'}
     put = router.call(Rack::MockRequest.env_for('/test', :method => 'PUT'))
     assert_status 405, put
     assert_equal %w{DELETE GET POST}, put[1]['Allow'].split(/\s*,\s*/).sort

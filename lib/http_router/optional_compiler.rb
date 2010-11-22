@@ -7,11 +7,20 @@ class HttpRouter
       @paths = [""]
       @chars = path.split('')
       while !@chars.empty?
-        case @chars.first
-          when '('  then @chars.shift and double_paths
-          when ')'  then @chars.shift and half_paths
-          when '\\' then @chars.shift and add_to_current_set(@chars.shift)
-          else           add_to_current_set(@chars.shift)
+      case @chars.first[0]
+        when ?(
+          @chars.shift and double_paths
+        when ?)
+          @chars.shift and half_paths
+        when ?\\ 
+          if @chars[1] == ?( || @chars[1] == ?)
+            @chars.shift 
+          else
+            add_to_current_set(@chars.shift)
+          end
+          add_to_current_set(@chars.shift)
+        else
+          add_to_current_set(@chars.shift)
         end
       end
       @paths

@@ -45,6 +45,6 @@ class TestArbitrary < MiniTest::Unit::TestCase
     r = router {
       add(":test").get.arbitrary(Proc.new{|req, params, dest| params[:test] == 'test' })
     }
-    assert_route r, '/test'
+    assert_route r, '/test', {:test => 'test'}
   end
 end

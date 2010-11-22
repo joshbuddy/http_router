@@ -1,3 +1,5 @@
+require 'strscan'
+
 class HttpRouter
   class Route
     attr_reader :dest, :paths, :path, :matches_with, :original_path
@@ -347,19 +349,33 @@ class HttpRouter
     end
 
     def generate_interstitial_parts(part)
-      part_segments = part.scan(/:[a-zA-Z_0-9]+|[^:]+/)
+      part_segments = []
+      scanner = StringScanner.new(part)
+      while !scanner.eos?
+        if scanner.scan(/\\[:\*]/)
+          part_segments << [:static, ''] if part_segments.last.nil? or part_segments.last.first == :variable
+          part_segments.last.last << scanner.matched[-1].chr
+        elsif scanner.scan(/\\/)
+          # do nothing
+        elsif scanner.scan(/:[a-zA_Z0-9_]+/)
+          part_segments << [:variable, scanner.matched]
+        elsif scanner.scan(/./)
+          part_segments << [:static, ''] if part_segments.last.nil? or part_segments.last.first == :variable
+          part_segments.last.last << scanner.matched
+        end
+      end
       priority = 0
       if part_segments.size > 1
         index = 0
-        segs = part_segments.map do |seg|
-          new_seg = if seg[0] == ?:
+        segs = part_segments.map do |(type, seg)|
+          new_seg = if type == :variable
             next_index = index + 1
             v_name = seg[1, seg.size].to_sym
             matcher = @matches_with[v_name]
             scan_regex = if next_index == part_segments.size
               matcher || /^[^\/]+/
             else
-              /^#{matcher || '[^\/]+?'}(?=#{Regexp.quote(part_segments[next_index])})/
+              /^#{matcher || '[^\/]+?'}(?=#{Regexp.quote(part_segments[next_index].last)})/
             end
             router.variable(v_name, scan_regex)
           else
@@ -372,7 +388,7 @@ class HttpRouter
         segs.each {|seg| seg.priority = priority}
         segs
       else
-        part
+        [part_segments.last.last]
       end
     end
 

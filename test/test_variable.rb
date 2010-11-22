@@ -1,7 +1,7 @@
 class TestVariable < MiniTest::Unit::TestCase
   def test_variable
-    assert_route router.add(':one'),      '/two',        {:one => 'two'}
-    assert_route router.add('test/:one'), '/test/three', {:one => 'three'}
+    assert_route ':one',      '/two',        {:one => 'two'}
+    assert_route 'test/:one', '/test/three', {:one => 'three'}
   end
 
   def test_variable_vs_static
@@ -29,145 +29,89 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route nil,          '/two'
   end
   
-  #context("with dynamic paths") do
-  #  it "should recognize /foo/:id and /foo" do
-  #    @router.add("/foo/:id").to(:test2)
-  #    @router.add("/foo").to(:test1)
-  #    @router.recognize(Rack::MockRequest.env_for('/foo')).dest.should == :test1
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
-  #  end
-  #
-  #  it "should recognize /foo/: and map it to $1" do
-  #    @router.add("/foo/:").to(:test2)
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id')).dest.should == :test2
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id')).params_as_hash[:$1].should == 'id'
-  #  end
-  #
-  #  it "should use a static part as a variable if no further match is available" do
-  #    @router.add("/foo/foo").to(:test1)
-  #    @router.add("/:foo/foo2").to(:test2)
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/foo')).dest.should == :test1
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/foo2')).dest.should == :test2
-  #  end
-  #
-  #  it "should recognize /foo/:/: and map it to $1 and $2" do
-  #    @router.add("/foo/:/:").to(:test2)
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).dest.should == :test2
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).params_as_hash[:$1].should == 'id'
-  #    @router.recognize(Rack::MockRequest.env_for('/foo/id/what')).params_as_hash[:$2].should == 'what'
-  #  end
-  #
-  #  it "should recognize '/:variable'" do
-  #    route = @router.add('/:variable').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/%E6%AE%BA%E3%81%99'))
-  #    response.route.should == route
-  #    response.params.should == ["\346\256\272\343\201\231"]
-  #    response.params_as_hash[:variable].should == "\346\256\272\343\201\231"
-  #  end
-  #
-  #  it "should recognize '/:variable' and URI unescape variables" do
-  #    route = @router.add('/:variable').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/value'))
-  #    response.route.should == route
-  #    response.params.should == ['value']
-  #    response.params_as_hash[:variable].should == 'value'
-  #  end
-  #
-  #  it "should recognize using match_path" do
-  #    route = @router.add('/:test').match_path(%r{/(test123|\d+)}).to(:test)
-  #    @router.recognize(Rack::MockRequest.env_for('/test123')).params_as_hash[:test].should == 'test123'
-  #    @router.recognize(Rack::MockRequest.env_for('/123')).params_as_hash[:test].should == '123'
-  #    @router.recognize(Rack::MockRequest.env_for('/test321')).should be_nil
-  #    @router.recognize(Rack::MockRequest.env_for('/test123andmore')).should be_nil
-  #    @router.recognize(Rack::MockRequest.env_for('/lesstest123')).should be_nil
-  #  end
-  #
-  #  it "should recognize '/test.:format'" do
-  #    route = @router.add('/test.:format').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/test.html'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should == 'html'
-  #    @router.recognize(Rack::MockRequest.env_for('/test')).should be_nil
-  #  end
-  #
-  #  it "should recognize '/test(.:format)'" do
-  #    route = @router.add('/test(.:format)').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/test.html'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should == 'html'
-  #    response = @router.recognize(Rack::MockRequest.env_for('/test'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should be_nil
-  #  end
-  #
-  #  it "should recognize '/(.:format)'" do
-  #    route = @router.add('/(.:format)').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/.html'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should == 'html'
-  #    response = @router.recognize(Rack::MockRequest.env_for('/'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should be_nil
-  #  end
-  #
-  #  it "should recognize '/:test.:format'" do
-  #    route = @router.add('/:test.:format').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/hey.html'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should == 'html'
-  #    response.params_as_hash[:test].should == 'hey'
-  #  end
-  #
-  #  it "should recognize '/:test(.:format)'" do
-  #    route = @router.add('/:test(.:format)').to(:test)
-  #    response = @router.recognize(Rack::MockRequest.env_for('/hey.html'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should == 'html'
-  #    response.params_as_hash[:test].should == 'hey'
-  #    response = @router.recognize(Rack::MockRequest.env_for('/hey'))
-  #    response.route.should == route
-  #    response.params_as_hash[:format].should be_nil
-  #    response.params_as_hash[:test].should == 'hey'
-  #  end
-  #
-  #  context "with globs" do
-  #    it "should recognize" do
-  #      route = @router.add('/test/*variable').to(:test)
-  #      response = @router.recognize(Rack::MockRequest.env_for('/test/one/two/three'))
-  #      response.route.should == route
-  #      response.params.should == [['one', 'two', 'three']]
-  #    end
-  #
-  #    it "should recognize" do
-  #      route = @router.add('/test/*variable/test').to(:test)
-  #      response = @router.recognize(Rack::MockRequest.env_for('/test/one/two/three/test'))
-  #      response.route.should == route
-  #      response.params.should == [['one', 'two', 'three']]
-  #    end
-  #
-  #    it "should recognize with a regexp" do
-  #      route = @router.add('/test/*variable/anymore').matching(:variable => /\d+/).to(:test)
-  #      response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567/anymore'))
-  #      response.route.should == route
-  #      response.params.should == [['123', '345', '567']]
-  #      response = @router.recognize(Rack::MockRequest.env_for('/test/123/345/567'))
-  #      response.should be_nil
-  #    end
-  #
-  #    it "should recognize /foo/*/test and map it to $1" do
-  #      @router.add("/foo/*/test").to(:test2)
-  #      @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/test')).dest.should == :test2
-  #      @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/test')).params_as_hash[:$1].should == ['id1', 'id2']
-  #    end
-  #
-  #    it "should recognize /foo/*/what/: and map it to $1 and $2" do
-  #      @router.add("/foo/*/what/:").to(:test2)
-  #      @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).dest.should == :test2
-  #      @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).params_as_hash[:$1].should == ['id1', 'id2']
-  #      @router.recognize(Rack::MockRequest.env_for('/foo/id1/id2/what/more')).params_as_hash[:$2].should == 'more'
-  #    end
-  #  end
-  #
-  #end
+  def test_variable_and_static
+    dynamic, static = router {
+      add("/foo/:id")
+      add("/foo")
+    }
+    assert_route dynamic, '/foo/id', {:id => 'id'}
+    assert_route static,  '/foo'
+  end
+
+  def test_anonymous_variable
+    assert_route '/foo/:',  '/foo/id', {:'$1' => 'id'}
+    assert_route 'foo/:/:', '/foo/id/what', {:'$1' => 'id', :'$2' => 'what'}
+    assert_route 'foo/*/test', '/foo/id1/id2/test', {:'$1' => ['id1', 'id2']}
+    assert_route '/foo/*/what/:', '/foo/id1/id2/what/more', {:'$1' => ['id1', 'id2'], :'$2' => 'more'}
+  end
+
+  def test_variable_mixed_with_static
+    static, dynamic = router {
+      add("/foo/foo")
+      add("/:foo/foo2")
+    }
+    assert_route dynamic, '/foo/foo2', {:foo => 'foo'}
+    assert_route static,  '/foo/foo'
+  end
+
+  def test_encoding
+    assert_route '/:var', '/%E6%AE%BA%E3%81%99', {:var => "\346\256\272\343\201\231"}
+  end
+
+  def test_match_path
+    r = router { add('/:test').match_path(%r{/(test123|\d+)}) }
+    assert_route r, '/test123', {:test => "test123"}
+    assert_route r, '/123', {:test => "123"}
+    assert_route nil, '/test123andmore'
+    assert_route nil, '/lesstest123'
+  end
+
+  def test_format
+    assert_route '/test.:format', '/test.html', {:format => 'html'}
+  end
+
+  def test_optional_format
+    r = router {add('/test(.:format)')}
+    assert_route r, '/test.html', {:format => 'html'}
+    assert_route r, '/test'
+  end
+
+  def test_bare_optional_format
+    r = router {add('(.:format)')}
+    assert_route r, '/.html', {:format => 'html'}
+    assert_route r, '/'
+  end
+
+  def test_var_with_format
+    assert_route '/:test.:format', '/foo.bar', {:test => 'foo', :format => 'bar'}
+  end
+
+  def test_var_with_optional_format
+    r = router { add('/:test(.:format)') }
+    assert_route r, '/foo.bar', {:test => 'foo', :format => 'bar'}
+    assert_route r, '/foo', {:test => 'foo'}
+  end
+
+  def test_glob
+    assert_route '/test/*variable', 'test/one/two/three', {:variable => ['one', 'two', 'three']}
+  end
+
+  def test_glob_with_static
+    assert_route '/test/*variable/test', '/test/one/two/three/test', {:variable => ['one', 'two', 'three']}
+  end
   
+  def test_glob_with_regex
+    r = router { add('/test/*variable/anymore')}
+    assert_route r, '/test/123/345/567/anymore', {:variable => ['123', '345', '567']}
+    assert_route nil, '/test/123/345/567'
+  end
+  
+  def test_regex_and_greedy
+    with_regex, without_regex = router {
+      add("/:common_variable/:matched").matching(:matched => /\d+/)
+      add("/:common_variable/:unmatched")
+    }
+    assert_route with_regex,    '/common/123',   {:common_variable => 'common', :matched => '123'}
+    assert_route without_regex, '/common/other', {:common_variable => 'common', :unmatched => 'other'}
+  end
 end
