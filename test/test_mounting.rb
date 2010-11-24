@@ -64,22 +64,25 @@ class TestMounting < MiniTest::Unit::TestCase
     assert_equal "/mounted/bar", @r2.url(:test)
     assert_equal "https://example.com/mounted/bar", @r2.url(:test, :scheme => "https", :host => "example.com")
   end
+
+  def test_clone
+    @r3 = HttpRouter.new
+    @r1.add("/first").to(@r2)
+    @r2.add("/second").to(@r3)
+    r1 = @r1.clone
+    assert @r1.routes.first
+    r2 = r1.routes.first.dest
+    assert r2
+    assert_equal @r1.routes.first.dest.object_id, @r2.object_id
+    assert r2.object_id != @r2.object_id
+    assert_equal 2, r2.routes.size
+    r3 = r2.routes.last.dest
+    assert_instance_of HttpRouter, r3
+    assert r3.object_id != @r3.object_id
+  end
 end
 
 #      it "should clone my nested structure" do
-#        @r3 = HttpRouter.new
-#        @r1.add("/first").to(@r2)
-#        @r2.add("/second").to(@r3)
-#        r1 = @r1.clone
-#        @r1.routes.first.should_not be_nil
-#        r2 = r1.routes.first.dest
-#        r2.should_not be_nil
-#        @r1.routes.first.dest.object_id.should == @r2.object_id
-#        r2.object_id.should_not == @r2.object_id
-#        r2.routes.should have(2).route
-#        r3 = r2.routes.last.dest
-#        r3.should be_an_instance_of(HttpRouter)
-#        r3.object_id.should_not == @r3.object_id
 #      end
 #    end
 #  end

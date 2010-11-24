@@ -25,16 +25,16 @@ class HttpRouter
         private
           def route!(base=self.class, pass_block=nil)
             if base.router and match = base.router.recognize(@request)
-              if match.matched?
-                @block_params = match.params
-                (@params ||= {}).merge!(match.params_as_hash)
+              if match.respond_to?(:path)
+                @block_params = match.param_values
+                (@params ||= {}).merge!(match.params)
                 pass_block = catch(:pass) do
-                  route_eval(&match.route.dest)
+                  route_eval(&match.path.route.dest)
                 end
-              else
+              elsif match.is_a?(Array)
                 route_eval { 
-                  match.headers.each{|k,v| response[k] = v}
-                  status match.status
+                  match[1].each{|k,v| response[k] = v}
+                  status match[0]
                 }
               end
             end

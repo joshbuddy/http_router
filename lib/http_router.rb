@@ -7,7 +7,6 @@ require 'http_router/variable'
 require 'http_router/static'
 require 'http_router/glob'
 require 'http_router/route'
-#require 'http_router/response'
 require 'http_router/path'
 require 'http_router/optional_compiler'
 require 'http_router/parts'
@@ -179,9 +178,12 @@ class HttpRouter
       response.redirect(request.path_info[0, request.path_info.size - 1], 302)
       response.finish
     else
-      env['router'] = self
       @root.call(request) || @default_app.call(request.env)
     end
+  end
+
+  def recognize(env)
+    @root.recognize(env)
   end
 
   # Returns a new node

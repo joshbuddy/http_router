@@ -1,6 +1,6 @@
 class HttpRouter
   class Node
-    Response = Struct.new(:path, :params)
+    Response = Struct.new(:path, :param_values, :params)
     attr_accessor :value, :variable, :catchalls
     attr_reader :linear, :lookup, :request_node, :arbitrary_node
 
@@ -158,9 +158,7 @@ class HttpRouter
 
     def find_on_parts(request, parts, action = :call, params = [])
       if parts and !parts.empty?
-        if parts.size == 1 and parts.first == ''
-          process_match(self, nil, params, request, action) if @value and (router.ignore_trailing_slash? or @value.route.trailing_slash_ignore?)
-        end 
+        find_on_parts(request, nil, :"#{action}_with_trailing_slash", params) if parts.size == 1 and parts.first == ''
         if @linear
           dupped_parts, dupped_params = nil, nil
           response = @linear.find do |(tester, node)|
@@ -197,17 +195,19 @@ class HttpRouter
       env = request.env
       path = node.value
       path.splitting_indexes and path.splitting_indexes.each{|i| params[i] = params[i].split(HttpRouter::Parts::SLASH_RX)}
-      params_as_hash = path.hashify_params(params)
+      params_as_hash = path.route.default_values ? path.route.default_values.merge(path.hashify_params(params)) : path.hashify_params(params)
+      response_struct = Response.new(path, params, params_as_hash)
       previous_params = env['router.params']
+      env['router'] = router
       env['router.params'] ||= {}
-      env['router.params'].merge!(path.route.default_values) if path.route.default_values
       env['router.params'].merge!(params_as_hash)
-      env['router.response'] = Response.new(path, params_as_hash)
+      env['router.response'] = response_struct
+      env['SCRIPT_NAME'] ||= ''
       matched = if node.value.route.partially_match?
         env['PATH_INFO'] = "#{HttpRouter::Parts::SLASH}#{parts && parts.join(HttpRouter::Parts::SLASH)}"
         env['SCRIPT_NAME'] += request.path_info[0, request.path_info.size - env['PATH_INFO'].size]
         true
-      elsif parts.nil? || parts.empty?
+      elsif (parts and (action == :call_with_trailing_slash || action == :nocall_with_trailing_slash) and (router.ignore_trailing_slash? or (parts.size == 1 and parts.first == ''))) or parts.nil? || parts.empty?
         env["PATH_INFO"] = ''
         env["SCRIPT_NAME"] += request.path_info
         true
@@ -215,14 +215,17 @@ class HttpRouter
         false
       end
       if matched
-        if path.route.dest.respond_to?(:call) and action == :call
+        case action
+        when :call, :call_with_trailing_slash
           response = path.route.dest.call(env)
           env['router.last_repsonse'] = response
           if response.first != 404 and response.first != 410
             throw :response, response
           end
+        when :nocall, :nocall_with_trailing_slash
+          throw :response, response_struct
         else
-          throw :response, path.route.dest
+          raise
         end
       end
     end
