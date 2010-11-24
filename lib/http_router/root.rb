@@ -18,7 +18,7 @@ class HttpRouter
         process_response(node, parts, params, request)
       elsif !router.request_methods_specified.empty?
         alternate_methods = (router.request_methods_specified - [request.request_method]).select do |alternate_method|
-          test_request = request.dup
+          test_request = ::Rack::Request.new(request.env.dup)
           test_request.env['REQUEST_METHOD'] = alternate_method
           routes = []
           catch(:match) { find_on_parts(test_request, get_parts(request), [], routes) } || !routes.empty?
