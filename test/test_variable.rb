@@ -10,15 +10,6 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route static,  '/one'
   end
 
-  def test_variable_vs_glob
-    glob, variable = router { 
-      add '*var'
-      add ':var'
-    }
-    assert_route variable,     '/two',     {:var => 'two'}
-    assert_route glob,         '/two/two', {:var => %w{two two}}
-  end
-
   def test_variable_with_static_after
     variable, static = router { 
       add '/:var/one'

@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
     Response = Struct.new(:path, :param_values, :params)
-    attr_accessor :value, :variable, :catchalls
+    attr_accessor :value, :variable, :catchall
     attr_reader :linear, :lookup, :request_node, :arbitrary_node
 
     def initialize(router)
@@ -10,7 +10,7 @@ class HttpRouter
     end
 
     def reset!
-      @linear, @lookup, @catchalls = nil, nil, nil
+      @linear, @lookup, @catchall = nil, nil, nil
     end
 
     def add(val)
@@ -34,7 +34,7 @@ class HttpRouter
       elsif @request_node
         current_node = @request_node
         while current_node.request_method
-          current_node = (current_node.catchalls ||= router.request_node)
+          current_node = (current_node.catchall ||= router.request_node)
         end
         [current_node]
       else
@@ -63,30 +63,19 @@ class HttpRouter
         target = router.node
         @arbitrary_node.linear << [procs, target]
         if @value
-          @arbitrary_node.catchalls = router.node
-          @arbitrary_node.catchalls.value = @value
+          @arbitrary_node.catchall = router.node
+          @arbitrary_node.catchall.value = @value
           @value = nil
         end
       elsif @arbitrary_node
-        target = @arbitrary_node.catchalls = router.node
+        target = @arbitrary_node.catchall = router.node
       end
       target
     end
     
     def add_to_catchall(val)
-      @catchalls ||= []
-      node = @catchalls.find{|c| c.variable.matches_with == val.matches_with and c.variable.class == val.class}
-      if node
-        node
-      elsif val.is_a?(Glob)
-        @catchalls.push router.node
-        @catchalls.last.variable = val
-        @catchalls.last
-      else
-        @catchalls.unshift router.node
-        @catchalls.first.variable = val
-        @catchalls.first
-      end
+      (@catchall ||= router.node).variable = val
+      @catchall
     end
     
     protected
@@ -97,7 +86,7 @@ class HttpRouter
       if @value
         target_node = @request_node
         while target_node.request_method
-          target_node = (target_node.catchalls ||= router.request_node)
+          target_node = (target_node.catchall ||= router.request_node)
         end
         target_node.value ||= @value
         @value = nil
@@ -133,18 +122,18 @@ class HttpRouter
                 end
               end
             when 1 #this node is farther ahead
-              current_nodes[current_node_index] = (current_node.catchalls ||= router.request_node)
+              current_nodes[current_node_index] = (current_node.catchall ||= router.request_node)
             when -1 #this method is more important than the current node
               next_node = current_node.dup
               current_node.reset!
               current_node.request_method = method
-              current_node.catchalls ||= next_node
+              current_node.catchall ||= next_node
               redo
             end
           end
           current_nodes.flatten!
         elsif current_nodes.first.is_a?(RequestNode) && !current_nodes.first.request_method.nil?
-          current_nodes.map!{|n| n.catchalls ||= router.request_node}
+          current_nodes.map!{|n| n.catchall ||= router.request_node}
         end
       end
       transplant_value
@@ -177,12 +166,10 @@ class HttpRouter
         if match = @lookup && @lookup[parts.first]
           match.find_on_parts(request, parts[1, parts.size - 1], action, params)
         end
-        if @catchalls
-          @catchalls.each do |c|
-            dupped_parts, dupped_params = parts.dup, params.dup
-            dupped_params << escape_val(c.variable.consume(nil, dupped_parts))
-            c.find_on_parts(request, dupped_parts, action, dupped_params)
-          end
+        if catchall
+          dupped_parts, dupped_params = parts.dup, params.dup
+          dupped_params << escape_val(catchall.variable.consume(nil, dupped_parts))
+          catchall.find_on_parts(request, dupped_parts, action, dupped_params)
         end
       end
       request_node.find_on_request_methods(request, parts, action, params) if request_node
@@ -248,8 +235,8 @@ class HttpRouter
       }
       if next_node
         process_match(next_node.last, parts, params, request, action)
-      elsif @catchalls
-        process_match(@catchalls, parts, params, request, action)
+      elsif @catchall
+        process_match(@catchall, parts, params, request, action)
       end
     end
   end
@@ -264,7 +251,7 @@ class HttpRouter
           match.last.find_on_request_methods(request, parts, action, params)
         end
         @lookup[request_value].find_on_request_methods(request, parts, action, params) if @lookup and @lookup[request_value]
-        @catchalls.find_on_request_methods(request, parts, action, params) if @catchalls
+        @catchall.find_on_request_methods(request, parts, action, params) if @catchall
       end
       if @value
         process_match(self, parts, params, request, action)
