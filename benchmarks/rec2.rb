@@ -15,15 +15,15 @@ u.add('/dynamic/:variable').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/:greed').matching(:greed => /.*/).compile.to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/hey.:greed.html').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 
-#puts Benchmark.measure {
-#  ('aa'..'nn').each do |first|
-#    ('a'..'n').each do |second|
-#      u.add("/#{first}/#{second}").to {|env| [200, {'Content-type'=>'text/html'}, []]}
-#    end
-#  end
-##
-#  puts "u.routes.size: #{u.routes.size}"
-#}
+puts Benchmark.measure {
+  ('aa'..'nn').each do |first|
+    ('a'..'n').each do |second|
+      u.add("/#{first}/#{second}").to {|env| [200, {'Content-type'=>'text/html'}, []]}
+    end
+  end
+#
+  puts "u.routes.size: #{u.routes.size}"
+}
 #
 TIMES = 50_000
 

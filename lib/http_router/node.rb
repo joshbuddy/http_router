@@ -1,6 +1,17 @@
 class HttpRouter
   class Node
-    Response = Struct.new(:path, :param_values, :params)
+    class Response < Struct.new(:path, :param_values)
+      attr_reader :params
+      def initialize(path, param_values)
+        super
+        if path.splitting_indexes
+          param_values = param_values.dup
+          path.splitting_indexes.each{|i| param_values[i] = param_values[i].split(HttpRouter::Parts::SLASH_RX)}
+        end
+        @params = path.route.default_values ? path.route.default_values.merge(path.hashify_params(param_values)) : path.hashify_params(param_values)
+      end
+    end
+
     attr_accessor :value, :variable, :catchall
     attr_reader :linear, :lookup, :request_node, :arbitrary_node
 
@@ -28,20 +39,6 @@ class HttpRouter
       end
     end
     
-    def add_request_methods(options)
-      if !options.empty?
-        generate_request_method_tree(options)
-      elsif @request_node
-        current_node = @request_node
-        while current_node.request_method
-          current_node = (current_node.catchall ||= router.request_node)
-        end
-        [current_node]
-      else
-        [self]
-      end
-    end
- 
     def add_to_linear(val)
       create_linear
       n = if @linear.assoc(val)
@@ -78,35 +75,15 @@ class HttpRouter
       @catchall
     end
     
-    protected
-    
-    attr_reader :router
-
-    def transplant_value
-      if @value
-        target_node = @request_node
-        while target_node.request_method
-          target_node = (target_node.catchall ||= router.request_node)
-        end
-        target_node.value ||= @value
-        @value = nil
-      end
-    end
-    
-    def generate_request_method_tree(request_options)
-      raise UnsupportedRequestConditionError if (request_options.keys & RequestNode::RequestMethods).size != request_options.size
+    def add_request_methods(request_options)
+      raise UnsupportedRequestConditionError if request_options && (request_options.keys & RequestNode::RequestMethods).size != request_options.size
       current_nodes = [self]
       RequestNode::RequestMethods.each do |method|
-        if request_options.key?(method) # so, the request method we care about it ..
-          if current_nodes == [self]
-            current_nodes = [@request_node ||= router.request_node]
-          end
-          
+        if request_options && request_options.key?(method) # so, the request method we care about it ..
+          current_nodes = [@request_node ||= router.request_node] if current_nodes == [self]
           for current_node_index in (0...current_nodes.size)
             current_node = current_nodes.at(current_node_index)
-            unless current_node.request_method
-              current_node.request_method = method
-            end
+            current_node.request_method = method unless current_node.request_method
             case RequestNode::RequestMethods.index(method) <=> RequestNode::RequestMethods.index(current_node.request_method)
             when 0 #use this node
               Array(request_options[method]).each_with_index do |request_value, index|
@@ -132,14 +109,29 @@ class HttpRouter
             end
           end
           current_nodes.flatten!
-        elsif current_nodes.first.is_a?(RequestNode) && !current_nodes.first.request_method.nil?
-          current_nodes.map!{|n| n.catchall ||= router.request_node}
+        else
+          current_nodes.map!{|n| n.is_a?(RequestNode) && n.request_method == method ? (n.catchall ||= router.request_node) : n}
         end
       end
       transplant_value
       current_nodes
     end
 
+    protected
+    
+    attr_reader :router
+
+    def transplant_value
+      if @value && @request_node
+        target_node = @request_node
+        while target_node.request_method
+          target_node = (target_node.catchall ||= router.request_node)
+        end
+        target_node.value ||= @value
+        @value = nil
+      end
+    end
+    
     def escape_val(val)
       val.is_a?(Array) ? val.each{|v| HttpRouter.uri_unescape!(v)} : HttpRouter.uri_unescape!(val)
       val
@@ -180,40 +172,39 @@ class HttpRouter
 
     def process_match(node, parts, params, request, action)
       env = request.env
-      path = node.value
-      path.splitting_indexes and path.splitting_indexes.each{|i| params[i] = params[i].split(HttpRouter::Parts::SLASH_RX)}
-      params_as_hash = path.route.default_values ? path.route.default_values.merge(path.hashify_params(params)) : path.hashify_params(params)
-      response_struct = Response.new(path, params, params_as_hash)
-      previous_params = env['router.params']
-      env['router'] = router
-      env['router.params'] ||= {}
-      env['router.params'].merge!(params_as_hash)
-      env['router.response'] = response_struct
-      env['SCRIPT_NAME'] ||= ''
-      matched = if node.value.route.partially_match?
-        env['PATH_INFO'] = "#{HttpRouter::Parts::SLASH}#{parts && parts.join(HttpRouter::Parts::SLASH)}"
-        env['SCRIPT_NAME'] += request.path_info[0, request.path_info.size - env['PATH_INFO'].size]
-        true
-      elsif (parts and (action == :call_with_trailing_slash || action == :nocall_with_trailing_slash) and (router.ignore_trailing_slash? or (parts.size == 1 and parts.first == ''))) or parts.nil? || parts.empty?
-        env["PATH_INFO"] = ''
-        env["SCRIPT_NAME"] += request.path_info
-        true
-      else
-        false
-      end
-      if matched
-        case action
-        when :call, :call_with_trailing_slash
-          response = path.route.dest.call(env)
-          env['router.last_repsonse'] = response
-          if response.first != 404 and response.first != 410
-            throw :response, response
+      case action
+      when :nocall, :nocall_with_trailing_slash
+        throw :response, node.value.map{|path| Response.new(path, params)}
+      when :call, :call_with_trailing_slash
+        node.value.each do |path|
+          response_struct = Response.new(path, params)
+          previous_params = env['router.params']
+          env['router'] = router
+          env['router.params'] ||= {}
+          env['router.params'].merge!(response_struct.params)
+          env['router.response'] = response_struct
+          env['SCRIPT_NAME'] ||= ''
+          matched = if path.route.partially_match?
+            env['PATH_INFO'] = "#{HttpRouter::Parts::SLASH}#{parts && parts.join(HttpRouter::Parts::SLASH)}"
+            env['SCRIPT_NAME'] += request.path_info[0, request.path_info.size - env['PATH_INFO'].size]
+            true
+          elsif (parts and (action == :call_with_trailing_slash) and (router.ignore_trailing_slash? or (parts.size == 1 and parts.first == ''))) or parts.nil? || parts.empty?
+            env["PATH_INFO"] = ''
+            env["SCRIPT_NAME"] += request.path_info
+            true
+          else
+            false
           end
-        when :nocall, :nocall_with_trailing_slash
-          throw :response, response_struct
-        else
-          raise
-        end
+          if matched
+            response = path.route.dest.call(env)
+            env['router.last_repsonse'] = response
+            if response.first != 404 and response.first != 410
+              throw :response, response
+            end
+          end
+        end if node.value
+      else
+        raise
       end
     end
 
@@ -230,13 +221,15 @@ class HttpRouter
   class ArbitraryNode < Node
     def find_on_arbitrary(request, parts, action, params)
       next_node = @linear && !@linear.empty? && @linear.find { |(procs, node)| 
-        params_hash = node.value.hashify_params(params) || {}
-        procs.all?{|p| p.call(request, params_hash, node.value.route.dest)}
+        params_hash = node.value ? node.value.first.hashify_params(params) : {}
+        procs.all?{|p| p.call(request, params_hash)}
       }
       if next_node
         process_match(next_node.last, parts, params, request, action)
       elsif @catchall
         process_match(@catchall, parts, params, request, action)
+      elsif @value
+        process_match(self, parts, params, request, action)
       end
     end
   end
@@ -255,8 +248,8 @@ class HttpRouter
       end
       if @value
         process_match(self, parts, params, request, action)
-      else
-        find_on_parts(request, parts, action, params)
+      elsif arbitrary_node
+        arbitrary_node.find_on_arbitrary(request, parts, action, params)
       end
     end
   end

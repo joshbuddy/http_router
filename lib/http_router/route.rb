@@ -205,7 +205,12 @@ class HttpRouter
           working_set = current_node.add_request_methods(@conditions)
           working_set.map!{|node| node.add_arbitrary(@arbitrary)}
           working_set.each do |current_node|
-            current_node.value ||= path
+            case current_node.value
+            when nil
+              current_node.value = [path]
+            else
+              current_node.value << path
+            end
           end
           path.variable_names.each{|vn| router.variable_names << vn} unless path.static?
         end

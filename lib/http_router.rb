@@ -12,6 +12,7 @@ require 'http_router/optional_compiler'
 require 'http_router/parts'
 require 'http_router/version'
 require 'http_router/rack'
+require 'http_router/graph'
 
 class HttpRouter
   # Raised when a Route is not able to be generated.
@@ -47,12 +48,8 @@ class HttpRouter
     @default_app               = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
     @ignore_trailing_slash     = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash   = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
-    @request_methods_specified = Set.new
-    @routes                    = []
-    @named_routes              = {}
     @init_block                = block
     @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
-    @variable_names            = Set.new
     reset!
     if block
       instance_eval(&block)
@@ -73,8 +70,10 @@ class HttpRouter
   # Resets the router to a clean state.
   def reset!
     @root = Root.new(self)
-    @routes.clear
-    @named_routes.clear
+    @request_methods_specified = Set.new
+    @routes = []
+    @named_routes = {}
+    @variable_names = Set.new
   end
 
   # Assigns the default application.
@@ -151,7 +150,7 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-    when Symbol then @named_routes[route].url(*args)
+    when Symbol then url(@named_routes[route], *args)
     when Route  then route.url(*args)
     when nil    then @handle_unavailable_route.call(:url, *args)
     else             
@@ -160,7 +159,7 @@ class HttpRouter
 
   def url_with_params(route, *args)
     case route
-    when Symbol then @named_routes[route].url_with_params(*args)
+    when Symbol then url_with_params(@named_routes[route], *args)
     when Route  then route.url_with_params(*args)
     when nil    then @handle_unavailable_route.call(:url_with_params, *args)
     else             
