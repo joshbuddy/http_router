@@ -12,7 +12,6 @@ require 'http_router/optional_compiler'
 require 'http_router/parts'
 require 'http_router/version'
 require 'http_router/rack'
-require 'http_router/graph'
 
 class HttpRouter
   # Raised when a Route is not able to be generated.
@@ -51,10 +50,7 @@ class HttpRouter
     @init_block                = block
     @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
     reset!
-    if block
-      instance_eval(&block)
-      @routes.each {|r| r.compile}
-    end
+    instance_eval(&block) if block
   end
 
   # Ignore trailing slash feature enabled? See #initialize for details.

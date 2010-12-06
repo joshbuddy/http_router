@@ -173,8 +173,6 @@ class HttpRouter
     def process_match(node, parts, params, request, action)
       env = request.env
       case action
-      when :nocall, :nocall_with_trailing_slash
-        throw :response, node.value.map{|path| Response.new(path, params)}
       when :call, :call_with_trailing_slash
         node.value.each do |path|
           response_struct = Response.new(path, params)
@@ -203,6 +201,8 @@ class HttpRouter
             end
           end
         end if node.value
+      when :nocall, :nocall_with_trailing_slash
+        throw :response, node.value.map{|path| Response.new(path, params)}
       else
         raise
       end

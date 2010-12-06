@@ -28,7 +28,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'sinatra'
   s.add_development_dependency 'rbench'
   s.add_development_dependency 'phocus'
-  s.add_development_dependency 'rspec'
   s.add_development_dependency 'bundler',  '~> 1.0.0'
 
   if s.respond_to? :specification_version then
