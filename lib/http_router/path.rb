@@ -32,7 +32,7 @@ class HttpRouter
     end
 
     def hashify_params(params)
-      variable_names && params ? variable_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h } : {}
+      !static? && params ? variable_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h } : {}
     end
 
     def ===(other_path)
@@ -64,10 +64,7 @@ class HttpRouter
     end
 
     def variables
-      unless @variables
-        @variables = @parts.select{|p| p.is_a?(Variable)}
-      end
-      @variables
+      @variables ||= @parts.select{|p| p.is_a?(Variable)}
     end
 
     def variable_names
