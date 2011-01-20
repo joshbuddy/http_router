@@ -50,9 +50,10 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_match_path
-    r = router { add('/:test').match_path(%r{/(test123|\d+)}) }
-    assert_route r, '/test123', {:test => "test123"}
-    assert_route r, '/123', {:test => "123"}
+    r = router { add(%r{/(test123|\d+)}) }
+    assert_equal true, r.regex?
+    assert_route r, '/test123'
+    assert_route r, '/123'
     assert_route nil, '/test123andmore'
     assert_route nil, '/lesstest123'
   end

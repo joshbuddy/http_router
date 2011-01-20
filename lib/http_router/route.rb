@@ -2,20 +2,26 @@ require 'strscan'
 
 class HttpRouter
   class Route
-    attr_reader :dest, :paths, :path, :matches_with, :original_path
+    attr_reader :dest, :paths, :path, :matches_with, :original_path, :regex
     attr_accessor :trailing_slash_ignore, :partially_match, :default_values
 
     def initialize(router, path)
       @router = router
-      path[0,0] = '/' unless path[0] == ?/
-      @path = path
-      @original_path = path.dup
-      @partially_match = extract_partial_match(path)
-      @trailing_slash_ignore = extract_trailing_slash(path)
       @matches_with = {}
       @arbitrary = []
       @conditions =  {}
       @default_values = {}
+      case path
+      when Regexp
+        @regex = path
+        path = '/*'
+        match_path(@regex)
+      end
+      @path = path
+      @original_path = path.dup
+      path[0,0] = '/' unless path[0] == ?/
+      @partially_match = extract_partial_match(path)
+      @trailing_slash_ignore = extract_trailing_slash(path)
     end
 
     def method_missing(method, *args, &block)
@@ -24,6 +30,10 @@ class HttpRouter
       else
         super
       end
+    end
+
+    def regex?
+      !@regex.nil?
     end
 
     def to_s
@@ -174,7 +184,15 @@ class HttpRouter
 
     # Convenient regexp matching on an entire path. Returns +self+
     def match_path(matcher)
-      arbitrary{|env, params, dest| match = matcher.match(env.path_info); !match.nil? and match.begin(0) == 0 and match[0].size == env.path_info.size}
+      arbitrary{|env, params, dest|
+        match = matcher.match(env.path_info)
+        if !match.nil? and match.begin(0) == 0 and match[0].size == env.path_info.size
+          env['router.regex_match'] = match
+          true
+        else
+          false
+        end
+      }
     end
 
     # Adds an arbitrary proc matcher to a Route. Receives either a block, or a proc. The proc will receive a Rack::Request object, a Hash of the params, and the destination for this route. The proc must return true if the Route is matched. Returns +self+.
