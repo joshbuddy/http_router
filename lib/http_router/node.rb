@@ -202,7 +202,16 @@ class HttpRouter
           end
         end if node.value
       when :nocall, :nocall_with_trailing_slash
-        throw :response, node.value.map{|path| Response.new(path, params)}
+        responses = node.value.select do |path|
+          matched = if path.route.partially_match?
+            true
+          elsif (parts and (action == :nocall_with_trailing_slash) and (router.ignore_trailing_slash? or (parts.size == 1 and parts.first == ''))) or parts.nil? || parts.empty?
+            true
+          else
+            false
+          end
+        end
+        throw :response, responses.map{|r| Response.new(r, params)} unless responses.empty?
       else
         raise
       end

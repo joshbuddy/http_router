@@ -14,8 +14,8 @@ class TestMisc < MiniTest::Unit::TestCase
     r2.add('/test2').name(:test).to(:test2)
     assert_equal 2, r2.routes.size
 
-    assert r1.recognize(Rack::MockRequest.env_for('/test2')).nil?
-    assert !r2.recognize(Rack::MockRequest.env_for('/test2')).nil?
+    assert r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2'))).nil?
+    assert !r2.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2'))).nil?
     assert_equal r1.routes.first, r1.named_routes[:test_route]
     assert_equal r2.routes.first, r2.named_routes[:test_route]
 
