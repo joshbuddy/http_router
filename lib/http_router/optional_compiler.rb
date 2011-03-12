@@ -2,22 +2,14 @@ class HttpRouter
   class OptionalCompiler
     attr_reader :paths
     def initialize(path)
-      @start_index = 0
-      @end_index = 1
-      @paths = [""]
-      @chars = path.split('')
-      while !@chars.empty?
+      @start_index, @end_index = 0, 1
+      @paths, @chars = [""], path.split('')
+      until @chars.empty?
       case @chars.first[0]
-        when ?(
-          @chars.shift and double_paths
-        when ?)
-          @chars.shift and half_paths
+        when ?( then @chars.shift and double_paths
+        when ?) then @chars.shift and half_paths
         when ?\\ 
-          if @chars[1] == ?( || @chars[1] == ?)
-            @chars.shift 
-          else
-            add_to_current_set(@chars.shift)
-          end
+          @chars[1] == ?( || @chars[1] == ?) ? @chars.shift : add_to_current_set(@chars.shift)
           add_to_current_set(@chars.shift)
         else
           add_to_current_set(@chars.shift)
