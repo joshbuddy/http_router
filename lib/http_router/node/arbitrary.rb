@@ -1,8 +1,8 @@
 class HttpRouter
   class Node
     class Arbitrary < Node
-      def initialize(blk, param_names)
-        @blk, @param_names = blk, param_names
+      def initialize(router, blk, param_names)
+        @router, @blk, @param_names = router, blk, param_names
       end
 
       def [](request)

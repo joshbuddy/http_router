@@ -5,10 +5,8 @@ class HttpRouter
         [:host, :request_method, :scheme]
       end
 
-      def initialize
-        @linear = []
-        @catchall = nil
-        @lookup = {}
+      def initialize(router)
+        @router, @linear, @catchall, @lookup = router, [], nil, {}
       end
 
       def request_method=(meth)
@@ -16,15 +14,15 @@ class HttpRouter
       end
 
       def add_lookup(val)
-        @lookup[val] ||= Request.new
+        @lookup[val] ||= Request.new(@router)
       end
 
       def add_catchall
-        @catchall ||= Request.new
+        @catchall ||= Request.new(@router)
       end
 
       def add_linear(matcher)
-        next_node = Request.new
+        next_node = Request.new(@router)
         @linear << [matcher, next_node]
         next_node
       end
@@ -32,9 +30,7 @@ class HttpRouter
       def [](request)
         if @request_method
           val = request.rack_request.send(@request_method)
-          @linear.each { |(matcher, node)| 
-            node[request] if matcher === val
-          }
+          @linear.each { |(matcher, node)| node[request] if matcher === val }
           @lookup[val][request] if @lookup.key?(val)
           @catchall[request] if @catchall
         else

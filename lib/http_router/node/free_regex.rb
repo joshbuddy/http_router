@@ -1,8 +1,8 @@
 class HttpRouter
   class Node
     class FreeRegex < Node
-      def initialize(matcher)
-        @matcher = matcher
+      def initialize(router, matcher)
+        @router, @matcher = router, matcher
       end
 
       def [](request)

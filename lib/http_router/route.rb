@@ -17,7 +17,11 @@ class HttpRouter
         path.slice!(-1)
       end
       @paths = OptionalCompiler.new(path).paths
-      compile
+    end
+
+    def partial(match_partially = true)
+      @match_partially = match_partially
+      self
     end
 
     def match_partially?
@@ -29,8 +33,13 @@ class HttpRouter
     end
 
     def to(dest = nil, &dest2)
+      compile
       @app = dest || dest2
       self
+    end
+
+    def compiled?
+      @compiled
     end
 
     def name(n)
@@ -43,14 +52,44 @@ class HttpRouter
       ((@conditions ||= {})[:request_method] ||= []) << m; self
     end
 
+    def host(host)
+      ((@conditions ||= {})[:host] ||= []) << host; self
+    end
+
+    def scheme(scheme)
+      ((@conditions ||= {})[:scheme] ||= []) << scheme; self
+    end
+
     def matching(matchers)
       @opts.merge!(matchers)
-      url
+      self
     end
 
     def default(defaults)
       (@default_values ||= {}).merge!(defaults)
-      url
+      self
+    end
+
+    # Sets the destination of this route to redirect to an arbitrary URL.
+    def redirect(path, status = 302)
+      raise ArgumentError, "Status has to be an integer between 300 and 399" unless (300..399).include?(status)
+      to { |env|
+        params = env['router.params']
+        response = ::Rack::Response.new
+        response.redirect(eval(%|"#{path}"|), status)
+        response.finish
+      }
+      self
+    end
+
+    # Sets the destination of this route to serve static files from either a directory or a single file.
+    def static(root)
+      if File.directory?(root)
+        partial.to ::Rack::File.new(root)
+      else
+        to {|env| env['PATH_INFO'] = File.basename(root); ::Rack::File.new(File.dirname(root)).call(env) }
+      end
+      self
     end
 
     def post; with_request_method('POST'); end
@@ -58,8 +97,8 @@ class HttpRouter
     def put; with_request_method('PUT'); end
     def delete; with_request_method('DELETE'); end
 
-    def arbitrary(blk = nil, &blks)
-      (@arbitrary ||= []) << blk || blk2
+    def arbitrary(blk = nil, &blk2)
+      (@arbitrary ||= []) << (blk || blk2)
       self
     end
 
@@ -116,10 +155,12 @@ class HttpRouter
     end
 
     def to_s
-      "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect}>"
+      "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect} @arbitrary=#{@arbitrary.inspect}>"
     end
 
+    private
     def compile
+      return if @compiled
       @paths.map! do |path|
         param_names = []
         node = @router.root
@@ -165,15 +206,20 @@ class HttpRouter
             node = node.add_match(Regexp.new("#{regex}$"), capturing_indicies, priority)
           end
         end
-        if @conditions
+        nodes = if @conditions && !@conditions.empty?
           Array(@conditions[:request_method]).each {|m| @router.known_methods << m} if @conditions[:request_method]
-          node = node.add_request(@conditions)
+          node.add_request(@conditions)
+        else
+          [node]
         end
-        Array(@arbitrary).each {|a| node = node.add_arbitrary(a, param_names)} if @arbitrary
+        if @arbitrary && !@arbitrary.empty?
+          Array(@arbitrary).each{|a| nodes.map!{|n| n.add_arbitrary(a, param_names)} }
+        end
         path_obj = Path.new(self, path, param_names)
-        node.add_destination(path_obj)
+        nodes.each{|n| n.add_destination(path_obj)}
         path_obj
       end
+      @compiled = true
     end
   end
 end

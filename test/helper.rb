@@ -9,8 +9,8 @@ end
 
 class MiniTest::Unit::TestCase
 
-  def router(&blk)
-    @router ||= HttpRouter.new(&blk)
+  def router(opts = nil, &blk)
+    @router ||= HttpRouter.new(opts, &blk)
     if blk
       @router.routes.each { |route| route.default_destination if route.dest.nil? }
       @router.routes.size > 1 ? @router.routes : @router.routes.first
@@ -48,7 +48,7 @@ class MiniTest::Unit::TestCase
       route = router.add(route)
     end
     dest = "Routing to #{route.to_s}"
-    route.to{|env| Rack::Response.new(dest).finish} if route && !route.dest
+    route.to{|env| Rack::Response.new(dest).finish} if route && route.dest.nil?
     request = Rack::MockRequest.env_for(request) if request.is_a?(String)
     response = @router.call(request)
     if route

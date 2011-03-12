@@ -5,8 +5,8 @@ class HttpRouter
 
       attr_reader :matcher
 
-      def initialize(matcher, capturing_indicies, priority = 0)
-        @matcher, @capturing_indicies, @priority = matcher, capturing_indicies, priority
+      def initialize(router, matcher, capturing_indicies, priority = 0)
+        @router, @matcher, @capturing_indicies, @priority = router, matcher, capturing_indicies, priority
       end
 
       def [](request)

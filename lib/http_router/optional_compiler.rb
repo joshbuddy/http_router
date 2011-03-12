@@ -17,7 +17,8 @@ class HttpRouter
       end
       @paths
     end
-    
+
+    private
     def add_to_current_set(c)
       (@start_index...@end_index).each { |path_index| @paths[path_index] << c }
     end

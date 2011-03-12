@@ -16,8 +16,9 @@ class HttpRouter
   InvalidRouteException = Class.new(RuntimeError)
   MissingParameterException = Class.new(RuntimeError)
 
-  def initialize(&blk)
+  def initialize(opts = nil, &blk)
     reset!
+    @ignore_trailing_slash = opts && opts.key?(:ignore_trailing_slash) ? opts[:ignore_trailing_slash] : true
     @named_routes = {}
     @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
     instance_eval(&blk) if blk
@@ -31,10 +32,20 @@ class HttpRouter
       Route.new(self, path, opts)
     end
     @routes << route
-    route.to(&app) if app
+    route.to(app) if app
     route
   end
-  
+
+  def add_with_request_method(path, method, opts = {}, &app)
+    route = add(path, opts).send(method.to_sym)
+    route.to(app) if app
+    route
+  end
+
+  [:post, :get, :delete, :put].each do |rm|
+    class_eval "def #{rm}(path, opts = {}, &app); add_with_request_method(path, #{rm.inspect}, opts, &app); end", __FILE__, __LINE__
+  end
+
   def call(env, perform_call = true)
     rack_request = Rack::Request.new(env)
     request = Request.new(rack_request.path_info, rack_request, perform_call)
@@ -56,7 +67,7 @@ class HttpRouter
   end
   
   def reset!
-    @root = Node.new
+    @root = Node.new(self)
     @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }
     @routes = []
     @known_methods = Set.new
@@ -71,6 +82,10 @@ class HttpRouter
 
   def self.uri_escape!(s)
     s.to_s.gsub!(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) { "%#{$1.unpack('H2'*$1.size).join('%').upcase}" }
+  end
+
+  def ignore_trailing_slash?
+    @ignore_trailing_slash
   end
 
   def append_querystring(uri, params)
@@ -89,5 +104,3 @@ class HttpRouter
     uri
   end
 end
-
-

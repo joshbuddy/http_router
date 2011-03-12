@@ -9,7 +9,11 @@ class HttpRouter
     autoload :Arbitrary,     'http_router/node/arbitrary'
     autoload :Request,       'http_router/node/request'
 
-    attr_reader :priority
+    attr_reader :priority, :router
+
+    def initialize(router)
+      @router = router
+    end
 
     def [](request)
       destination(request, false)
@@ -54,59 +58,64 @@ class HttpRouter
     end
 
     def destination(request_obj, match_partially = true)
-      if request_obj.path.empty? or (match_partially and request_obj.path.size == 1 and request_obj.path.last == '')
+      if match_partially
         request(request_obj)
         arbitrary(request_obj)
-      end
-      @destination && @destination.each do |d| 
-        if (d.route.match_partially? && match_partially) or request_obj.path.empty? or (request_obj.path.size == 1 and request_obj.path.last == '')
-          if request_obj.perform_call
-            env = request_obj.rack_request.dup.env
-            env['router.params'] ||= {}
-            env['router.params'].merge!(Hash[d.param_names.zip(request_obj.params)])
-            matched = if d.route.match_partially?
-              env['PATH_INFO'] = "/#{request_obj.path.join('/')}"
-              env['SCRIPT_NAME'] += request_obj.rack_request.path_info[0, request_obj.rack_request.path_info.size - env['PATH_INFO'].size]
+        @destination && @destination.each do |d| 
+          if d.route.match_partially? or request_obj.path.empty? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
+            if request_obj.perform_call
+              env = request_obj.rack_request.dup.env
+              env['router.params'] ||= {}
+              env['router.params'].merge!(Hash[d.param_names.zip(request_obj.params)])
+              matched = if d.route.match_partially?
+                env['PATH_INFO'] = "/#{request_obj.path.join('/')}"
+                env['SCRIPT_NAME'] += request_obj.rack_request.path_info[0, request_obj.rack_request.path_info.size - env['PATH_INFO'].size]
+              else
+                env["PATH_INFO"] = ''
+                env["SCRIPT_NAME"] += request_obj.rack_request.path_info
+              end
+              throw :success, d.route.dest.call(env)
             else
-              env["PATH_INFO"] = ''
-              env["SCRIPT_NAME"] += request_obj.rack_request.path_info
+              throw :success, d
             end
-            throw :success, d.route.dest.call(env)
-          else
-            throw :success, d
           end
         end
       end
     end
 
     def add_variable
-      @variable ||= Variable.new
+      @variable ||= Variable.new(@router)
     end
 
     def add_glob
-      @glob ||= Glob.new
+      @glob ||= Glob.new(@router)
     end
-  
+
     def add_request(opts)
-      @request ||= Request.new
-      next_request = @request
+      @request ||= Request.new(@router)
+      next_requests = [@request]
       Request.request_methods.each do |method|
-        next_request.request_method = method
-        next_request = case opts[method]
-        when nil
-          next_request.add_catchall
-        when String
-          next_request.add_lookup(opts[method])
-        when Regexp
-          next_request.add_linear(opts[method])
+        next_requests.map! do |next_request|
+          next_request.request_method = method
+          (opts[method].nil? ? [nil] : Array(opts[method])).map do |request_matcher|
+            case request_matcher
+            when nil
+              next_request.add_catchall
+            when String
+              next_request.add_lookup(request_matcher)
+            when Regexp
+              next_request.add_linear(request_matcher)
+            end
+          end
         end
+        next_requests.flatten!
       end
-      next_request
+      next_requests
     end
-  
+
     def add_arbitrary(blk, param_names)
       @arbitrary ||= []
-      @arbitrary << Arbitrary.new(blk, param_names)
+      @arbitrary << Arbitrary.new(@router, blk, param_names)
       @arbitrary.last
     end
   
@@ -115,24 +124,24 @@ class HttpRouter
       if priority != 0
         @linear.each_with_index { |n, i|
           if priority > (n.priority || 0)
-            @linear[i, 0] = Regex.new(regexp, matching_indicies, priority)
+            @linear[i, 0] = Regex.new(@router, regexp, matching_indicies, priority)
             return @linear[i]
           end
         }
       end
-      @linear << Regex.new(regexp, matching_indicies, priority)
+      @linear << Regex.new(@router, regexp, matching_indicies, priority)
       @linear.last
     end
 
     def add_spanning_match(regexp, matching_indicies = [0])
       @linear ||= []
-      @linear << SpanningRegex.new(regexp, matching_indicies)
+      @linear << SpanningRegex.new(@router, regexp, matching_indicies)
       @linear.last
     end
   
     def add_free_match(regexp)
       @linear ||= []
-      @linear << FreeRegex.new(regexp)
+      @linear << FreeRegex.new(@router, regexp)
       @linear.last
     end
   
@@ -143,7 +152,7 @@ class HttpRouter
   
     def add_lookup(part)
       @lookup ||= {}
-      @lookup[part] ||= Node.new
+      @lookup[part] ||= Node.new(@router)
     end
 
     def join_whole_path(request)

@@ -29,13 +29,6 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route static,  '/foo'
   end
 
-  def test_anonymous_variable
-    assert_route '/foo/:',  '/foo/id', {:'$1' => 'id'}
-    assert_route 'foo/:/:', '/foo/id/what', {:'$1' => 'id', :'$2' => 'what'}
-    assert_route 'foo/*/test', '/foo/id1/id2/test', {:'$1' => ['id1', 'id2']}
-    assert_route '/foo/*/what/:', '/foo/id1/id2/what/more', {:'$1' => ['id1', 'id2'], :'$2' => 'more'}
-  end
-
   def test_variable_mixed_with_static
     static, dynamic = router {
       add("/foo/foo")
@@ -50,8 +43,7 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_match_path
-    r = router { add(%r{/(test123|\d+)}) }
-    assert_equal true, r.regex?
+    r = router { add(%r{^/(test123|\d+)$}) }
     assert_route r, '/test123'
     assert_route r, '/123'
     assert_route nil, '/test123andmore'

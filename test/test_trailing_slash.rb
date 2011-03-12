@@ -3,10 +3,6 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route router.add('/test'), '/test/'
   end
 
-  def test_ignore_trailing_slash_disabled
-    assert_route router(:ignore_trailing_slash => false).add('/test/?'), '/test/'
-  end
-
   def test_ignore_trailing_slash_enabled
     router(:ignore_trailing_slash => false).add('/test/?')
     assert_route nil, '/test/'
