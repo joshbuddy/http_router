@@ -46,6 +46,10 @@ class HttpRouter
     class_eval "def #{rm}(path, opts = {}, &app); add_with_request_method(path, #{rm.inspect}, opts, &app); end", __FILE__, __LINE__
   end
 
+  def recognize(env)
+    call(env, false)
+  end
+
   def call(env, perform_call = true)
     rack_request = Rack::Request.new(env)
     request = Request.new(rack_request.path_info, rack_request, perform_call)

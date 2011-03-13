@@ -48,7 +48,7 @@ class HttpRouter
       self
     end
 
-    def with_request_method(m)
+    def request_method(m)
       ((@conditions ||= {})[:request_method] ||= []) << m; self
     end
 
@@ -92,10 +92,10 @@ class HttpRouter
       self
     end
 
-    def post; with_request_method('POST'); end
-    def get; with_request_method('GET'); end
-    def put; with_request_method('PUT'); end
-    def delete; with_request_method('DELETE'); end
+    def post;   request_method('POST');   end
+    def get;    request_method('GET');    end
+    def put;    request_method('PUT');    end
+    def delete; request_method('DELETE'); end
 
     def arbitrary(blk = nil, &blk2)
       (@arbitrary ||= []) << (blk || blk2)
