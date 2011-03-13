@@ -2,6 +2,7 @@ require 'set'
 require 'rack'
 require 'http_router/node'
 require 'http_router/request'
+require 'http_router/response'
 require 'http_router/route'
 require 'http_router/path'
 require 'http_router/regex_route'
@@ -13,13 +14,12 @@ class HttpRouter
   attr_accessor :default_app
 
   UngeneratableRouteException = Class.new(RuntimeError)
-  InvalidRouteException = Class.new(RuntimeError)
-  MissingParameterException = Class.new(RuntimeError)
+  InvalidRouteException       = Class.new(RuntimeError)
+  MissingParameterException   = Class.new(RuntimeError)
 
   def initialize(opts = nil, &blk)
     reset!
     @ignore_trailing_slash = opts && opts.key?(:ignore_trailing_slash) ? opts[:ignore_trailing_slash] : true
-    @named_routes = {}
     @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
     instance_eval(&blk) if blk
   end
@@ -42,7 +42,7 @@ class HttpRouter
     route
   end
 
-  [:post, :get, :delete, :put].each do |rm|
+  [:post, :get, :delete, :put, :head].each do |rm|
     class_eval "def #{rm}(path, opts = {}, &app); add_with_request_method(path, #{rm.inspect}, opts, &app); end", __FILE__, __LINE__
   end
 
@@ -56,15 +56,18 @@ class HttpRouter
     response = catch(:success) {
       @root[request]
     }
-    if response || !perform_call
-      response
-    elsif env['router.request_miss']
+    response = request.matched_paths if !perform_call && !request.matched_paths.empty?
+    if !response && env['router.request_miss']
       supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
-        test_env = env.clone
-        test_env['REQUEST_METHOD'] = m
-        call(test_env, false).is_a?(Path)
+        test_env = Rack::Request.new(rack_request.env.clone)
+        test_env.env['REQUEST_METHOD'] = m
+        request = Request.new(test_env.path_info, Rack::Request.new(test_env), false)
+        @root[request]
+        request.matched_paths
       end
       [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+    elsif response
+      response
     else
       @default_app.call(env)
     end
@@ -74,6 +77,7 @@ class HttpRouter
     @root = Node.new(self)
     @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }
     @routes = []
+    @named_routes = {}
     @known_methods = Set.new
   end
 
@@ -82,10 +86,6 @@ class HttpRouter
     when Symbol then url(@named_routes[route], *args)
     when Route  then route.url(*args)
     end
-  end
-
-  def self.uri_escape!(s)
-    s.to_s.gsub!(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) { "%#{$1.unpack('H2'*$1.size).join('%').upcase}" }
   end
 
   def ignore_trailing_slash?

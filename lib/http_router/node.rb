@@ -58,9 +58,9 @@ class HttpRouter
     end
 
     def destination(request_obj, match_partially = true)
-      if match_partially
-        request(request_obj)
-        arbitrary(request_obj)
+      request(request_obj)
+      arbitrary(request_obj)
+      if match_partially or request_obj.path.empty?
         @destination && @destination.each do |d| 
           if d.route.match_partially? or request_obj.path.empty? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
             if request_obj.perform_call
@@ -76,7 +76,7 @@ class HttpRouter
               end
               throw :success, d.route.dest.call(env)
             else
-              throw :success, d
+              (request_obj.matched_paths ||= []) << Response.new(request_obj, d)
             end
           end
         end

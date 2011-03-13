@@ -1,8 +1,9 @@
 class HttpRouter
   class Request
     attr_reader :extra_env, :perform_call
-    attr_accessor :path, :params, :rack_request
+    attr_accessor :path, :params, :rack_request, :matched_paths
     def initialize(path, rack_request, perform_call)
+      @matched_paths = []
       @path = (path[0] == ?/ ? path[1, path.size] : path).split(/\//)
       @path << '' if path.size > 1 && path[-1] == ?/
       @rack_request, @perform_call = rack_request, perform_call
@@ -18,6 +19,7 @@ class HttpRouter
       dup_obj = super
       dup_obj.path = path.dup
       dup_obj.params = params.dup
+      dup_obj.matched_paths = matched_paths
       dup_obj
     end
   end

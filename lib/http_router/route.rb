@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :matches_with
+    attr_reader :default_values, :matches_with, :router, :path
 
     def initialize(router, path, opts = {})
       @router = router
@@ -19,6 +19,10 @@ class HttpRouter
       @paths = OptionalCompiler.new(path).paths
     end
 
+    def as_options
+      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name, :partial => @partially_match, :arbitrary => @arbitrary}
+    end
+
     def partial(match_partially = true)
       @match_partially = match_partially
       self
@@ -32,9 +36,13 @@ class HttpRouter
       @app
     end
 
+    def regex?
+      false
+    end
+
     def to(dest = nil, &dest2)
-      compile
       @app = dest || dest2
+      compile
       self
     end
 
@@ -96,6 +104,7 @@ class HttpRouter
     def get;    request_method('GET');    end
     def put;    request_method('PUT');    end
     def delete; request_method('DELETE'); end
+    def head;   request_method('HEAD');   end
 
     def arbitrary(blk = nil, &blk2)
       (@arbitrary ||= []) << (blk || blk2)

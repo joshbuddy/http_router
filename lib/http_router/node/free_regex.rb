@@ -9,7 +9,7 @@ class HttpRouter
         whole_path = "/#{join_whole_path(request)}"
         if match = @matcher.match(whole_path)
           request = request.clone
-          request.extra_env['router.match'] = match
+          request.extra_env['router.regex_match'] = match
           destination(request)
         end
       end

@@ -10,5 +10,8 @@ class HttpRouter
       true
     end
 
+    def regex?
+      true
+    end
   end
 end
