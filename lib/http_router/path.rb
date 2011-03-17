@@ -45,6 +45,10 @@ class HttpRouter
       [path, options]
     end
 
+    def original_path
+      @path
+    end
+
     private
     def raw_url(args,options)
       raise UngeneratableRouteException

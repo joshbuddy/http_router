@@ -7,8 +7,9 @@ class HttpRouter
 
       def [](request)
         request = request.clone
-        params = Hash[@param_names.zip(request.params)]
-        @blk.call(request.rack_request, params) and super(request)
+        request.continue = proc { |state| destination(request) if state }
+        params = @param_names.nil? ? {} : Hash[@param_names.zip(request.params)]
+        @blk.call(request, params)
       end
     end
   end

@@ -61,12 +61,12 @@ class HttpRouter
       request(request_obj)
       arbitrary(request_obj)
       if match_partially or request_obj.path.empty?
-        @destination && @destination.each do |d| 
+        @destination && @destination.each do |d|
           if d.route.match_partially? or request_obj.path.empty? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
             if request_obj.perform_call
               env = request_obj.rack_request.dup.env
               env['router.params'] ||= {}
-              env['router.params'].merge!(Hash[d.param_names.zip(request_obj.params)])
+              env['router.params'].merge!(d.hashify_params(request_obj.params))
               matched = if d.route.match_partially?
                 env['PATH_INFO'] = "/#{request_obj.path.join('/')}"
                 env['SCRIPT_NAME'] += request_obj.rack_request.path_info[0, request_obj.rack_request.path_info.size - env['PATH_INFO'].size]
@@ -76,7 +76,7 @@ class HttpRouter
               end
               throw :success, d.route.dest.call(env)
             else
-              (request_obj.matched_paths ||= []) << Response.new(request_obj, d)
+              throw :success, Response.new(request_obj, d)
             end
           end
         end

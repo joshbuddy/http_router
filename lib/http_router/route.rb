@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :matches_with, :router, :path
+    attr_reader :default_values, :matches_with, :router, :path, :conditions
 
     def initialize(router, path, opts = {})
       @router = router
@@ -68,6 +68,10 @@ class HttpRouter
       ((@conditions ||= {})[:scheme] ||= []) << scheme; self
     end
 
+    def user_agent(user_agent)
+      ((@conditions ||= {})[:user_agent] ||= []) << user_agent; self
+    end
+
     def matching(matchers)
       @opts.merge!(matchers)
       self
@@ -107,6 +111,12 @@ class HttpRouter
     def head;   request_method('HEAD');   end
 
     def arbitrary(blk = nil, &blk2)
+      arbitrary_with_continue { |req, params|
+        req.continue[(blk || blk2)[req, params]]
+      }
+    end
+
+    def arbitrary_with_continue(blk = nil, &blk2)
       (@arbitrary ||= []) << (blk || blk2)
       self
     end
@@ -215,20 +225,21 @@ class HttpRouter
             node = node.add_match(Regexp.new("#{regex}$"), capturing_indicies, priority)
           end
         end
-        nodes = if @conditions && !@conditions.empty?
-          Array(@conditions[:request_method]).each {|m| @router.known_methods << m} if @conditions[:request_method]
-          node.add_request(@conditions)
-        else
-          [node]
-        end
-        if @arbitrary && !@arbitrary.empty?
-          Array(@arbitrary).each{|a| nodes.map!{|n| n.add_arbitrary(a, param_names)} }
-        end
-        path_obj = Path.new(self, path, param_names)
-        nodes.each{|n| n.add_destination(path_obj)}
-        path_obj
+        add_non_path_to_tree(node, path, param_names)
       end
       @compiled = true
+    end
+
+    def add_non_path_to_tree(node, path, names)
+      nodes = if @conditions && !@conditions.empty?
+        node.add_request(@conditions)
+      else
+        [node]
+      end
+      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, names)} } if @arbitrary
+      path_obj = Path.new(self, path, names)
+      nodes.each{|n| n.add_destination(path_obj)}
+      path_obj
     end
   end
 end

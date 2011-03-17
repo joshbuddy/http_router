@@ -20,7 +20,6 @@ class HttpRouter
   def initialize(opts = nil, &blk)
     reset!
     @ignore_trailing_slash = opts && opts.key?(:ignore_trailing_slash) ? opts[:ignore_trailing_slash] : true
-    @handle_unavailable_route  = Proc.new{ raise UngeneratableRouteException }
     instance_eval(&blk) if blk
   end
 
@@ -53,19 +52,15 @@ class HttpRouter
   def call(env, perform_call = true)
     rack_request = Rack::Request.new(env)
     request = Request.new(rack_request.path_info, rack_request, perform_call)
-    response = catch(:success) {
-      @root[request]
-    }
-    response = request.matched_paths if !perform_call && !request.matched_paths.empty?
-    if !response && env['router.request_miss']
+    response = catch(:success) { @root[request] }
+    if !response
       supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
         test_env = Rack::Request.new(rack_request.env.clone)
         test_env.env['REQUEST_METHOD'] = m
-        request = Request.new(test_env.path_info, Rack::Request.new(test_env), false)
-        @root[request]
-        request.matched_paths
+        test_request = Request.new(test_env.path_info, test_env, false)
+        catch(:success) { @root[test_request] }
       end
-      [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+      supported_methods.empty? ? @default_app.call(env) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
     elsif response
       response
     else
@@ -78,13 +73,14 @@ class HttpRouter
     @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }
     @routes = []
     @named_routes = {}
-    @known_methods = Set.new
+    @known_methods = ['GET', "POST", "PUT", "DELETE"]
   end
 
   def url(route, *args)
     case route
     when Symbol then url(@named_routes[route], *args)
     when Route  then route.url(*args)
+    else raise UngeneratableRouteException
     end
   end
 
