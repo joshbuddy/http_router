@@ -62,7 +62,7 @@ class HttpRouter
       arbitrary(request_obj)
       if match_partially or request_obj.path.empty?
         @destination && @destination.each do |d|
-          if d.route.match_partially? or request_obj.path.empty? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
+          if request_obj.path.empty? or d.route.match_partially? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
             if request_obj.perform_call
               env = request_obj.rack_request.dup.env
               env['router.params'] ||= {}
