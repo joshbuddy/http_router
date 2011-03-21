@@ -95,16 +95,30 @@ class HttpRouter
       @request ||= Request.new(@router)
       next_requests = [@request]
       Request.request_methods.each do |method|
+        method_index = Request.request_methods.index(method)
         next_requests.map! do |next_request|
-          next_request.request_method = method
-          (opts[method].nil? ? [nil] : Array(opts[method])).map do |request_matcher|
-            case request_matcher
-            when nil
-              next_request.add_catchall
-            when String
-              next_request.add_lookup(request_matcher)
-            when Regexp
-              next_request.add_linear(request_matcher)
+          if opts[method].nil? && next_request.request_method.nil?
+            next_request
+          else
+            next_request_index = next_request.request_method && Request.request_methods.index(next_request.request_method)
+            rank = next_request_index ? method_index <=> next_request_index : 0
+            case rank
+            when 0
+              next_request.request_method = method
+              (opts[method].nil? ? [nil] : Array(opts[method])).map do |request_matcher|
+                case request_matcher
+                when nil
+                  next_request.add_catchall
+                when String
+                  next_request.add_lookup(request_matcher)
+                when Regexp
+                  next_request.add_linear(request_matcher)
+                end
+              end
+            when -1
+              next_request
+            when 1
+              next_request.transform_to(method)
             end
           end
         end
