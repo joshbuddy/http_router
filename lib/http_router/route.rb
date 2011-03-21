@@ -236,7 +236,7 @@ class HttpRouter
       else
         [node]
       end
-      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, names)} } if @arbitrary
+      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, @match_partially, names)} } if @arbitrary
       path_obj = Path.new(self, path, names)
       nodes.each{|n| n.add_destination(path_obj)}
       path_obj

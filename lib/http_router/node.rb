@@ -127,9 +127,9 @@ class HttpRouter
       next_requests
     end
 
-    def add_arbitrary(blk, param_names)
+    def add_arbitrary(blk, allow_partial, param_names)
       @arbitrary ||= []
-      @arbitrary << Arbitrary.new(@router, blk, param_names)
+      @arbitrary << Arbitrary.new(@router, allow_partial, blk, param_names)
       @arbitrary.last
     end
   

@@ -57,6 +57,7 @@ class HttpRouter
       supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
         test_env = Rack::Request.new(rack_request.env.clone)
         test_env.env['REQUEST_METHOD'] = m
+        test_env.env['HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
         test_request = Request.new(test_env.path_info, test_env, false)
         catch(:success) { @root[test_request] }
       end

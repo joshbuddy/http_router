@@ -49,13 +49,11 @@ class HttpRouter
       end
 
       def [](request)
-        matched = false
         if @request_method
           val = request.rack_request.send(@request_method.to_sym)
           @linear.each { |(matcher, node)| node[request] if matcher === val }
           @lookup[val][request] if @lookup.key?(val)
           @catchall[request] if @catchall
-          matched = @lookup.key?(val) || !@catchall.nil?
         else
           super(request)
         end
