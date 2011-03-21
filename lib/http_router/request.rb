@@ -1,6 +1,5 @@
 class HttpRouter
   class Request
-    attr_reader :perform_call
     attr_accessor :path, :params, :rack_request, :extra_env, :continue
     alias_method :rack, :rack_request
     def initialize(path, rack_request, perform_call)
@@ -9,6 +8,14 @@ class HttpRouter
       @path << '' if path.size > 1 && path[-1] == ?/
       @extra_env = {}
       @params = []
+    end
+
+    def perform_call
+      @perform_call == true
+    end
+
+    def testing_405?
+      @perform_call == 405
     end
 
     def to_s
