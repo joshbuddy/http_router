@@ -92,6 +92,10 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route '/test/*variable.:format', 'test/one/two/three.html', {:variable => ['one', 'two', 'three'], :format => 'html'}
   end
 
+  def test_glob_with_optional_format
+    assert_route '/test/*variable(.:format)', 'test/one/two/three.html', {:variable => ['one', 'two', 'three'], :format => 'html'}
+  end
+
   def test_glob_with_literal
     assert_route '/test/*variable.html', 'test/one/two/three.html', {:variable => ['one', 'two', 'three']}
   end
