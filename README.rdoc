@@ -8,6 +8,7 @@
 * Partial matches.
 * Supports interstitial variables (e.g. /my-:variable-brings.all.the.boys/yard) and unnamed variable /one/:/two
 * Very fast and small code base (~1,000 loc).
+* Sinatra via https://github.com/joshbuddy/http_router_sinatra
 
 == Usage
 
