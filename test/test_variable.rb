@@ -120,6 +120,7 @@ class TestVariable < MiniTest::Unit::TestCase
     def test_match_path_with_groups
       r = router { add(%r{/(?<year>\\d{4})/(?<month>\\d{2})/(?<day>\\d{2})/?}) }
       assert_route r, '/1234/23/56', {:year => '1234', :month => '23', :day => '56'}
-    end"
+    end
+    "
   end
 end
