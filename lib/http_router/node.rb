@@ -133,23 +133,25 @@ class HttpRouter
       @arbitrary.last
     end
 
-    def add_match(regexp, matching_indicies = [0], priority = 0)
+    def add_match(regexp, matching_indicies = [0], priority = 0, splitting_indicies = nil)
+      add_prioritized_match(Regex.new(@router, regexp, matching_indicies, priority, splitting_indicies))
+    end
+
+    def add_spanning_match(regexp, matching_indicies = [0], priority = 0, splitting_indicies = nil)
+      add_prioritized_match(SpanningRegex.new(@router, regexp, matching_indicies, priority, splitting_indicies))
+    end
+
+    def add_prioritized_match(match)
       @linear ||= []
-      if priority != 0
+      if match.priority != 0
         @linear.each_with_index { |n, i|
-          if priority > (n.priority || 0)
-            @linear[i, 0] = Regex.new(@router, regexp, matching_indicies, priority)
+          if match.priority > (n.priority || 0)
+            @linear[i, 0] = match
             return @linear[i]
           end
         }
       end
-      @linear << Regex.new(@router, regexp, matching_indicies, priority)
-      @linear.last
-    end
-
-    def add_spanning_match(regexp, matching_indicies = [0])
-      @linear ||= []
-      @linear << SpanningRegex.new(@router, regexp, matching_indicies)
+      @linear << match
       @linear.last
     end
 

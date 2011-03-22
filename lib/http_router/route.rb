@@ -208,14 +208,26 @@ class HttpRouter
               node.add_lookup(parts[0])
             end
           else
+            capturing_indicies = []
+            splitting_indicies = []
             captures = 0
             priority = 0
+            spans = false
             regex = parts.inject('') do |reg, part|
               reg << case part[0]
               when ?\\
                 Regexp.quote(part[1].chr)
               when ?:
                 captures += 1
+                capturing_indicies << captures
+                name = part[1, part.size].to_sym
+                param_names << name
+                matches_with[name] = @opts[name]
+                "(#{(@opts[name] || '[^/]*?')})"
+              when ?*
+                spans = true
+                captures += 1
+                splitting_indicies << captures
                 name = part[1, part.size].to_sym
                 param_names << name
                 matches_with[name] = @opts[name]
@@ -225,9 +237,8 @@ class HttpRouter
                 Regexp.quote(part)
               end
             end
-            capturing_indicies = []
-            captures.times {|i| capturing_indicies << i + 1}
-            node = node.add_match(Regexp.new("#{regex}$"), capturing_indicies, priority)
+            node = spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, priority, splitting_indicies) :
+              node.add_match(Regexp.new("#{regex}$"), capturing_indicies, priority, splitting_indicies)
           end
         end
         add_non_path_to_tree(node, path, param_names)
