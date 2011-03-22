@@ -125,7 +125,7 @@ class HttpRouter
 
     def url(*args)
       result, extra_params = url_with_params(*args)
-      @router.append_querystring(result, extra_params)
+      append_querystring(result, extra_params)
     end
 
     def clone(new_router)
@@ -261,6 +261,22 @@ class HttpRouter
         dest.url_mount = urlmount
       end
       path_obj
+    end
+
+    def append_querystring(uri, params)
+      if params && !params.empty?
+        uri_size = uri.size
+        params.each do |k,v|
+          case v
+          when Array
+            v.each { |v_part| uri << '&' << ::Rack::Utils.escape(k.to_s) << '%5B%5D=' << ::Rack::Utils.escape(v_part.to_s) }
+          else
+            uri << '&' << ::Rack::Utils.escape(k.to_s) << '=' << ::Rack::Utils.escape(v.to_s)
+          end
+        end
+        uri[uri_size] = ??
+      end
+      uri
     end
   end
 end

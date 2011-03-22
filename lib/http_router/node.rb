@@ -141,20 +141,6 @@ class HttpRouter
       add_prioritized_match(SpanningRegex.new(@router, regexp, matching_indicies, priority, splitting_indicies))
     end
 
-    def add_prioritized_match(match)
-      @linear ||= []
-      if match.priority != 0
-        @linear.each_with_index { |n, i|
-          if match.priority > (n.priority || 0)
-            @linear[i, 0] = match
-            return @linear[i]
-          end
-        }
-      end
-      @linear << match
-      @linear.last
-    end
-
     def add_free_match(regexp)
       @linear ||= []
       @linear << FreeRegex.new(@router, regexp)
@@ -175,5 +161,19 @@ class HttpRouter
       request.path.join('/')
     end
 
+    private
+    def add_prioritized_match(match)
+      @linear ||= []
+      if match.priority != 0
+        @linear.each_with_index { |n, i|
+          if match.priority > (n.priority || 0)
+            @linear[i, 0] = match
+            return @linear[i]
+          end
+        }
+      end
+      @linear << match
+      @linear.last
+    end
   end
 end

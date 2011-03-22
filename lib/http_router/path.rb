@@ -2,7 +2,7 @@ class HttpRouter
   class Path
     attr_reader :route, :param_names
     def initialize(route, path, param_names = [])
-      @route, @path, @param_names, @static = route, path, param_names, param_names.empty?
+      @route, @path, @param_names, @dynamic = route, path, param_names, !param_names.empty?
       duplicate_param_names = param_names.dup.uniq!
       raise AmbiguousVariableException, "You have duplicate variable name present: #{duplicate_param_names.join(', ')}" if duplicate_param_names
       if path.respond_to?(:split)
@@ -34,7 +34,7 @@ class HttpRouter
     end
 
     def hashify_params(params)
-      !@static && params ? param_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h } : {}
+      @dynamic && params ? param_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h } : {}
     end
 
     def url(args, options)
@@ -50,7 +50,7 @@ class HttpRouter
     end
 
     private
-    def raw_url(args,options)
+    def raw_url(args, options)
       raise UngeneratableRouteException
     end
 

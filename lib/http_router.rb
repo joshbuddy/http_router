@@ -41,15 +41,11 @@ class HttpRouter
     @routes << route
   end
 
-  def add_with_request_method(path, method, opts = {}, &app)
-    route = add(path, opts).send(method.to_sym)
-    route.to(app) if app
-    route
-  end
-
-  [:post, :get, :delete, :put, :head].each do |rm|
-    class_eval "def #{rm}(path, opts = {}, &app); add_with_request_method(path, #{rm.inspect}, opts, &app); end", __FILE__, __LINE__
-  end
+  def post(path, opts = {}, &app);   add_with_request_method(path, :post, opts, &app);   end
+  def get(path, opts = {}, &app);    add_with_request_method(path, :get, opts, &app);    end
+  def head(path, opts = {}, &app);   add_with_request_method(path, :head, opts, &app);   end
+  def delete(path, opts = {}, &app); add_with_request_method(path, :delete, opts, &app); end
+  def put(path, opts = {}, &app);    add_with_request_method(path, :put, opts, &app);    end
 
   def recognize(env)
     call(env, false)
@@ -85,7 +81,7 @@ class HttpRouter
 
   def url(route, *args)
     case route
-    when Symbol then url(@named_routes[route], *args)
+    when Symbol then @named_routes.key?(route) ? @named_routes[route].url(*args) : raise(UngeneratableRouteException)
     when Route  then route.url(*args)
     else raise UngeneratableRouteException
     end
@@ -93,22 +89,6 @@ class HttpRouter
 
   def ignore_trailing_slash?
     @ignore_trailing_slash
-  end
-
-  def append_querystring(uri, params)
-    if params && !params.empty?
-      uri_size = uri.size
-      params.each do |k,v|
-        case v
-        when Array
-          v.each { |v_part| uri << '&' << ::Rack::Utils.escape(k.to_s) << '%5B%5D=' << ::Rack::Utils.escape(v_part.to_s) }
-        else
-          uri << '&' << ::Rack::Utils.escape(k.to_s) << '=' << ::Rack::Utils.escape(v.to_s)
-        end
-      end
-      uri[uri_size] = ??
-    end
-    uri
   end
 
   # Creates a deep-copy of the router.
@@ -125,5 +105,12 @@ class HttpRouter
       end
     end
     cloned_router
+  end
+
+  private
+  def add_with_request_method(path, method, opts = {}, &app)
+    route = add(path, opts).send(method.to_sym)
+    route.to(app) if app
+    route
   end
 end
