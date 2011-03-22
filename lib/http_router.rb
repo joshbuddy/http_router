@@ -11,15 +11,17 @@ require 'http_router/optional_compiler'
 class HttpRouter
   
   attr_reader :root, :routes, :known_methods, :named_routes
-  attr_accessor :default_app
+  attr_accessor :default_app, :url_mount
 
   UngeneratableRouteException = Class.new(RuntimeError)
   InvalidRouteException       = Class.new(RuntimeError)
   MissingParameterException   = Class.new(RuntimeError)
 
-  def initialize(opts = nil, &blk)
+  def initialize(options = nil, &blk)
     reset!
-    @ignore_trailing_slash = opts && opts.key?(:ignore_trailing_slash) ? opts[:ignore_trailing_slash] : true
+    @options = options
+    @default_app = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
+    @ignore_trailing_slash = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     instance_eval(&blk) if blk
   end
 
@@ -30,9 +32,13 @@ class HttpRouter
     else
       Route.new(self, path, opts)
     end
-    @routes << route
+    add_route(route)
     route.to(app) if app
     route
+  end
+
+  def add_route(route)
+    @routes << route
   end
 
   def add_with_request_method(path, method, opts = {}, &app)
@@ -103,5 +109,21 @@ class HttpRouter
       uri[uri_size] = ??
     end
     uri
+  end
+
+  # Creates a deep-copy of the router.
+  def clone(klass = self.class)
+    cloned_router = klass.new(@options)
+    @routes.each do |route|
+      new_route = route.clone(cloned_router)
+      cloned_router.add_route(new_route)
+      new_route.name(route.named) if route.named
+      begin
+        new_route.to route.dest.clone
+      rescue
+        new_route.to route.dest
+      end
+    end
+    cloned_router
   end
 end

@@ -7,8 +7,8 @@ Gem::Specification.new do |s|
   s.version = HttpRouter::VERSION
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Joshua Hull"]
-  s.summary = "A kick-ass HTTP router for use in Rack & Sinatra"
-  s.description = "This library allows you to recognize and build URLs in a Rack application. As well it contains an interface for use within Sinatra."
+  s.summary = "A kick-ass HTTP router for use in Rack"
+  s.description = "This library allows you to recognize and build URLs in a Rack application."
   s.email = %q{joshbuddy@gmail.com}
   s.extra_rdoc_files = ['README.rdoc']
   s.files = `git ls-files`.split("\n")

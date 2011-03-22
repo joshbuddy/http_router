@@ -126,6 +126,10 @@ class HttpRouter
       @router.append_querystring(result, extra_params)
     end
 
+    def clone(new_router)
+      Route.new(new_router, @original_path.dup, as_options)
+    end
+
     def url_with_params(*args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options = options.nil? ? default_values.dup : default_values.merge(options) if default_values
@@ -137,8 +141,8 @@ class HttpRouter
       end
       raise UngeneratableRouteException unless path
       result, params = path.url(args, options)
-      #mount_point = router.url_mount && router.url_mount.url(options)
-      #mount_point ? [File.join(mount_point, result), params] : [result, params]
+      mount_point = router.url_mount && router.url_mount.url(options)
+      mount_point ? [File.join(mount_point, result), params] : [result, params]
       [result, params]
     end
 
