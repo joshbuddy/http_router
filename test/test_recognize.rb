@@ -40,7 +40,7 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_body '/optional', router.call(Rack::MockRequest.env_for('/test/optional'))
     assert_body '/',         router.call(Rack::MockRequest.env_for('/test'))
   end
-  
+
   def test_partial_root
     router.add("/*").to { |env| Rack::Response.new(env['PATH_INFO']).finish }
     assert_body '/optional', router.call(Rack::MockRequest.env_for('/optional'))

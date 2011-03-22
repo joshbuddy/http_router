@@ -29,7 +29,7 @@ class MiniTest::Unit::TestCase
     response.last.each {|p| body << p}
     assert_equal expect, body
   end
-  
+
   def assert_header(header, response)
     response = Rack::MockRequest.env_for(response) if response.is_a?(String)
     response = router.call(response) if response.is_a?(Hash)
@@ -64,7 +64,7 @@ class MiniTest::Unit::TestCase
       assert_equal 404, response.first
     end
   end
-  
+
   def assert_generate(path, route, *args)
     if route.is_a?(String)
       router.reset!

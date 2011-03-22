@@ -19,12 +19,12 @@ class TestGenerate < MiniTest::Unit::TestCase
     assert_generate '/test', '/:var', :var => 'test'
     assert_generate '/test', '/:var', 'test'
   end
-  
+
   def test_array_with_extras
     assert_generate '/test?query=string', '/:var', :var => 'test', :query => 'string'
     assert_generate '/test?query=string', '/:var', 'test', :query => 'string'
   end
-  
+
   def test_multiple_dynamics
     assert_generate '/one/two', "/:var/:baz", :var => 'one', :baz => 'two'
     assert_generate '/one/two', "/:var/:baz", 'one', 'two'
@@ -60,7 +60,7 @@ class TestGenerate < MiniTest::Unit::TestCase
     assert_generate '/var/fooz', "/:var1(/:var2)", :var1 => 'var', :var2 => 'fooz'
     assert_raises(HttpRouter::UngeneratableRouteException) { router.url(router.add("/:var1(/:var2)").to(:test), :var2 => 'fooz') }
   end
-    
+
   def test_optionals_with_format
     assert_generate '/var',           "/:var1(/:var2.:format)", 'var'
     assert_generate '/var/fooz.html', "/:var1(/:var2.:format)", 'var', 'fooz', 'html'

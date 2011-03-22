@@ -1,5 +1,5 @@
 class TestRouteExtensions < MiniTest::Unit::TestCase
-  
+
   def test_redirect
     router.get("/index.html").redirect("/")
     response = router.call(Rack::MockRequest.env_for("/index.html"))

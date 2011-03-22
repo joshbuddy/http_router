@@ -28,19 +28,19 @@ RBench.run(TIMES) do
   report "4 levels, static" do
     u.call(simple2_env).first == 200 or raise
   end
-  
+
   report "8 levels, static" do
     u.call(simple3_env).first == 200 or raise
   end
-  
+
   report "4 levels, 1 dynamic" do
     u.call(simple_and_dynamic_env).first == 200 or raise
   end
-  
+
   report "8 levels, 3 dynamic" do
     u.call(simple_and_dynamic_env1).first == 200 or raise
   end
-  
+
   report "4 levels, 1 greedy" do
     u.call(simple_and_dynamic_env2).first == 200 or raise
   end

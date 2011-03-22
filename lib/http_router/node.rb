@@ -29,26 +29,26 @@ class HttpRouter
     def linear(request)
       @linear && @linear.each{|n| n[request]}
     end
-  
+
     def lookup(request)
       if @lookup && @lookup[request.path.first]
         request = request.clone
         @lookup[request.path.shift][request]
       end
     end
-  
+
     def variable(request)
       @variable && @variable[request]
     end
-  
+
     def glob(request)
       @glob && @glob[request]
     end
-  
+
     def request(request)
       @request && @request[request]
     end
-  
+
     def arbitrary(request)
       @arbitrary && @arbitrary.each{|n| n[request]}
     end
@@ -132,7 +132,7 @@ class HttpRouter
       @arbitrary << Arbitrary.new(@router, allow_partial, blk, param_names)
       @arbitrary.last
     end
-  
+
     def add_match(regexp, matching_indicies = [0], priority = 0)
       @linear ||= []
       if priority != 0
@@ -152,18 +152,18 @@ class HttpRouter
       @linear << SpanningRegex.new(@router, regexp, matching_indicies)
       @linear.last
     end
-  
+
     def add_free_match(regexp)
       @linear ||= []
       @linear << FreeRegex.new(@router, regexp)
       @linear.last
     end
-  
+
     def add_destination(route)
       @destination ||= []
       @destination << route
     end
-  
+
     def add_lookup(part)
       @lookup ||= {}
       @lookup[part] ||= Node.new(@router)

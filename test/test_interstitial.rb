@@ -35,7 +35,7 @@ class TestInterstitial < MiniTest::Unit::TestCase
     assert_route r5, '/one-value-time-one-variable',   {:var1 => 'one', :var2 => 'value', :var3 => 'time', :var4 => 'one', :var5 => 'variable'}
     assert_route r6, '/one-value-time-one-value-time', {:var1 => 'one', :var2 => 'value', :var3 => 'time', :var4 => 'one', :var5 => 'value', :var6 => 'time'}    
   end
-  
+
   def test_regex_with_mutliple_variables
     with_regex, without_regex = router {
       add("/:common_variable.:matched").matching(:matched => /\d+/)

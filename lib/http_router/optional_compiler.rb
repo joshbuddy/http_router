@@ -22,7 +22,7 @@ class HttpRouter
     def add_to_current_set(c)
       (@start_index...@end_index).each { |path_index| @paths[path_index] << c }
     end
-    
+
     # over current working set, double @paths
     def double_paths 
       (@start_index...@end_index).each { |path_index| @paths << @paths[path_index].dup }

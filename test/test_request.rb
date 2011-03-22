@@ -83,7 +83,7 @@ class TestRequest < MiniTest::Unit::TestCase
     }
     assert_route router.add("/test").host('host2'), Rack::MockRequest.env_for('http://host2/test', :method => 'POST')
   end
-  
+
   def test_match_on_scheme
     http, https = router { get("/test").scheme('http'); get("/test").scheme('https') }
     assert_status 405, Rack::MockRequest.env_for('https://example.org/test', :method => 'POST')

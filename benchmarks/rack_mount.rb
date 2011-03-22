@@ -42,6 +42,6 @@ simple_and_dynamic_env = Rack::MockRequest.env_for('/dynamic/anything')
     report "4 levels, 1 dynamic" do
       set.url(simple_env, :variable, {:variable => 'onemore'})
     end
-  
+
   end
 end

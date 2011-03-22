@@ -19,7 +19,7 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route static,       '/one'
     assert_route nil,          '/two'
   end
-  
+
   def test_variable_and_static
     dynamic, static = router {
       add("/foo/:id")
@@ -83,13 +83,13 @@ class TestVariable < MiniTest::Unit::TestCase
   def test_glob_with_static
     assert_route '/test/*variable/test', '/test/one/two/three/test', {:variable => ['one', 'two', 'three']}
   end
-  
+
   def test_glob_with_regex
     r = router { add('/test/*variable/anymore')}
     assert_route r, '/test/123/345/567/anymore', {:variable => ['123', '345', '567']}
     assert_route nil, '/test/123/345/567'
   end
-  
+
   def test_regex_and_greedy
     with_regex, without_regex = router {
       add("/:common_variable/:matched").matching(:matched => /\d+/)

@@ -1,3 +1,5 @@
+require 'url_mount'
+
 class HttpRouter
   class Route
     attr_reader :default_values, :matches_with, :router, :path, :conditions
@@ -143,7 +145,6 @@ class HttpRouter
       result, params = path.url(args, options)
       mount_point = router.url_mount && router.url_mount.url(options)
       mount_point ? [File.join(mount_point, result), params] : [result, params]
-      [result, params]
     end
 
     def significant_variable_names
@@ -243,6 +244,11 @@ class HttpRouter
       @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, match_partially?, names)} } if @arbitrary
       path_obj = Path.new(self, path, names)
       nodes.each{|n| n.add_destination(path_obj)}
+      if dest.respond_to?(:url_mount=)
+        urlmount = UrlMount.new(@original_path, @default_values)
+        urlmount.url_mount = router.url_mount if router.url_mount
+        dest.url_mount = urlmount
+      end
       path_obj
     end
   end

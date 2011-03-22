@@ -9,7 +9,7 @@ require 'http_router/regex_route'
 require 'http_router/optional_compiler'
 
 class HttpRouter
-  
+
   attr_reader :root, :routes, :known_methods, :named_routes
   attr_accessor :default_app, :url_mount
 
@@ -74,7 +74,7 @@ class HttpRouter
       @default_app.call(env)
     end
   end
-  
+
   def reset!
     @root = Node.new(self)
     @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }

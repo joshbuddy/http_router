@@ -21,7 +21,7 @@ class HttpRouter
     def to_s
       "request path, #{path.inspect}"
     end
-    
+
     def clone
       dup_obj = super
       dup_obj.path = path.dup
