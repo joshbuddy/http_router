@@ -6,8 +6,8 @@ desc "Run tests"
 task :test do
   $: << 'lib'
   require 'http_router'
-  require 'test/helper'
-  Dir['test/**/test_*.rb'].each { |test| require test }
+  require './test/helper'
+  Dir['./test/**/test_*.rb'].each { |test| require test }
 end
 
 require 'rake/rdoctask'
