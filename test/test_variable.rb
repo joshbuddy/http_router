@@ -110,4 +110,12 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route with_regex,    '/common/123',   {:common_variable => 'common', :matched => '123'}
     assert_route without_regex, '/common/other', {:common_variable => 'common', :unmatched => 'other'}
   end
+
+  if //.respond_to?(:names)
+    eval "
+    def test_match_path_with_groups
+      r = router { add(%r{/(?<year>\\d{4})/(?<month>\\d{2})/(?<day>\\d{2})/?}) }
+      assert_route r, '/1234/23/56', {:year => '1234', :month => '23', :day => '56'}
+    end"
+  end
 end

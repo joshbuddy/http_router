@@ -11,6 +11,7 @@ class HttpRouter
         if match = @matcher.match(whole_path)
           request = request.clone
           request.extra_env['router.regex_match'] = match
+          match.names.size.times{|i| request.params << match[i + 1]} if match.respond_to?(:names) && match.names
           super
         end
       end

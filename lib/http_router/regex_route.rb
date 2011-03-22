@@ -5,7 +5,8 @@ class HttpRouter
     end
 
     def compile
-      add_non_path_to_tree(@router.root.add_free_match(@original_path), path, [])
+      @param_names = @original_path.respond_to?(:names) ? @original_path.names.map(&:to_sym) : []
+      add_non_path_to_tree(@router.root.add_free_match(@original_path), path, @param_names)
       @compiled = true
     end
 
