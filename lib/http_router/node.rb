@@ -158,7 +158,7 @@ class HttpRouter
     end
 
     def join_whole_path(request)
-      request.path.join('/')
+      request.path * '/'
     end
 
     private

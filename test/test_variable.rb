@@ -43,7 +43,7 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_match_path
-    r = router { add(%r{^/(test123|\d+)$}) }
+    r = router { add %r{/(test123|\d+)} }
     assert_route r, '/test123'
     assert_route r, '/123'
     assert_route nil, '/test123andmore'
