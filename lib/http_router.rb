@@ -71,17 +71,17 @@ class HttpRouter
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
-  def get(path, opts = {}, &app);    add_with_request_method(path, :get, opts, &app);    end
+  def get(path, opts = {}, &app);    add_with_request_method(path, :get, opts, &app); end
 
   # Adds a path that only responds to the request method +POST+.
   #
   # Returns the route object.
-  def post(path, opts = {}, &app);   add_with_request_method(path, :post, opts, &app);   end
+  def post(path, opts = {}, &app); add_with_request_method(path, :post, opts, &app); end
 
   # Adds a path that only responds to the request method +HEAD+.
   #
   # Returns the route object.
-  def head(path, opts = {}, &app);   add_with_request_method(path, :head, opts, &app);   end
+  def head(path, opts = {}, &app); add_with_request_method(path, :head, opts, &app); end
 
   # Adds a path that only responds to the request method +DELETE+.
   #
@@ -91,7 +91,12 @@ class HttpRouter
   # Adds a path that only responds to the request method +PUT+.
   #
   # Returns the route object.
-  def put(path, opts = {}, &app);    add_with_request_method(path, :put, opts, &app);    end
+  def put(path, opts = {}, &app); add_with_request_method(path, :put, opts, &app); end
+
+  # Adds a path that only responds to the request method +OPTIONS+.
+  #
+  # Returns the route object.
+  def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
   def recognize(env)
     call(env, false)
