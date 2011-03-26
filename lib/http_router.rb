@@ -27,12 +27,14 @@ class HttpRouter
   # * :default_app -- Default application used if there is a non-match on #call. Defaults to 404 generator.
   # * :ignore_trailing_slash -- Ignore a trailing / when attempting to match. Defaults to +true+.
   # * :redirect_trailing_slash -- On trailing /, redirect to the same path without the /. Defaults to +false+.
+  # * :known_methods -- Array of http methods tested for 405s.
   def initialize(*args, &blk)
-    default_app, options = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
+    default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options = options
-    @default_app = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
-    @ignore_trailing_slash = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
+    @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
+    @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
+    @known_methods           = Set.new(options && options[:known_methods] || [])
     reset!
     instance_eval(&blk) if blk
   end
@@ -71,7 +73,7 @@ class HttpRouter
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
-  def get(path, opts = {}, &app);    add_with_request_method(path, :get, opts, &app); end
+  def get(path, opts = {}, &app); add_with_request_method(path, :get, opts, &app); end
 
   # Adds a path that only responds to the request method +POST+.
   #
@@ -118,7 +120,7 @@ class HttpRouter
         supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
           test_env = Rack::Request.new(rack_request.env.clone)
           test_env.env['REQUEST_METHOD'] = m
-          test_env.env['HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
+          test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
           test_request = Request.new(test_env.path_info, test_env, 405)
           catch(:success) { @root[test_request] }
         end
@@ -137,7 +139,6 @@ class HttpRouter
     @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }
     @routes = []
     @named_routes = {}
-    @known_methods = ['GET', "POST", "PUT", "DELETE"]
   end
 
   # Assigns the default application.

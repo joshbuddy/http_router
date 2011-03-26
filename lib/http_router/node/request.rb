@@ -35,6 +35,7 @@ class HttpRouter
       end
 
       def add_lookup(val)
+        @router.known_methods << val if @request_method == :request_method
         @lookup[val] ||= Request.new(@router)
       end
 
