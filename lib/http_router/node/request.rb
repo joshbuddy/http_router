@@ -1,10 +1,6 @@
 class HttpRouter
   class Node
     class Request < Node
-      def self.request_methods
-        [:host, :scheme, :request_method, :user_agent]
-      end
-
       attr_reader :request_method
 
       def initialize(router)

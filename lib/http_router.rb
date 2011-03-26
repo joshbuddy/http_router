@@ -10,7 +10,7 @@ require 'http_router/optional_compiler'
 
 class HttpRouter
 
-  attr_reader :root, :routes, :known_methods, :named_routes
+  attr_reader :root, :routes, :known_methods, :named_routes, :request_methods
   attr_accessor :default_app, :url_mount
 
   # Raised when a Route is not able to be generated.
@@ -28,6 +28,7 @@ class HttpRouter
   # * :ignore_trailing_slash -- Ignore a trailing / when attempting to match. Defaults to +true+.
   # * :redirect_trailing_slash -- On trailing /, redirect to the same path without the /. Defaults to +false+.
   # * :known_methods -- Array of http methods tested for 405s.
+  # * :request_methods -- Array of methods to use on request
   def initialize(*args, &blk)
     default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options = options
@@ -35,6 +36,7 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
+    @request_methods         = options && options[:request_methods] || [:host, :scheme, :request_method, :user_agent]
     reset!
     instance_eval(&blk) if blk
   end

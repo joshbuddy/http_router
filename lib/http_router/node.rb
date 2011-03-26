@@ -94,13 +94,12 @@ class HttpRouter
     def add_request(opts)
       @request ||= Request.new(@router)
       next_requests = [@request]
-      Request.request_methods.each do |method|
-        method_index = Request.request_methods.index(method)
+      @router.request_methods.each_with_index do |method, method_index|
         next_requests.map! do |next_request|
           if opts[method].nil? && next_request.request_method.nil?
             next_request
           else
-            next_request_index = next_request.request_method && Request.request_methods.index(next_request.request_method)
+            next_request_index = next_request.request_method && @router.request_methods.index(next_request.request_method)
             rank = next_request_index ? method_index <=> next_request_index : 0
             case rank
             when 0
