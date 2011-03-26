@@ -60,27 +60,7 @@ class HttpRouter
     def destination(request_obj, match_partially = true)
       request(request_obj)
       arbitrary(request_obj)
-      if match_partially or request_obj.path.empty?
-        @destination && @destination.each do |d|
-          if request_obj.path.empty? or d.route.match_partially? or (@router.ignore_trailing_slash? and request_obj.path.size == 1 and request_obj.path.last == '')
-            if request_obj.perform_call
-              env = request_obj.rack_request.dup.env
-              env['router.params'] ||= {}
-              env['router.params'].merge!(d.hashify_params(request_obj.params))
-              matched = if d.route.match_partially?
-                env['PATH_INFO'] = "/#{request_obj.path.join('/')}"
-                env['SCRIPT_NAME'] += request_obj.rack_request.path_info[0, request_obj.rack_request.path_info.size - env['PATH_INFO'].size]
-              else
-                env["PATH_INFO"] = ''
-                env["SCRIPT_NAME"] += request_obj.rack_request.path_info
-              end
-              throw :success, d.route.dest.call(env)
-            else
-              throw :success, Response.new(request_obj, d)
-            end
-          end
-        end
-      end
+      @destination.call(request_obj, match_partially) if @destination
     end
 
     def add_variable
@@ -106,18 +86,13 @@ class HttpRouter
               next_request.request_method = method
               (opts[method].nil? ? [nil] : Array(opts[method])).map do |request_matcher|
                 case request_matcher
-                when nil
-                  next_request.add_catchall
-                when String
-                  next_request.add_lookup(request_matcher)
-                when Regexp
-                  next_request.add_linear(request_matcher)
+                when nil    then next_request.add_catchall
+                when String then next_request.add_lookup(request_matcher)
+                when Regexp then next_request.add_linear(request_matcher)
                 end
               end
-            when -1
-              next_request
-            when 1
-              next_request.transform_to(method)
+            when -1 then next_request
+            when  1 then next_request.transform_to(method)
             end
           end
         end
@@ -146,9 +121,8 @@ class HttpRouter
       @linear.last
     end
 
-    def add_destination(route)
-      @destination ||= []
-      @destination << route
+    def add_destination(&dest)
+      @destination = dest
     end
 
     def add_lookup(part)

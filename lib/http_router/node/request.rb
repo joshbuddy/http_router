@@ -24,8 +24,8 @@ class HttpRouter
         @request_method = meth == :method ? :request_method : meth
         if @destination
           next_node = add_catchall
-          next_node.instance_variable_set(:@destination, (next_node.instance_variable_get(:@destination) || []).concat(@destination))
-          @destination.clear
+          next_node.instance_variable_set(:@destination, @destination)
+          @destination = nil
         end
         @request_method
       end

@@ -248,14 +248,31 @@ class HttpRouter
     end
 
     def add_non_path_to_tree(node, path, names)
-      nodes = if @conditions && !@conditions.empty?
-        node.add_request(@conditions)
-      else
-        [node]
-      end
-      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, match_partially?, names)} } if @arbitrary
       path_obj = Path.new(self, path, names)
-      nodes.each{|n| n.add_destination(path_obj)}
+      destination = Proc.new { |req, use_partial_matching|
+        if (use_partial_matching or req.path.empty?)
+          if req.path.empty? or match_partially? or (@router.ignore_trailing_slash? and req.path.size == 1 and req.path.last == '')
+            if req.perform_call
+              env = req.rack_request.dup.env
+              env['router.params'] ||= {}
+              env['router.params'].merge!(path_obj.hashify_params(req.params))
+              matched = if match_partially?
+                env['PATH_INFO'] = "/#{req.path.join('/')}"
+                env['SCRIPT_NAME'] += req.rack_request.path_info[0, req.rack_request.path_info.size - env['PATH_INFO'].size]
+              else
+                env["PATH_INFO"] = ''
+                env["SCRIPT_NAME"] += req.rack_request.path_info
+              end
+              throw :success, @app.call(env)
+            else
+              throw :success, Response.new(req, path_obj)
+            end
+          end
+        end
+      }
+      nodes = @conditions && !@conditions.empty? ? node.add_request(@conditions) : [node]
+      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, match_partially?, names)} } if @arbitrary
+      nodes.map!{|n| n.add_destination(&destination)}
       if dest.respond_to?(:url_mount=)
         urlmount = UrlMount.new(@original_path, @default_values)
         urlmount.url_mount = router.url_mount if router.url_mount
