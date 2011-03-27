@@ -1,4 +1,4 @@
 # encoding: utf-8
 class HttpRouter #:nodoc
-  VERSION = '0.6.5'
+  VERSION = '0.6.6'
 end
