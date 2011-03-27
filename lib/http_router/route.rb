@@ -11,13 +11,15 @@ class HttpRouter
       @opts = opts
       @arbitrary = opts[:arbitrary] || opts[:__arbitrary__]
       @conditions = opts[:conditions] || opts[:__conditions__] || {}
-      name(opts.delete(:name)) if opts.key?(:name)
+      name(opts[:name]) if opts.key?(:name)
       @opts.merge!(opts[:matching]) if opts[:matching]
       @matches_with = {}
       @default_values = opts[:default_values] || {}
       if @original_path[-1] == ?*
         @match_partially = true
         path.slice!(-1)
+      elsif opts.key?(:partial)
+        @match_partially = opts[:partial]
       end
       @paths = OptionalCompiler.new(path).paths
     end
