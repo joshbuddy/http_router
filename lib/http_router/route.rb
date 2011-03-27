@@ -12,6 +12,7 @@ class HttpRouter
       @arbitrary = opts[:arbitrary] || opts[:__arbitrary__]
       @conditions = opts[:conditions] || opts[:__conditions__] || {}
       name(opts.delete(:name)) if opts.key?(:name)
+      @opts.merge!(opts[:matching]) if opts[:matching]
       @matches_with = {}
       @default_values = opts[:default_values] || {}
       if @original_path[-1] == ?*

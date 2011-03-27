@@ -5,6 +5,7 @@ require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
 require 'http_router/path'
+require 'http_router/rack'
 require 'http_router/regex_route'
 require 'http_router/optional_compiler'
 
@@ -110,7 +111,7 @@ class HttpRouter
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>.
   def call(env, perform_call = true)
-    rack_request = Rack::Request.new(env)
+    rack_request = ::Rack::Request.new(env)
     if redirect_trailing_slash? && (rack_request.head? || rack_request.get?) && rack_request.path_info[-1] == ?/
       response = ::Rack::Response.new
       response.redirect(request.path_info[0, request.path_info.size - 1], 302)
@@ -120,7 +121,7 @@ class HttpRouter
       response = catch(:success) { @root[request] }
       if !response
         supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
-          test_env = Rack::Request.new(rack_request.env.clone)
+          test_env = ::Rack::Request.new(rack_request.env.clone)
           test_env.env['REQUEST_METHOD'] = m
           test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
           test_request = Request.new(test_env.path_info, test_env, 405)
@@ -138,7 +139,7 @@ class HttpRouter
   # Resets the router to a clean state.
   def reset!
     @root = Node.new(self)
-    @default_app = Proc.new{ |env| Rack::Response.new("Your request couldn't be found", 404).finish }
+    @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
     @routes = []
     @named_routes = {}
   end

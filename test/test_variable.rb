@@ -107,12 +107,15 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_regex_and_greedy
-    with_regex, without_regex = router {
+    with_regex, without_regex, with_post = router {
       add("/:common_variable/:matched").matching(:matched => /\d+/)
       add("/:common_variable/:unmatched")
+      post("/:common_variable/:unmatched")
     }
     assert_route with_regex,    '/common/123',   {:common_variable => 'common', :matched => '123'}
     assert_route without_regex, '/common/other', {:common_variable => 'common', :unmatched => 'other'}
+    assert_route with_regex,    Rack::MockRequest.env_for('/common/123', :method => 'POST'),   {:common_variable => 'common', :matched => '123'}
+    assert_route with_post, Rack::MockRequest.env_for('/common/other', :method => 'POST'), {:common_variable => 'common', :unmatched => 'other'}
   end
 
   if //.respond_to?(:names)
