@@ -2,7 +2,9 @@ require 'bundler'
 Bundler::GemHelper.install_tasks
 
 desc "Run all tests"
-task :test => ['test:integration', 'test:examples']
+task :test => ['test:integration', 'test:examples', 'test:rdoc_examples']
+
+require 'pp'
 
 namespace :test do
   desc "Run integration tests"
@@ -51,6 +53,54 @@ namespace :test do
         Process.kill('HUP', pid) if pid
       end
     end
+  end
+  desc "rdoc examples"
+  task :rdoc_examples do
+    $: << 'lib'
+    require 'http_router'
+    in_example = false
+    examples = []
+    STDOUT.sync = true
+    current_example = ''
+    rb_files = Dir['./lib/**/*.rb']
+    puts "Scanning #{rb_files * ', '}"
+    rb_files.each do |file|
+      lines = File.read(file).split(/\n/)
+      lines.each do |line|
+        if line[/^\s*#(.*)/] # comment
+          line = $1.strip
+          case line
+          when /^example:/i then in_example = true
+          when /^(?:# )?=+> (.*)/
+            expected = $1.strip
+            msg = expected.dup
+            msg << " was expected to be "
+            msg << "\#{__example_runner.inspect}"
+            current_example << "raise \"#{msg.gsub('"', '\\"')}\" unless __example_runner.strip == #{expected}\n" if in_example
+          when ''
+            unless current_example.empty?
+              examples << current_example
+              current_example = ''
+            end
+            in_example = false
+          else
+            current_example << "__example_runner = (" << line << ")\n" if in_example
+          end
+        else
+          unless current_example.empty?
+            examples << current_example
+            current_example = ''
+          end
+          in_example = false
+        end
+      end
+    end
+    puts "Running #{examples.size} example#{'s' if examples.size != 1}"
+    examples.each do |example|
+      print "."
+      eval(example)
+    end
+    puts " ✔"
   end
 end
 

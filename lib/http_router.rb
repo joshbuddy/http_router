@@ -154,7 +154,7 @@ class HttpRouter
   #
   # Example:
   #   router = HttpRouter.new
-  #   router.add('/:foo.:format).name(:test).compile
+  #   router.add('/:foo.:format').name(:test).to{|env| [200, {}, []]}
   #   router.url(:test, 123, 'html')
   #   # ==> "/123.html"
   #   router.url(:test, 123, :format => 'html')
