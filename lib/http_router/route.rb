@@ -284,17 +284,22 @@ class HttpRouter
       path_obj
     end
 
+    def append_querystring_value(uri, key, value)
+      case value
+      when Array
+        k = "#{key}[]"
+        value.each{ |v| append_querystring_value(uri, k, v) }
+      when Hash
+        value.each{ |k, v| append_querystring_value(uri, "#{key}[#{k}]", v) }
+      else
+        uri << '&' << ::Rack::Utils.escape(key.to_s) << '=' << ::Rack::Utils.escape(value.to_s)
+      end
+    end
+
     def append_querystring(uri, params)
       if params && !params.empty?
         uri_size = uri.size
-        params.each do |k,v|
-          case v
-          when Array
-            v.each { |v_part| uri << '&' << ::Rack::Utils.escape(k.to_s) << '%5B%5D=' << ::Rack::Utils.escape(v_part.to_s) }
-          else
-            uri << '&' << ::Rack::Utils.escape(k.to_s) << '=' << ::Rack::Utils.escape(v.to_s)
-          end
-        end
+        params.each{ |k,v|  append_querystring_value(uri, k, v) }
         uri[uri_size] = ??
       end
       uri
