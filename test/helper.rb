@@ -71,6 +71,6 @@ class MiniTest::Unit::TestCase
       route = router.add(route)
     end
     route.to{|env| Rack::Response.new("Routing to #{route.to_s}").finish} if route && route.respond_to?(:to) && !route.dest
-    assert_equal path, router.url(route, *args)
+    assert_equal path.gsub('[','%5B').gsub(']','%5D'), router.url(route, *args)
   end
 end

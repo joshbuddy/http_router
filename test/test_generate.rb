@@ -91,20 +91,15 @@ class TestGenerate < MiniTest::Unit::TestCase
     assert_raises(HttpRouter::InvalidRouteException) { router.url(r, 'asd') }
   end
   
-  def escape_brackets(s)
-    s.gsub('[','%5B').gsub(']','%5D')
-  end
-  alias eb escape_brackets
-  
   def test_array
-    assert_generate eb('/var?foo[]=baz&foo[]=bar'), '/var', :foo => ['baz', 'bar']
+    assert_generate '/var?foo[]=baz&foo[]=bar', '/var', :foo => ['baz', 'bar']
   end
   
   def test_hash
-    assert_generate eb('/var?foo[az]=baz&foo[ar]=bar'), '/var', :foo => {:az => 'baz', :ar => 'bar'}
+    assert_generate '/var?foo[az]=baz&foo[ar]=bar', '/var', :foo => {:az => 'baz', :ar => 'bar'}
   end
   
   def test_hash_with_array
-    assert_generate eb('/var?foo[az]=baz&foo[ar][]=bar&foo[ar][]=barz'), '/var', :foo => {:az => 'baz', :ar => ['bar', 'barz']}
+    assert_generate '/var?foo[az]=baz&foo[ar][]=bar&foo[ar][]=barz', '/var', :foo => {:az => 'baz', :ar => ['bar', 'barz']}
   end
 end
