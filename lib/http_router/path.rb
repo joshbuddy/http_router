@@ -34,7 +34,7 @@ class HttpRouter
     end
 
     def hashify_params(params)
-      @dynamic && params ? param_names.zip(params).inject({}) { |h, (k,v)| h[k] = v; h } : {}
+      @dynamic && params ? Hash[param_names.zip(params)] : {}
     end
 
     def url(args, options)
