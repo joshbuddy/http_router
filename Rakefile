@@ -44,7 +44,7 @@ namespace :test do
             c = $1
             raise "out was nil" if out.nil?
             test = out.shift
-            raise "excepted #{c.inspect}, recieved #{test.inspect}" unless c.strip == test.strip
+            raise "excepted #{c.inspect}, received #{test.inspect}" unless c.strip == test.strip
             assertion_count += 1
           end
         end
