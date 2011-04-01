@@ -15,7 +15,7 @@ run HttpRouter.new {
 # => Content-Type: image/vnd.microsoft.icon
 # => Content-Length: 1150
 # => Connection: keep-alive
-# => Server: thin 1.2.7 codename No Hup
+# => Server: thin 1.2.8 codename Black Keys
 # 
 # $ curl -I http://localhost:3000/images/cat1.jpg
 # => HTTP/1.1 200 OK
@@ -23,4 +23,4 @@ run HttpRouter.new {
 # => Content-Type: image/jpeg
 # => Content-Length: 29817
 # => Connection: keep-alive
-# => Server: thin 1.2.7 codename No Hup
+# => Server: thin 1.2.8 codename Black Keys
