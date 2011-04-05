@@ -96,10 +96,10 @@ class TestGenerate < MiniTest::Unit::TestCase
   end
   
   def test_hash
-    assert_generate '/var?foo[az]=baz&foo[ar]=bar', '/var', :foo => {:az => 'baz', :ar => 'bar'}
+    assert_generate '/var?foo[az]=baz', '/var', :foo => {:az => 'baz'}
   end
   
   def test_hash_with_array
-    assert_generate '/var?foo[az]=baz&foo[ar][]=bar&foo[ar][]=barz', '/var', :foo => {:az => 'baz', :ar => ['bar', 'barz']}
+    assert_generate '/var?foo[ar][]=bar', '/var', :foo => {:ar => ['bar']}
   end
 end

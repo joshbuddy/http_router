@@ -33,7 +33,7 @@ class HttpRouter
   def initialize(*args, &blk)
     default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options = options
-    @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404).finish }
+    @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404, {'X-Cascade' => 'pass'}).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
@@ -119,7 +119,7 @@ class HttpRouter
     else
       request = Request.new(rack_request.path_info, rack_request, perform_call)
       response = catch(:success) { @root[request] }
-      if !response
+      if response.nil?
         supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
           test_env = ::Rack::Request.new(rack_request.env.clone)
           test_env.env['REQUEST_METHOD'] = m
@@ -127,11 +127,13 @@ class HttpRouter
           test_request = Request.new(test_env.path_info, test_env, 405)
           catch(:success) { @root[test_request] }
         end
-        supported_methods.empty? ? @default_app.call(env) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+        supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
       elsif response
         response
-      else
+      elsif perform_call
         @default_app.call(env)
+      else
+        nil
       end
     end
   end

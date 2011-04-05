@@ -8,7 +8,7 @@ class HttpRouter
       case @chars.first[0]
         when ?( then @chars.shift and double_paths
         when ?) then @chars.shift and half_paths
-        when ?\\ 
+        when ?\\
           @chars[1] == ?( || @chars[1] == ?) ? @chars.shift : add_to_current_set(@chars.shift)
           add_to_current_set(@chars.shift)
         else
