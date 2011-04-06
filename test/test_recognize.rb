@@ -35,6 +35,10 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_route router.add('/test\*variable'), '/test*variable'
   end
 
+  def test_unicode
+    assert_route router.add('/føø'), '/f%C3%B8%C3%B8'
+  end
+
   def test_partial
     router.add("/test*").to { |env| Rack::Response.new(env['PATH_INFO']).finish }
     assert_body '/optional', router.call(Rack::MockRequest.env_for('/test/optional'))
