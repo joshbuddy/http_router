@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rbench'
   s.add_development_dependency 'phocus'
   s.add_development_dependency 'bundler',  '~> 1.0.0'
-  s.add_development_dependency 'thin',  '~> 1.2.7'
+  s.add_development_dependency 'thin',  '= 1.2.8'
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
