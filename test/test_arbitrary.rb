@@ -9,11 +9,11 @@ class TestArbitrary < MiniTest::Unit::TestCase
   end
 
   def test_less_specific_node
-    general, hello, love80, love8080 = router {
-      add("/test")
+    hello, love80, love8080, general = router {
       add("/test").arbitrary(Proc.new{|req, params| req.rack.host == 'hellodooly' })
       add("/test").arbitrary(Proc.new{|req, params| req.rack.host == 'lovelove' }).arbitrary{|req, params| req.rack.port == 80}
       add("/test").arbitrary(Proc.new{|req, params| req.rack.host == 'lovelove' }).arbitrary{|req, params| req.rack.port == 8080}
+      add("/test")
     }
     assert_route general,  'http://lovelove:8081/test'
     assert_route hello,    'http://hellodooly:8081/test'

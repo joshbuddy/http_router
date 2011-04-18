@@ -5,7 +5,7 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_variable_vs_static
-    dynamic, static = router { add ':one'; add 'one' }
+    static, dynamic = router { add 'one'; add ':one' }
     assert_route dynamic, '/two', {:one => 'two'}
     assert_route static,  '/one'
   end
@@ -107,10 +107,10 @@ class TestVariable < MiniTest::Unit::TestCase
   end
 
   def test_regex_and_greedy
-    with_regex, without_regex, with_post = router {
+    with_regex, with_post, without_regex = router {
       add("/:common_variable/:matched").matching(:matched => /\d+/)
-      add("/:common_variable/:unmatched")
       post("/:common_variable/:unmatched")
+      add("/:common_variable/:unmatched")
     }
     assert_route with_regex,    '/common/123',   {:common_variable => 'common', :matched => '123'}
     assert_route without_regex, '/common/other', {:common_variable => 'common', :unmatched => 'other'}

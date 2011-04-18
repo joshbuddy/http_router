@@ -15,7 +15,7 @@ class HttpRouter
           add_to_current_set(@chars.shift)
         end
       end
-      @paths
+      @paths.reverse!
     end
 
     private

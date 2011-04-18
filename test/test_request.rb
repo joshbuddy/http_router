@@ -47,20 +47,20 @@ class TestRequest < MiniTest::Unit::TestCase
   end
 
   def test_move_node
-    general, post = router {
-      add("/test").default_destination
+    post, general = router {
       post("/test").default_destination
+      add("/test").default_destination
     }
     assert_route post,    Rack::MockRequest.env_for('/test', :method => 'POST')
     assert_route general, Rack::MockRequest.env_for('/test', :method => 'PUT')
   end
 
   def test_complex_routing
-    host2, post, host2_get, host2_post = router {
+    host2_post, host2_get, host2, post = router {
+      add("/test").post.host('host2')
+      add("/test").host('host2').get
       add("/test").host('host2')
       add("/test").post
-      add("/test").host('host2').get
-      add("/test").post.host('host2')
     }
     assert_route host2,      Rack::MockRequest.env_for('http://host2/test', :method => 'PUT')
     assert_route post,       Rack::MockRequest.env_for('http://host1/test', :method => 'POST')

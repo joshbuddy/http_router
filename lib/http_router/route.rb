@@ -167,7 +167,7 @@ class HttpRouter
             path.param_names.size == var_count
           }
         else
-          @paths.reverse_each do |path|
+          @paths.each do |path|
             if params && !params.empty?
               return path if (path.param_names & params.keys).size == path.param_names.size
             elsif path.param_names.empty?
@@ -216,7 +216,6 @@ class HttpRouter
             capturing_indicies = []
             splitting_indicies = []
             captures = 0
-            priority = 0
             spans = false
             regex = parts.inject('') do |reg, part|
               reg << case part[0]
@@ -238,12 +237,11 @@ class HttpRouter
                 matches_with[name] = @opts[name]
                 "(#{(@opts[name] || '.*?')})"
               else
-                priority += part.size
                 Regexp.quote(URI.encode(part))
               end
             end
-            node = spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, priority, splitting_indicies) :
-              node.add_match(Regexp.new("#{regex}$"), capturing_indicies, priority, splitting_indicies)
+            node = spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies) :
+              node.add_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies)
           end
         end
         add_non_path_to_tree(node, path, param_names)
@@ -274,9 +272,9 @@ class HttpRouter
           end
         end
       }
-      nodes = @conditions && !@conditions.empty? ? node.add_request(@conditions) : [node]
-      @arbitrary.each{|a| nodes.map!{|n| n.add_arbitrary(a, match_partially?, names)} } if @arbitrary
-      nodes.map!{|n| n.add_destination(&destination)}
+      node = node.add_request(@conditions) if @conditions && !@conditions.empty?
+      @arbitrary.each{|a| node = node.add_arbitrary(a, match_partially?, names)} if @arbitrary
+      node.add_destination(destination, @match_partially)
       if dest.respond_to?(:url_mount=)
         urlmount = UrlMount.new(@original_path, @default_values)
         urlmount.url_mount = router.url_mount if router.url_mount

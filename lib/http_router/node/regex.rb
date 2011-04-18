@@ -4,8 +4,9 @@ class HttpRouter
       alias_method :node_lookup, :[]
       attr_reader :matcher, :splitting_indicies
 
-      def initialize(router, matcher, capturing_indicies, priority = 0, splitting_indicies = nil)
-        @router, @matcher, @capturing_indicies, @priority, @splitting_indicies = router, matcher, capturing_indicies, priority, splitting_indicies
+      def initialize(router, matcher, capturing_indicies, splitting_indicies = nil)
+        @matcher, @capturing_indicies, @splitting_indicies = matcher, capturing_indicies, splitting_indicies
+        super(router)
       end
 
       def [](request)

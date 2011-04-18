@@ -20,13 +20,13 @@ class TestInterstitial < MiniTest::Unit::TestCase
   end
 
   def test_multi
-    r1, r2, r3, r4, r5, r6 = router {
-      add('/:var1')
-      add('/:var1-:var2')
-      add('/:var1-:var2-:var3')
-      add('/:var1-:var2-:var3-:var4')
-      add('/:var1-:var2-:var3-:var4-:var5')
+    r6, r5, r4, r3, r2, r1 = router {
       add('/:var1-:var2-:var3-:var4-:var5-:var6')
+      add('/:var1-:var2-:var3-:var4-:var5')
+      add('/:var1-:var2-:var3-:var4')
+      add('/:var1-:var2-:var3')
+      add('/:var1-:var2')
+      add('/:var1')
     }
     assert_route r1, '/one',                           {:var1 => 'one'}
     assert_route r2, '/one-value',                     {:var1 => 'one', :var2 => 'value'}
