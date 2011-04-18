@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.summary = "A kick-ass HTTP router for use in Rack"
   s.description = "This library allows you to recognize and build URLs in a Rack application."
   s.email = %q{joshbuddy@gmail.com}
-  s.extra_rdoc_files = ['README.md']
+  s.extra_rdoc_files = ['README.md', 'LICENSE']
   s.files = `git ls-files`.split("\n")
   s.homepage = %q{http://github.com/joshbuddy/http_router}
   s.rdoc_options = ["--charset=UTF-8"]
