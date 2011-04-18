@@ -12,6 +12,14 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_route router.add('/.html'),        '/.html'
   end
 
+  def test_passing
+    passed, working = router {
+      add('/').to { |env| throw :pass; [200, {}, ['pass']] }
+      add('/').to { |env| [200, {}, ['working']] }
+    }
+    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
+  end
+
   def test_optional
     route = router {
       add 'one(/two(/three(/four)(/five)))'
