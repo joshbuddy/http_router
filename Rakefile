@@ -39,7 +39,7 @@ namespace :test do
           case c
           when /^\$/
             out = `#{c[1, c.size]} 2>/dev/null`.split(/\n/)
-            raise "#{c} produced #{out}" unless $?.success?
+            raise "#{c} produced #{`#{c[1, c.size]} 2>&1`}" unless $?.success?
           when /^=> ?(.*)/
             c = $1
             raise "out was nil" if out.nil?
