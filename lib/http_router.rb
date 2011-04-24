@@ -68,8 +68,12 @@ class HttpRouter
     route
   end
 
-  def pass_wrapper(response)
-    response[1]['X-Cascade'] == 'pass' ? throw(:pass) : response
+  def pass_on_response(response)
+    response[1]['X-Cascade'] == 'pass'
+  end
+
+  def set_pass_on_response(&blk)
+    extend(Module.new{define_method(:pass_on_response, &blk)})
   end
 
   # Adds a path that only responds to the request method +GET+.
