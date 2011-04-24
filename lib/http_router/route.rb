@@ -265,7 +265,7 @@ class HttpRouter
                 env["PATH_INFO"] = ''
                 env["SCRIPT_NAME"] += req.rack_request.path_info
               end
-              throw :success, @app.call(env)
+              throw :success, router.pass_wrapper(@app.call(env))
             else
               throw :success, Response.new(req, path_obj)
             end

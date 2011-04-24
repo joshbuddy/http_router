@@ -58,19 +58,18 @@ class HttpRouter
   #
   # Returns the route object.
   def add(path, opts = {}, &app)
-    route = case path
-    when Regexp
-      RegexRoute.new(self, path, opts)
-    else
-      Route.new(self, path, opts)
-    end
-    add_route(route)
+    route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
     route.to(app) if app
     route
   end
 
   def add_route(route)
     @routes << route
+    route
+  end
+
+  def pass_wrapper(response)
+    response[1]['X-Cascade'] == 'pass' ? throw(:pass) : response
   end
 
   # Adds a path that only responds to the request method +GET+.

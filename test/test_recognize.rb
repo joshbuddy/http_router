@@ -20,6 +20,14 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
   end
 
+  def test_passing_with_cascade
+    passed, working = router {
+      add('/').to { |env| [200, {'X-Cascade' => 'pass'}, ['pass']] }
+      add('/').to { |env| [200, {}, ['working']] }
+    }
+    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
+  end
+
   def test_optional
     route = router {
       add 'one(/two(/three(/four)(/five)))'
