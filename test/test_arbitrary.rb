@@ -48,6 +48,14 @@ class TestArbitrary < MiniTest::Unit::TestCase
     assert_route r, '/test', {:test => 'test'}
   end
 
+  def test_passing
+    never, route = router {
+      add('test').arbitrary(Proc.new{|req, params| throw :pass })
+      add("test")
+    }
+    assert_route route, 'http://lovelove:8080/test'
+  end
+
   def test_continue
     no, yes = router {
       add('test').arbitrary_with_continue{|req, p| req.continue[false]}
