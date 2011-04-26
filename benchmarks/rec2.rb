@@ -25,7 +25,7 @@ puts Benchmark.measure {
   puts "u.routes.size: #{u.routes.size}"
 }
 #
-TIMES = 50_000
+TIMES = 10_000
 
 #simple_env = 
 #simple2_env = 
@@ -34,7 +34,7 @@ TIMES = 50_000
 #simple_and_dynamic_env1 = Rack::MockRequest.env_for('/rails/controller/action/id')
 #simple_and_dynamic_env2 = Rack::MockRequest.env_for('/greedy/controller/action/id')
 #simple_and_dynamic_env3 = Rack::MockRequest.env_for('/greedy/hey.hello.html')
-5.times {
+#5.times {
   RBench.run(TIMES) do
 
     report "2 levels, static" do
@@ -62,5 +62,5 @@ TIMES = 50_000
     #end
 
   end
-}
+#}
 puts `ps -o rss= -p #{Process.pid}`.to_i
