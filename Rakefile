@@ -114,4 +114,4 @@ Rake::RDocTask.new do |rd|
 end
 
 require 'code_stats'
-CodeStats::Tasks.new(:reporting_depth => 3)
+CodeStats::Tasks.new
