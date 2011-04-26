@@ -66,11 +66,8 @@ class HttpRouter
     end
 
     def unescape(val)
-      val.to_s.gsub(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
-    end
-
-    def join_whole_path(request)
-      request.path * '/'
+      val.to_s.gsub!(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
+      val
     end
   end
 end

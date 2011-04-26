@@ -10,6 +10,10 @@ class HttpRouter
       @params = []
     end
 
+    def joined_path
+      @path * '/'
+    end
+
     def perform_call
       @perform_call == true
     end

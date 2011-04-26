@@ -11,7 +11,7 @@ require 'http_router/optional_compiler'
 
 class HttpRouter
 
-  attr_reader :root, :routes, :known_methods, :named_routes, :request_methods
+  attr_reader :root, :routes, :known_methods, :named_routes
   attr_accessor :default_app, :url_mount
 
   # Raised when a Route is not able to be generated.
@@ -29,7 +29,6 @@ class HttpRouter
   # * :ignore_trailing_slash -- Ignore a trailing / when attempting to match. Defaults to +true+.
   # * :redirect_trailing_slash -- On trailing /, redirect to the same path without the /. Defaults to +false+.
   # * :known_methods -- Array of http methods tested for 405s.
-  # * :request_methods -- Array of methods to use on request
   def initialize(*args, &blk)
     default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options = options
@@ -37,7 +36,6 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
-    @request_methods         = options && options[:request_methods] || [:host, :scheme, :request_method, :user_agent]
     reset!
     instance_eval(&blk) if blk
   end
@@ -123,14 +121,7 @@ class HttpRouter
       request = Request.new(rack_request.path_info, rack_request, perform_call)
       response = catch(:success) { @root[request] }
       if response.nil?
-        supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m| 
-          test_env = ::Rack::Request.new(rack_request.env.clone)
-          test_env.env['REQUEST_METHOD'] = m
-          test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
-          test_request = Request.new(test_env.path_info, test_env, 405)
-          catch(:success) { @root[test_request] }
-        end
-        supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+        no_response(env, perform_call)
       elsif response
         response
       elsif perform_call
@@ -203,6 +194,17 @@ class HttpRouter
   end
 
   private
+  def no_response(env, perform_call = true)
+    supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m|
+      test_env = ::Rack::Request.new(env.clone)
+      test_env.env['REQUEST_METHOD'] = m
+      test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
+      test_request = Request.new(test_env.path_info, test_env, 405)
+      catch(:success) { @root[test_request] }
+    end
+    supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+  end
+
   def add_with_request_method(path, method, opts = {}, &app)
     route = add(path, opts).send(method.to_sym)
     route.to(app) if app

@@ -8,7 +8,7 @@ class HttpRouter
       end
 
       def [](request)
-        whole_path = "/#{join_whole_path(request)}"
+        whole_path = "/#{request.joined_path}"
         if match = @matcher.match(whole_path) and match[0].size == whole_path.size
           request = request.clone
           request.extra_env['router.regex_match'] = match

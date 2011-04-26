@@ -2,7 +2,7 @@ class HttpRouter
   class Node
     class SpanningRegex < Regex
       def [](request)
-        whole_path = join_whole_path(request)
+        whole_path = request.joined_path
         if match = @matcher.match(whole_path) and match.begin(0).zero?
           request = request.clone
           add_params(request, match)
