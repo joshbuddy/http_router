@@ -187,7 +187,6 @@ class HttpRouter
       "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect} @arbitrary=#{@arbitrary.inspect}>"
     end
 
-    private
     def compile
       return if @compiled
       @paths.map! do |path|
@@ -247,8 +246,10 @@ class HttpRouter
         add_non_path_to_tree(node, path, param_names)
       end
       @compiled = true
+      self
     end
 
+    private
     def add_non_path_to_tree(node, path, names)
       path_obj = Path.new(self, path, names)
       destination = Proc.new { |req, use_partial_matching|
@@ -265,7 +266,7 @@ class HttpRouter
                 env["PATH_INFO"] = ''
                 env["SCRIPT_NAME"] += req.rack_request.path_info
               end
-              response = @app.call(env)
+              response = path_obj.route.dest.call(env)
               router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
             else
               throw :success, Response.new(req, path_obj)
