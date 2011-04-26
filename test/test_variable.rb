@@ -76,6 +76,11 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route r, '/foo', {:test => 'foo'}
   end
 
+  def test_var_with_optional_format_and_regex
+    r = router { add('/:test(.:format)', :format => /[^\.]+/) }
+    assert_route r, '/asd@asd.com.json', {:test => 'asd@asd.com', :format => 'json'}
+  end
+
   def test_glob
     assert_route '/test/*variable', 'test/one/two/three', {:variable => ['one', 'two', 'three']}
   end

@@ -82,6 +82,7 @@ class HttpRouter
     end
 
     def matching(matchers)
+      matchers = Hash[*matchers] if matchers.is_a?(Array)
       @opts.merge!(matchers)
       self
     end

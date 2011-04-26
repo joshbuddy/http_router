@@ -71,7 +71,7 @@ class HttpRouter
   end
 
   def set_pass_on_response(&blk)
-    extend(Module.new{define_method(:pass_on_response, &blk)})
+    extend(Module.new { define_method(:pass_on_response, &blk) })
   end
 
   # Adds a path that only responds to the request method +GET+.
@@ -120,10 +120,10 @@ class HttpRouter
     else
       request = Request.new(rack_request.path_info, rack_request, perform_call)
       response = catch(:success) { @root[request] }
-      if response.nil?
-        no_response(env, perform_call)
-      elsif response
+      if response
         response
+      elsif response.nil?
+        no_response(env, perform_call)
       elsif perform_call
         @default_app.call(env)
       else
@@ -134,10 +134,8 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
-    @root = Node.new(self)
+    @routes, @named_routes, @root = [], {}, Node.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
-    @routes = []
-    @named_routes = {}
   end
 
   # Assigns the default application.
