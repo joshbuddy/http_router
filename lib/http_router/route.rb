@@ -10,19 +10,22 @@ class HttpRouter
       @original_path = path
       @path = path
       @opts = opts
-      @arbitrary = opts[:arbitrary] || opts[:__arbitrary__]
-      @conditions = opts[:conditions] || opts[:__conditions__] || {}
-      name(opts[:name]) if opts.key?(:name)
-      @opts.merge!(opts[:matching]) if opts[:matching]
       @matches_with = {}
       @default_values = opts[:default_values] || {}
       if @original_path[-1] == ?*
         @match_partially = true
         path.slice!(-1)
-      elsif opts.key?(:partial)
-        @match_partially = opts[:partial]
       end
       @paths = OptionalCompiler.new(path).paths
+      process_opts
+    end
+
+    def process_opts
+      @arbitrary = @opts[:arbitrary] || @opts[:__arbitrary__]
+      @conditions = @opts[:conditions] || @opts[:__conditions__] || {}
+      @opts.merge!(@opts[:matching]) if @opts[:matching]
+      @match_partially = @opts[:partial] if @match_partially.nil? && @opts.key?(:partial)
+      name(@opts[:name]) if @opts.key?(:name)
     end
 
     def as_options
@@ -252,29 +255,27 @@ class HttpRouter
     private
     def add_non_path_to_tree(node, path, names)
       path_obj = Path.new(self, path, names)
-      destination = Proc.new { |req, use_partial_matching|
-        if (use_partial_matching or req.path.empty?)
-          if req.path.empty? or match_partially? or (@router.ignore_trailing_slash? and req.path.size == 1 and req.path.last == '')
-            if req.perform_call
-              env = req.rack_request.dup.env
-              env['router.params'] ||= {}
-              env['router.params'].merge!(path_obj.hashify_params(req.params))
-              matched = if match_partially?
-                env['PATH_INFO'] = "/#{req.path.join('/')}"
-                env['SCRIPT_NAME'] += req.rack_request.path_info[0, req.rack_request.path_info.size - env['PATH_INFO'].size]
-              else
-                env["PATH_INFO"] = ''
-                env["SCRIPT_NAME"] += req.rack_request.path_info
-              end
-              response = path_obj.route.dest.call(env)
-              router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
+      destination = Proc.new do |req, params|
+        if req.path.empty? or match_partially? or (@router.ignore_trailing_slash? and req.path.size == 1 and req.path.last == '')
+          if req.perform_call
+            env = req.rack_request.dup.env
+            env['router.params'] ||= {}
+            env['router.params'].merge!(path_obj.hashify_params(req.params))
+            matched = if match_partially?
+              env['PATH_INFO'] = "/#{req.path.join('/')}"
+              env['SCRIPT_NAME'] += req.rack_request.path_info[0, req.rack_request.path_info.size - env['PATH_INFO'].size]
             else
-              throw :success, Response.new(req, path_obj)
+              env["PATH_INFO"] = ''
+              env["SCRIPT_NAME"] += req.rack_request.path_info
             end
+            response = path_obj.route.dest.call(env)
+            router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
+          else
+            throw :success, Response.new(req, path_obj)
           end
         end
-      }
-      node = node.add_request(@conditions) if @conditions && !@conditions.empty?
+      end
+      node = node.add_request(@conditions) unless @conditions.empty?
       @arbitrary.each{|a| node = node.add_arbitrary(a, match_partially?, names)} if @arbitrary
       node.add_destination(destination, @match_partially)
       if dest.respond_to?(:url_mount=)

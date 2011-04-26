@@ -2,6 +2,7 @@ class HttpRouter
   class RegexRoute < Route
     def initialize(router, path, opts = {})
       @router, @original_path, @opts = router, path, opts
+      process_opts
     end
 
     def compile

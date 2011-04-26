@@ -18,8 +18,7 @@ class HttpRouter
     end
 
     def [](request)
-      @matchers.each {|m| m[request] }
-      nil
+      @matchers.each {|m| m[request] }; nil
     end
 
     def add_variable
