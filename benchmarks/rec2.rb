@@ -25,7 +25,7 @@ puts Benchmark.measure {
   puts "u.routes.size: #{u.routes.size}"
 }
 #
-TIMES = 10_000
+TIMES = 50_000
 
 #simple_env = 
 #simple2_env = 
