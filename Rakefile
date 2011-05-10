@@ -7,6 +7,12 @@ task :test => ['test:integration', 'test:examples', 'test:rdoc_examples']
 
 require 'pp'
 
+desc "Clean things"
+task :clean do
+  sh 'find . -name "*.rbc" | xargs rm'
+  sh 'rm -rf pkg'
+end
+
 namespace :test do
   desc "Run integration tests"
   task :integration do
