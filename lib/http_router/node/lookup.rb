@@ -16,6 +16,10 @@ class HttpRouter
       def add(part)
         Node.new(@router, @map[part] ||= [])
       end
+
+      def usuable?(other)
+        other.class == self.class
+      end
     end
   end
 end

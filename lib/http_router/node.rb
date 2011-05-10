@@ -22,11 +22,11 @@ class HttpRouter
     end
 
     def add_variable
-      add_or_use(Variable.new(@router))
+      add(Variable.new(@router))
     end
 
     def add_glob
-      add_or_use(Glob.new(@router))
+      add(Glob.new(@router))
     end
 
     def add_request(opts)
@@ -54,18 +54,17 @@ class HttpRouter
     end
 
     def add_lookup(part)
-      add_or_use(Lookup.new(@router))
+      add(Lookup.new(@router))
       @matchers.last.add(part)
+    end
+
+    def usable?(other)
+      false
     end
 
     private
     def add(matcher)
-      @matchers << matcher
-      @matchers.last
-    end
-
-    def add_or_use(matcher)
-      @matchers << matcher unless @matchers.last.is_a?(matcher.class)
+      @matchers << matcher unless matcher.usable?(@matchers.last)
       @matchers.last
     end
 

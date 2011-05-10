@@ -2,6 +2,7 @@ class HttpRouter
   class Node
     class Arbitrary < Node
       alias_method :node_lookup, :[]
+      attr_reader :allow_partial, :blk, :param_names
 
       def initialize(router, allow_partial, blk, param_names)
         @allow_partial, @blk, @param_names = allow_partial, blk, param_names
@@ -17,6 +18,10 @@ class HttpRouter
             @blk.call(request, params)
           end
         end
+      end
+
+      def usuable?(other)
+        other.class == self.class && other.allow_partial == allow_partial && other.blk == blk && other.param_names == param_names
       end
     end
   end

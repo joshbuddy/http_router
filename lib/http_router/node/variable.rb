@@ -8,6 +8,10 @@ class HttpRouter
           super(request)
         end
       end
+
+      def usuable?(other)
+        other.class == self.class
+      end
     end
   end
 end

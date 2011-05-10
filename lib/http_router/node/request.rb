@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
     class Request < Node
-      attr_reader :request_method
+      attr_reader :request_method, :opts
 
       def initialize(router, opts)
         @opts = opts
@@ -18,6 +18,10 @@ class HttpRouter
           end
         }
         super(request)
+      end
+
+      def usuable?(other)
+        other.class == self.class && other.opts == opts
       end
     end
   end

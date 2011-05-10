@@ -16,6 +16,10 @@ class HttpRouter
           end
         end
       end
+
+      def usuable?(other)
+        other.class == self.class && other.allow_partial == allow_partial && other.blk == blk
+      end
     end
   end
 end

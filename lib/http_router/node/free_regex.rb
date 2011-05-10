@@ -17,6 +17,10 @@ class HttpRouter
           super
         end
       end
+
+      def usuable?(other)
+        other.class == self.class && other.matcher == matcher
+      end
     end
   end
 end
