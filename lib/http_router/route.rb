@@ -273,7 +273,7 @@ class HttpRouter
             router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
           elsif req.acceptance_test
             response = Response.new(req, path_obj)
-            req.acceptance_test[response]
+            catch(:pass) { req.acceptance_test[response] }
             throw :success, response if response.acceptance_response
           else
             throw :success, Response.new(req, path_obj)
