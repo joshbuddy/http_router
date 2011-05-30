@@ -1,3 +1,4 @@
+require 'uri'
 class HttpRouter
   class Path
     attr_reader :route, :param_names
@@ -41,8 +42,7 @@ class HttpRouter
       path = raw_url(args, options)
       raise InvalidRouteException if path !~ @path_validation_regex
       raise TooManyParametersException unless args.empty?
-      uri_escape!(path)
-      [path, options]
+      [URI.escape(path), options]
     end
 
     def original_path
@@ -52,10 +52,6 @@ class HttpRouter
     private
     def raw_url(args, options)
       raise UngeneratableRouteException
-    end
-
-    def uri_escape!(s)
-      s.to_s.gsub!(/([^:\/?\[\]\-_~\.!\$&'\(\)\*\+,;=@a-zA-Z0-9]+)/n) { "%#{$1.unpack('H2'*$1.size).join('%').upcase}" }
     end
   end
 end

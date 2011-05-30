@@ -1,7 +1,7 @@
 class HttpRouter
   class Request
     attr_reader :acceptance_test
-    attr_accessor :path, :params, :rack_request, :extra_env, :continue
+    attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with
     alias_method :rack, :rack_request
     def initialize(path, rack_request, perform_call, &acceptance_test)
       @rack_request, @perform_call, @acceptance_test = rack_request, perform_call, acceptance_test

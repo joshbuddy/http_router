@@ -54,8 +54,7 @@ class HttpRouter
     end
 
     def add_lookup(part)
-      add(Lookup.new(@router))
-      @matchers.last.add(part)
+      add(Lookup.new(@router)).add(part)
     end
 
     def usable?(other)

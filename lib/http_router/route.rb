@@ -120,6 +120,7 @@ class HttpRouter
     def delete;  request_method('DELETE');  end
     def head;    request_method('HEAD');    end
     def options; request_method('OPTIONS'); end
+    def patch;   request_method('PATCH'); end
 
     def arbitrary(blk = nil, &blk2)
       arbitrary_with_continue { |req, params|
@@ -273,7 +274,7 @@ class HttpRouter
             router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
           elsif req.acceptance_test
             response = Response.new(req, path_obj)
-            catch(:pass) { req.acceptance_test[response] }
+            req.passed_with = catch(:pass) { req.acceptance_test[response] }
             throw :success, response if response.acceptance_response
           else
             throw :success, Response.new(req, path_obj)

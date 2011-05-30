@@ -1,3 +1,4 @@
+# encoding: utf-8
 class TestGenerate < MiniTest::Unit::TestCase
 
   def test_static
@@ -84,6 +85,10 @@ class TestGenerate < MiniTest::Unit::TestCase
 
   def test_nil_values
     assert_generate '/url', "/url(/:var)", :var => nil
+  end
+
+  def test_unicode
+    assert_generate '/%C3%A4', "/:var", :var => 'ä'
   end
 
   def test_raise
