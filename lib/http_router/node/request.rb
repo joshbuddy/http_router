@@ -23,6 +23,17 @@ class HttpRouter
       def usuable?(other)
         other.class == self.class && other.opts == opts
       end
+
+      def to_code(pos)
+        code = "\nif "
+        code << @opts.map do |k,v|
+          case v
+          when Array then "#{v.inspect}.any?{|vv| vv === request#{pos}.rack_request.send(#{k.inspect})}"
+          else            "#{v.inspect} === request#{pos}.rack_request.send(#{k.inspect})"
+          end           
+        end * ' and '
+        code << "\n#{super}\nend\n"
+      end
     end
   end
 end

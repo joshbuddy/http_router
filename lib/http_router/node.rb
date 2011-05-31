@@ -11,14 +11,10 @@ class HttpRouter
     autoload :Lookup,        'http_router/node/lookup'
     autoload :Destination,   'http_router/node/destination'
 
-    attr_reader :priority, :router
+    attr_reader :priority, :router, :node_position
 
     def initialize(router, matchers = [])
       @router, @matchers = router, matchers
-    end
-
-    def [](request)
-      @matchers.each {|m| m[request] }; nil
     end
 
     def add_variable
@@ -61,10 +57,31 @@ class HttpRouter
       false
     end
 
+    def method_missing(m, *args, &blk)
+      if m.to_s == 'fast_lookup'
+        compile
+        fast_lookup(*args)
+      else
+        super
+      end
+    end
+
+    def compile
+      instance_eval "def fast_lookup(request0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
+    end
+
     private
     def add(matcher)
       @matchers << matcher unless matcher.usable?(@matchers.last)
       @matchers.last
+    end
+
+    def to_code(pos)
+      code = "# --> to_code for #{self.class} #{@node_position}"
+      @matchers.each do |m|
+        code << m.to_code(pos).split(/\n/).map{|line| ' ' * ((caller.length + 1) * 2) << line}.join("\n")
+      end
+      code << "\n"
     end
   end
 end

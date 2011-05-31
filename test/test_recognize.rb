@@ -4,12 +4,27 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_route router.add(''),              '/'
   end
 
-  def test_simple
+  def test_simple1
     assert_route router.add('/'),             '/'
+  end
+
+  def test_simple2
     assert_route router.add('/test'),         '/test'
+  end
+
+  def test_simple3
     assert_route router.add('/test/one'),     '/test/one'
+  end
+
+  def test_simple4
     assert_route router.add('/test/one/two'), '/test/one/two'
+  end
+
+  def test_simple5
     assert_route router.add('/test.html'),    '/test.html'
+  end
+
+  def test_simple6
     assert_route router.add('/.html'),        '/.html'
   end
 

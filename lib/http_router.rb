@@ -39,6 +39,7 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
+    @nodes                   = []
     reset!
     instance_eval(&blk) if blk
   end
@@ -122,7 +123,7 @@ class HttpRouter
       response.finish
     else
       request = Request.new(rack_request.path_info, rack_request, perform_call, &blk)
-      response = catch(:success) { @root[request] }
+      response = catch(:success) { @root.fast_lookup(request) }
       if response
         response
       elsif response.nil?
@@ -144,6 +145,15 @@ class HttpRouter
   # Assigns the default application.
   def default(app)
     @default_app = app
+  end
+
+  def register_node(n)
+    @nodes << n
+    @nodes.size - 1
+  end
+
+  def [](pos)
+    @nodes.at(pos)
   end
 
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
@@ -194,6 +204,10 @@ class HttpRouter
     cloned_router
   end
 
+  def compile
+    @root.compile
+  end
+
   private
   def no_response(env, perform_call = true)
     supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m|
@@ -201,7 +215,7 @@ class HttpRouter
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
       test_request = Request.new(test_env.path_info, test_env, 405)
-      catch(:success) { @root[test_request] }
+      catch(:success) { @root.fast_lookup(test_request) }
     end
     supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end
