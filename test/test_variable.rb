@@ -1,3 +1,4 @@
+# encoding: utf-8
 class TestVariable < MiniTest::Unit::TestCase
   def test_variable
     assert_route ':one',      '/two',        {:one => 'two'}

@@ -1,5 +1,3 @@
-require 'url_mount'
-require 'uri'
 
 class HttpRouter
   class Route
@@ -300,7 +298,7 @@ class HttpRouter
       when Hash
         value.each{ |k, v| append_querystring_value(uri, "#{key}[#{k}]", v) }
       else
-        uri << '&' << ::Rack::Utils.escape(key.to_s) << '=' << ::Rack::Utils.escape(value.to_s)
+        uri << '&' << CGI.escape(key.to_s) << '=' << CGI.escape(value.to_s)
       end
     end
 

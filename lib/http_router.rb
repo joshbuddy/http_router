@@ -1,5 +1,8 @@
 require 'set'
 require 'rack'
+require 'uri'
+require 'cgi'
+require 'url_mount'
 require 'http_router/node'
 require 'http_router/request'
 require 'http_router/response'
