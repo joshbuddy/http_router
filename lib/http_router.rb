@@ -123,7 +123,7 @@ class HttpRouter
       response.finish
     else
       request = Request.new(rack_request.path_info, rack_request, perform_call, &blk)
-      response = catch(:success) { @root.fast_lookup(request) }
+      response = catch(:success) { @root[request] }
       if response
         response
       elsif response.nil?
@@ -215,7 +215,7 @@ class HttpRouter
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
       test_request = Request.new(test_env.path_info, test_env, 405)
-      catch(:success) { @root.fast_lookup(test_request) }
+      catch(:success) { @root[test_request] }
     end
     supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end

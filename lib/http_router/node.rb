@@ -58,16 +58,16 @@ class HttpRouter
     end
 
     def method_missing(m, *args, &blk)
-      if m.to_s == 'fast_lookup'
+      if m.to_s == '[]'
         compile
-        fast_lookup(*args)
+        send(:[], *args)
       else
         super
       end
     end
 
     def compile
-      instance_eval "def fast_lookup(request0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
+      instance_eval "def [](request0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
     end
 
     private
