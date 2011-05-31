@@ -15,6 +15,8 @@ u.add('/dynamic/:variable').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/:greed').matching(:greed => /.*/).compile.to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/hey.:greed.html').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 
+u.compile rescue nil
+
 puts Benchmark.measure {
   ('aa'..'nn').each do |first|
     ('a'..'n').each do |second|
@@ -34,7 +36,7 @@ TIMES = 50_000
 #simple_and_dynamic_env1 = Rack::MockRequest.env_for('/rails/controller/action/id')
 #simple_and_dynamic_env2 = Rack::MockRequest.env_for('/greedy/controller/action/id')
 #simple_and_dynamic_env3 = Rack::MockRequest.env_for('/greedy/hey.hello.html')
-#5.times {
+5.times {
   RBench.run(TIMES) do
 
     report "2 levels, static" do
@@ -62,5 +64,5 @@ TIMES = 50_000
     #end
 
   end
-#}
+}
 puts `ps -o rss= -p #{Process.pid}`.to_i

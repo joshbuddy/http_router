@@ -8,16 +8,14 @@ class HttpRouter
       end
 
       def to_code(pos)
-        "
-whole_path = \"/\#{request#{pos}.joined_path}\"
-if match = #{matcher.inspect}.match(whole_path) and match[0].size == whole_path.size
-  request#{pos.next} = request#{pos}.clone
-  request#{pos.next}.extra_env['router.regex_match'] = match
-  request#{pos.next}.path = ['']
-  match.names.size.times{|i| request#{pos.next}.params << match[i + 1]} if match.respond_to?(:names) && match.names
-  #{super(pos.next)}
-end
-        "
+        indented_code pos, "whole_path = \"/\#{request#{pos}.joined_path}\"
+        if match = #{matcher.inspect}.match(whole_path) and match[0].size == whole_path.size
+          request#{pos.next} = request#{pos}.clone
+          request#{pos.next}.extra_env['router.regex_match'] = match
+          request#{pos.next}.path = ['']
+          match.names.size.times{|i| request#{pos.next}.params << match[i + 1]} if match.respond_to?(:names) && match.names
+          #{super(pos.next)}
+        end"
       end
 
       def usuable?(other)

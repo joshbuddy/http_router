@@ -19,15 +19,13 @@ class HttpRouter
       end
 
       def to_code(pos)
-        "
-if match = #{@matcher.inspect}.match(request#{pos}.path.first) and match.begin(0).zero?
-  request#{pos.next} = request#{pos}.clone
-  request#{pos.next}.path.shift
-  #{"#{@splitting_indicies.inspect}.each { |idx| request#{pos.next}.params << URI.unescape(match[idx]).split(/\\\//) }" if @splitting_indicies}
-  #{@capturing_indicies.inspect}.each { |idx| request#{pos.next}.params << URI.unescape(match[idx]) }
-  #{super(pos.next)}
-end
-        "
+          indented_code pos, "if match = #{@matcher.inspect}.match(request#{pos}.path.first) and match.begin(0).zero?
+            request#{pos.next} = request#{pos}.clone
+            request#{pos.next}.path.shift
+            #{"#{@splitting_indicies.inspect}.each { |idx| request#{pos.next}.params << URI.unescape(match[idx]).split(/\\\//) }" if @splitting_indicies}
+            #{@capturing_indicies.inspect}.each { |idx| request#{pos.next}.params << URI.unescape(match[idx]) }
+            #{super(pos.next)}
+          end"
       end
     end
   end

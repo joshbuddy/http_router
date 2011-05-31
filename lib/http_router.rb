@@ -14,7 +14,7 @@ require 'http_router/optional_compiler'
 
 class HttpRouter
 
-  attr_reader :root, :routes, :known_methods, :named_routes
+  attr_reader :root, :routes, :known_methods, :named_routes, :nodes
   attr_accessor :default_app, :url_mount
 
   # Raised when a Route is not able to be generated.

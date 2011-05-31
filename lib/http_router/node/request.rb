@@ -9,30 +9,20 @@ class HttpRouter
         super(router)
       end
 
-      def [](request)
-        @opts.each{|k,v|
-          test = request.rack_request.send(k)
-          return unless case v
-          when Array then v.any?{|vv| vv === test}
-          else            v === test
-          end
-        }
-        super(request)
-      end
-
       def usuable?(other)
         other.class == self.class && other.opts == opts
       end
 
       def to_code(pos)
-        code = "\nif "
+        code = "if "
         code << @opts.map do |k,v|
           case v
-          when Array then "#{v.inspect}.any?{|vv| vv === request#{pos}.rack_request.send(#{k.inspect})}"
-          else            "#{v.inspect} === request#{pos}.rack_request.send(#{k.inspect})"
+          when Array then "#{v.inspect}.any?{|vv| vv === request#{pos}.rack_request.#{k}}"
+          else            "#{v.inspect} === request#{pos}.rack_request.#{k.inspect}"
           end           
         end * ' and '
-        code << "\n#{super}\nend\n"
+        code << "\n#{super}\nend"
+        indented_code pos, code
       end
     end
   end

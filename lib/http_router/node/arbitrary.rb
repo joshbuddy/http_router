@@ -14,19 +14,16 @@ class HttpRouter
       end
 
       def to_code(pos)
-        "
-n = router[#{node_position}]
-if request#{pos}.path.empty? or (request#{pos}.path.size == 1 and request#{pos}.path.at(0) == '') or #{@allow_partial.inspect}
-  request#{pos.next} = request#{pos}.clone
-  request#{pos.next}.continue = proc { |state|
-    if state
-      #{super(pos.next)}
-    end
-  }
-  params = #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(request#{pos.next}.params)]"}
-  n.blk.call(request#{pos.next}, params)
-end
-        "
+        indented_code pos, "#{"if request#{pos}.path_finished?" unless @allow_partial}
+          request#{pos.next} = request#{pos}.clone
+          request#{pos.next}.continue = proc { |state|
+            if state
+              #{super(pos.next)}
+            end
+          }
+          params = #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(request#{pos.next}.params)]"}
+          router.nodes.at(#{node_position}).blk[request#{pos.next}, params]
+        #{"end" unless @allow_partial}"
       end
     end
   end

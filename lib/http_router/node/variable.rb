@@ -6,13 +6,13 @@ class HttpRouter
       end
 
       def to_code(pos)
-        "
-unless request#{pos}.path.empty?
-  request#{pos.next} = request#{pos}.clone
-  request#{pos.next}.params << URI.unescape(request#{pos.next}.path.shift)
-  #{super(pos.next)}
-end
-        "
+        indented_code(pos, "
+          unless request#{pos}.path_finished?
+            request#{pos.next} = request#{pos}.clone
+            request#{pos.next}.params << URI.unescape(request#{pos.next}.path.shift)
+            #{super(pos.next)}
+          end
+        ")
       end
     end
   end

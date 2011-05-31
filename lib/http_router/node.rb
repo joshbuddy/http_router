@@ -77,11 +77,17 @@ class HttpRouter
     end
 
     def to_code(pos)
-      code = "# --> to_code for #{self.class} #{@node_position}"
+      spacer = "#{'  ' * pos}"
+      code = "#{spacer}# --> to_code for #{self.class} #{@node_position}\n"
       @matchers.each do |m|
-        code << m.to_code(pos).split(/\n/).map{|line| ' ' * ((caller.length + 1) * 2) << line}.join("\n")
+        code << m.to_code(pos)
       end
       code << "\n"
+    end
+
+    def indented_code(pos, code)
+      indent_size = code[/^ */].size
+      "\n" << code.strip.split(/\n/).map{|line| "#{'  ' * pos.next}#{line[/ {#{indent_size}}(.*)/, 1]}"}.join("\n") << "\n"
     end
   end
 end

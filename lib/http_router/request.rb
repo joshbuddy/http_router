@@ -34,5 +34,9 @@ class HttpRouter
       dup_obj.extra_env = extra_env.dup
       dup_obj
     end
+
+    def path_finished?
+      @path.size == 0 or @path.size == 1 && @path.first == ''
+    end
   end
 end
