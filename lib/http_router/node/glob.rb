@@ -6,7 +6,7 @@ class HttpRouter
         request.params << []
         remaining_parts = request.path.dup
         until remaining_parts.empty?
-          request.params[-1] << unescape(remaining_parts.shift)
+          request.params[-1] << URI.unescape(remaining_parts.shift)
           request.path = remaining_parts
           super(request)
         end

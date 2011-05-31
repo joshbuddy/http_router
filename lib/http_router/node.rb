@@ -66,10 +66,5 @@ class HttpRouter
       @matchers << matcher unless matcher.usable?(@matchers.last)
       @matchers.last
     end
-
-    def unescape(val)
-      val.to_s.gsub!(/((?:%[0-9a-fA-F]{2})+)/n){ [$1.delete('%')].pack('H*') }
-      val
-    end
   end
 end

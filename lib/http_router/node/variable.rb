@@ -4,7 +4,7 @@ class HttpRouter
       def [](request)
         unless request.path.empty?
           request = request.clone
-          request.params << unescape(request.path.shift)
+          request.params << URI.unescape(request.path.shift)
           super(request)
         end
       end
