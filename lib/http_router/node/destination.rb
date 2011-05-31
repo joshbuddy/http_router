@@ -15,10 +15,9 @@ class HttpRouter
 
       def to_code(pos)
         "
-n = router[#{node_position}]
 #{"if request#{pos}.path.empty? or (request#{pos}.path.size == 1 and request#{pos}.path.at(0) == '')" unless @allow_partial}
-  request#{pos}.passed_with = catch(:pass) do
-    n.blk[request#{pos}, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(request#{pos.next}.params)]"}]
+  request0.passed_with = catch(:pass) do
+    router[#{node_position}].blk[request#{pos}, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(request#{pos.next}.params)]"}]
   end
 #{"end" unless @allow_partial}
         "
