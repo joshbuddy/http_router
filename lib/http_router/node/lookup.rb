@@ -18,9 +18,9 @@ class HttpRouter
         code = "case r#{pos}.path.first\n"
         @map.keys.each do |k|
           code << "when #{k.inspect}\n
-            r#{pos.next} = r#{pos}.clone
-            r#{pos.next}.path.shift
-            #{@map[k].map{|n| n.to_code(pos.next)} * "\n"}"
+  r#{pos.next} = r#{pos}.clone
+  r#{pos.next}.path.shift
+  #{@map[k].map{|n| n.to_code(pos.next)} * "\n"}"
         end
         code << "\nend"
         indented_code pos, code

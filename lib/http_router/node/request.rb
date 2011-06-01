@@ -21,7 +21,7 @@ class HttpRouter
           else            "#{v.inspect} === r#{pos}.rack_request.#{k.inspect}"
           end           
         end * ' and '
-        code << "\n#{super}\nend"
+        code << "\n  #{super}\nend"
         indented_code pos, code
       end
     end

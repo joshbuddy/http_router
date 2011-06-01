@@ -11,8 +11,7 @@ class HttpRouter
             r#{pos.next} = r#{pos}.clone
             r#{pos.next}.params << URI.unescape(r#{pos.next}.path.shift)
             #{super(pos.next)}
-          end
-        ")
+          end")
       end
     end
   end
