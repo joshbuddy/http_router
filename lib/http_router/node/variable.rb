@@ -7,9 +7,9 @@ class HttpRouter
 
       def to_code(pos)
         indented_code(pos, "
-          unless request#{pos}.path_finished?
-            request#{pos.next} = request#{pos}.clone
-            request#{pos.next}.params << URI.unescape(request#{pos.next}.path.shift)
+          unless r#{pos}.path_finished?
+            r#{pos.next} = r#{pos}.clone
+            r#{pos.next}.params << URI.unescape(r#{pos.next}.path.shift)
             #{super(pos.next)}
           end
         ")

@@ -67,7 +67,7 @@ class HttpRouter
     end
 
     def compile
-      instance_eval "def [](request0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
+      instance_eval "def [](r0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
     end
 
     private
@@ -87,7 +87,7 @@ class HttpRouter
 
     def indented_code(pos, code)
       indent_size = code[/^ */].size
-      "\n" << code.strip.split(/\n/).map{|line| "#{'  ' * pos.next}#{line[/ {#{indent_size}}(.*)/, 1]}"}.join("\n") << "\n"
+      "\n" << code.strip.split(/\n/).map{|line| "#{'  ' * pos.next}#{line[/[ ]{#{indent_size}}(.*)/, 1]}"}.join("\n") << "\n"
     end
   end
 end

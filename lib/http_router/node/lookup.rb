@@ -15,12 +15,11 @@ class HttpRouter
       end
 
       def to_code(pos)
-        code = "
-          case request#{pos}.path.first\n"
+        code = "case r#{pos}.path.first\n"
         @map.keys.each do |k|
           code << "when #{k.inspect}\n
-            request#{pos.next} = request#{pos}.clone
-            request#{pos.next}.path.shift
+            r#{pos.next} = r#{pos}.clone
+            r#{pos.next}.path.shift
             #{@map[k].map{|n| n.to_code(pos.next)} * "\n"}"
         end
         code << "\nend"

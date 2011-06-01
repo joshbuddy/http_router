@@ -14,9 +14,9 @@ class HttpRouter
       end
 
       def to_code(pos)
-        indented_code pos, "#{"if request#{pos}.path_finished?" unless @allow_partial}
-          request0.passed_with = catch(:pass) do
-            router.nodes.at(#{node_position}).blk[request#{pos}, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(request#{pos.next}.params)]"}]
+        indented_code pos, "#{"if r#{pos}.path_finished?" unless @allow_partial}
+          r0.passed_with = catch(:pass) do
+            router.nodes.at(#{node_position}).blk[r#{pos}, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(r#{pos.next}.params)]"}]
           end
         #{"end" unless @allow_partial}"
       end
