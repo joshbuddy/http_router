@@ -14,8 +14,8 @@ class HttpRouter
           r#{pos.next} = r#{pos}.dup
           r#{pos.next}.extra_env['router.regex_match'] = match
           r#{pos.next}.path = ['']
-          
-          match.names.size.times{|i| r#{pos.next}.params << match[i + 1]} if match.respond_to?(:names) && match.names
+          " << (//.respond_to?(:names) ?
+          "match.names.size.times{|i| r#{pos.next}.params << match[i + 1]} if match.respond_to?(:names) && match.names" : "") << "
           #{super(pos.next)}
         end"
       end
