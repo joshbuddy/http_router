@@ -24,7 +24,12 @@ class HttpRouter
         root_methods_module = Module.new
         root_methods_module.module_eval(root_methods)
         router.root.extend root_methods_module
-        code = "\nm = :\"lookup_#{object_id} \#{request.path.first}\";send(m, request) if respond_to?(m)\n"
+        code = "
+        unless request.path_finished?
+          m = (\"lookup_#{object_id} \" << request.path.first).to_sym
+          send(m, request) if respond_to?(m)
+        end
+        "
       end
     end
   end
