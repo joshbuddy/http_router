@@ -16,7 +16,7 @@ class HttpRouter
       def to_code(pos)
         indented_code pos, "
         #{"if r#{pos}.path_finished?" unless @allow_partial}
-          r#{pos.next} = r#{pos}.clone
+          r#{pos.next} = r#{pos}.dup
           r#{pos.next}.continue = proc { |state|
             if state
               #{super(pos.next)}

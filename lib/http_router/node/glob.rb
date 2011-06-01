@@ -7,7 +7,7 @@ class HttpRouter
 
       def to_code(pos)
         indented_code pos, "
-          r#{pos.next} = r#{pos}.clone
+          r#{pos.next} = r#{pos}.dup
           r#{pos.next}.params << []
           remaining_parts = r#{pos.next}.path.dup
           until remaining_parts.empty?
