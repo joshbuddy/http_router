@@ -9,7 +9,7 @@ class HttpRouter
         super(router, parent)
       end
 
-      def usuable?(other)
+      def usable?(other)
         other.class == self.class && other.matcher == matcher && other.splitting_indicies == splitting_indicies && other.capturing_indicies == capturing_indicies
       end
 

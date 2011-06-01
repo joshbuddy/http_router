@@ -19,12 +19,12 @@ class HttpRouter
           request.path = old_path
           request.extra_env.delete('router.regex_match')
           " << (//.respond_to?(:names) ?
-          "params.slice!(#{-match.names.size}, #{match.names.size})" : ""
+          "params.slice!(-match.names.size, match.names.size)" : ""
           ) << "
         end"
       end
 
-      def usuable?(other)
+      def usable?(other)
         other.class == self.class && other.matcher == matcher
       end
     end

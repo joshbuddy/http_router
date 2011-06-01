@@ -10,7 +10,7 @@ class HttpRouter
         Node.new(@router, self, @map[part] ||= [])
       end
 
-      def usuable?(other)
+      def usable?(other)
         other.class == self.class
       end
 

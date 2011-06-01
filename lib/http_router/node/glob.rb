@@ -1,7 +1,7 @@
 class HttpRouter
   class Node
     class Glob < Node
-      def usuable?(other)
+      def usable?(other)
         other.class == self.class
       end
 

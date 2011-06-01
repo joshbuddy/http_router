@@ -9,7 +9,7 @@ class HttpRouter
         super(router, parent)
       end
 
-      def usuable?(other)
+      def usable?(other)
         other.class == self.class && other.allow_partial == allow_partial && other.blk == blk && other.param_names == param_names
       end
 
