@@ -22,8 +22,7 @@ class HttpRouter
               #{super(pos.next)}
             end
           }
-          params = #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(r#{pos.next}.params)]"}
-          router.nodes.at(#{node_position})[r#{pos.next}, params]
+          router.nodes.at(#{node_position})[r#{pos.next}, #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(r#{pos.next}.params)]"}]
         #{"end" unless @allow_partial}"
       end
     end

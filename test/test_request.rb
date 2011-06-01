@@ -6,6 +6,12 @@ class TestRequest < MiniTest::Unit::TestCase
     assert_status(405, Rack::MockRequest.env_for('/test', :method => 'GET'))
   end
 
+  def test_simple_case_with_array
+    r = router { add('test', :request => {:request_methods => ['POST', 'GET']}) }
+    assert_route r, Rack::MockRequest.env_for('/test', :method => 'POST')
+    assert_route r, Rack::MockRequest.env_for('/test', :method => 'GET')
+  end
+
   def test_single_app_with_404
     r = router { add('test').post.to{|env| [404, {}, []]} }
     assert_route nil, Rack::MockRequest.env_for('/test', :method => 'POST')

@@ -17,7 +17,7 @@ class HttpRouter
         code = "if "
         code << @opts.map do |k,v|
           case v
-          when Array then "#{v.inspect}.any?{|vv| vv === r#{pos}.rack_request.#{k}}"
+          when Array then "(#{v.map{|vv| "#{vv.inspect} === r#{pos}.rack_request.#{k}"}.join(' or ')})"
           else            "#{v.inspect} === r#{pos}.rack_request.#{k.inspect}"
           end           
         end * ' and '
