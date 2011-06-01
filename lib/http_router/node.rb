@@ -81,12 +81,8 @@ class HttpRouter
     end
 
     def depth
-      p = @parent
-      d = 0
-      until p.nil?
-        d += 1
-        p = p.parent
-      end
+      d, p = 0, @parent
+      d, p = d + 1, p.parent until p.nil?
       d
     end
   end
