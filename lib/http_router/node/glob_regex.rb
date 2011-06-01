@@ -1,10 +1,6 @@
 class HttpRouter
   class Node
     class GlobRegex < SpanningRegex
-      def add_params(request)
-        @capturing_indicies.each { |idx| request.params << URI.unescape(match[idx].split('/')) }
-      end
-
       def to_code(pos)
         indented_code pos, "
           whole_path = r#{pos}.joined_path

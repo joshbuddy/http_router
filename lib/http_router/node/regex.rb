@@ -9,11 +9,6 @@ class HttpRouter
         super(router)
       end
 
-      def add_params(request, match)
-        @splitting_indicies.each { |idx| request.params << URI.unescape(match[idx]).split(/\//) } if @splitting_indicies
-        @capturing_indicies.each { |idx| request.params << URI.unescape(match[idx]) }
-      end
-
       def usuable?(other)
         other.class == self.class && other.matcher == matcher && other.splitting_indicies == splitting_indicies && other.capturing_indicies == capturing_indicies
       end
