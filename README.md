@@ -6,6 +6,7 @@ This is an HTTP router for use in either a web framework, or on it's own using R
 
 ## Features
 
+* Ordered route resolution.
 * Supports variables, and globbing, both named and unnamed.
 * Regex support for variables.
 * Request condition support.
