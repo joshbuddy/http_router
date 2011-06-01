@@ -5,16 +5,16 @@ class HttpRouter
         other.class == self.class
       end
 
-      def to_code(pos)
-        indented_code pos, "
-          r#{pos.next} = r#{pos}.dup
-          r#{pos.next}.params << []
-          remaining_parts = r#{pos.next}.path.dup
+      def to_code
+        "request.params << (globbed_params#{depth} = [])
+          remaining_parts = request.path.dup
           until remaining_parts.empty?
-            r#{pos.next}.params[-1] << URI.unescape(remaining_parts.shift)
-            r#{pos.next}.path = remaining_parts
-            #{super(pos.next)}
-          end"
+            globbed_params#{depth} << URI.unescape(remaining_parts.shift)
+            request.path = remaining_parts
+            #{super}
+          end
+          request.path[0,0] = request.params.pop
+          "
       end
     end
   end

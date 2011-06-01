@@ -27,14 +27,6 @@ class HttpRouter
       "request path, #{path.inspect}"
     end
 
-    def dup
-      dup_obj = super
-      dup_obj.path = path.dup
-      dup_obj.params = params.dup
-      dup_obj.extra_env = extra_env.dup
-      dup_obj
-    end
-
     def path_finished?
       @path.size == 0 or @path.size == 1 && @path.first == ''
     end

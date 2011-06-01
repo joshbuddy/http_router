@@ -138,7 +138,7 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
-    @routes, @named_routes, @root = [], {}, Node.new(self)
+    @routes, @named_routes, @root = [], {}, Node.new(self, nil)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
   end
 

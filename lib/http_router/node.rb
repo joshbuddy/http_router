@@ -11,46 +11,46 @@ class HttpRouter
     autoload :Lookup,        'http_router/node/lookup'
     autoload :Destination,   'http_router/node/destination'
 
-    attr_reader :priority, :router, :node_position
+    attr_reader :priority, :router, :node_position, :parent
 
-    def initialize(router, matchers = [])
-      @router, @matchers = router, matchers
+    def initialize(router, parent, matchers = [])
+      @router, @parent, @matchers = router, parent, matchers
     end
 
     def add_variable
-      add(Variable.new(@router))
+      add(Variable.new(@router, self))
     end
 
     def add_glob
-      add(Glob.new(@router))
+      add(Glob.new(@router, self))
     end
 
     def add_request(opts)
-      add(Request.new(@router, opts))
+      add(Request.new(@router, self, opts))
     end
 
     def add_arbitrary(blk, allow_partial, param_names)
-      add(Arbitrary.new(@router, allow_partial, blk, param_names))
+      add(Arbitrary.new(@router, self, allow_partial, blk, param_names))
     end
 
     def add_match(regexp, matching_indicies = [0], splitting_indicies = nil)
-      add(Regex.new(@router, regexp, matching_indicies, splitting_indicies))
+      add(Regex.new(@router, self, regexp, matching_indicies, splitting_indicies))
     end
 
     def add_spanning_match(regexp, matching_indicies = [0], splitting_indicies = nil)
-      add(SpanningRegex.new(@router, regexp, matching_indicies, splitting_indicies))
+      add(SpanningRegex.new(@router, self, regexp, matching_indicies, splitting_indicies))
     end
 
     def add_free_match(regexp)
-      add(FreeRegex.new(@router, regexp))
+      add(FreeRegex.new(@router, self, regexp))
     end
 
     def add_destination(blk, partial)
-      add(Destination.new(@router, blk, partial))
+      add(Destination.new(@router, self, blk, partial))
     end
 
     def add_lookup(part)
-      add(Lookup.new(@router)).add(part)
+      add(Lookup.new(@router, self)).add(part)
     end
 
     def usable?(other)
@@ -67,7 +67,7 @@ class HttpRouter
     end
 
     def compile
-      instance_eval "def [](r0)\n#{to_code(0)}\nnil\nend", __FILE__, __LINE__
+      instance_eval "def [](request)\n#{to_code}\nnil\nend", __FILE__, __LINE__
     end
 
     private
@@ -76,18 +76,18 @@ class HttpRouter
       @matchers.last
     end
 
-    def to_code(pos)
-      @matchers.map{ |m| m.to_code(pos) }.join("\n") << "\n"
+    def to_code
+      @matchers.map{ |m| "# #{m.class}\n" << m.to_code }.join("\n") << "\n"
     end
 
-    def indented_code(pos, code)
-      lines = code.
-        strip.
-        split(/\n/).
-        select{|l| !l.strip.size.zero?}
-      indent_size = lines.first[/ */].size
-      lines.map! {|l| "#{'  ' * pos.next}#{l[indent_size, l.size]}"}
-      "\n" << lines.join("\n") << "\n"
+    def depth
+      p = @parent
+      d = 0
+      until p.nil?
+        d += 1
+        p = p.parent
+      end
+      d
     end
   end
 end
