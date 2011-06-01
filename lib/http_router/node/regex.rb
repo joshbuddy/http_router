@@ -21,7 +21,7 @@ class HttpRouter
           @capturing_indicies.map { |c| "request.params << URI.unescape(match[#{c}])\n" }.join << "
           #{super}
           request.path.unshift part
-          request.params.slice!(#{-params_size}, #{params_size})
+          #{params_size == 1 ? "request.params.pop" : "request.params.slice!(#{-params_size}, #{params_size})"}
         end"
       end
     end

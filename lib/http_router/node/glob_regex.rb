@@ -10,7 +10,7 @@ class HttpRouter
           request.path = remaining_path.split('/')
           #{super}
           request.path = original_path
-          request.params.slice!(#{-@capturing_indicies.size}, #{@capturing_indicies.size})
+          #{@capturing_indicies.size == 1 ? "request.params.pop" : "request.params.slice!(#{-@capturing_indicies.size}, #{@capturing_indicies.size})"}
         end
           "
       end
