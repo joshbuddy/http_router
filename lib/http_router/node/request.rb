@@ -16,12 +16,20 @@ class HttpRouter
       def to_code
         code = "if "
         code << @opts.map do |k,v|
-          case v
-          when Array then "(#{v.map{|vv| "#{vv.inspect} === request.rack_request.#{k}"}.join(' or ')})"
-          else            "#{v.inspect} === request.rack_request.#{k.inspect}"
+          case v.size
+          when 1 then to_code_condition(k, v.first)
+          else        "(#{v.map{|k, vv| to_code_condition(k, vv)}.join(' or ')})"
           end           
         end * ' and '
         code << "\n  #{super}\nend"
+      end
+
+      private
+      def to_code_condition(k, v)
+        case v
+        when String then "#{v.inspect} == request.rack_request.#{k}"
+        else             "#{v.inspect} === request.rack_request.#{k}"
+        end
       end
     end
   end
