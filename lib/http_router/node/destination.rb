@@ -24,12 +24,7 @@ class HttpRouter
                 env['router.request'] = request
                 env['router.params'] ||= {}
                 #{"env['router.params'].merge!(Hash[#{path.param_names.inspect}.zip(request.params)])" if path.dynamic?}
-                #{@allow_partial ? "
-                  env['PATH_INFO'] = \"/\#{request.path.join('/')}\"
-                  env['SCRIPT_NAME'] += request.rack_request.path_info[0, request.rack_request.path_info.size - env['PATH_INFO'].size]" : 
-                  "env['PATH_INFO'] = ''
-                  env['SCRIPT_NAME'] += request.rack_request.path_info"
-                }
+                #{@allow_partial ? "router.rewrite_partial_path_info(env, request)" : "router.rewrite_path_info(env, request)" }
                 response = @router.process_destination_path(#{path_ivar}, env)
                 router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
               else
