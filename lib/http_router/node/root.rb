@@ -5,6 +5,11 @@ class HttpRouter
         super(router, nil)
       end
 
+      def [](request)
+        compile
+        self[request]
+      end
+
       def compile
         root.extend(root.methods_module)
         instance_eval "def [](request)\n#{to_code}\nnil\nend", __FILE__, __LINE__
@@ -12,15 +17,6 @@ class HttpRouter
 
       def methods_module
         @module ||= Module.new
-      end
-
-      def method_missing(m, *args, &blk)
-        if m.to_s == '[]'
-          compile
-          send(:[], *args)
-        else
-          super
-        end
       end
     end
   end
