@@ -19,8 +19,7 @@ class HttpRouter
             request.path = remaining_parts
             #{node_to_code}
           end
-          request.path[0,0] = request.params.pop
-          "
+          request.path[0,0] = request.params.pop"
       end
     end
   end
