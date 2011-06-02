@@ -15,6 +15,8 @@ class HttpRouter
       end
 
       def to_code
+        lookup_ivar = :"@lookup_#{router.next_counter}"
+        inject_root_ivar(lookup_ivar, @map)
         inject_root_methods @map.keys.map {|k| 
           method = :"lookup_#{object_id}_#{k.hash}"
           "define_method(#{method.inspect}) do |request|
@@ -23,10 +25,7 @@ class HttpRouter
             request.path.unshift part
           end"}.join("\n")
         code = "
-        unless request.path_finished?
-          m = \"lookup_#{object_id}_\#{request.path.first.hash}\"
-          send(m, request) if respond_to?(m)
-        end
+        send(\"lookup_#{object_id}_\#{request.path.first.hash}\", request) if !request.path_finished? && #{lookup_ivar}.key?(request.path.first)
         "
       end
     end

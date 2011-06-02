@@ -1,7 +1,8 @@
 require 'uri'
 class HttpRouter
   class Path
-    attr_reader :route, :param_names
+    attr_reader :route, :param_names, :dynamic
+    alias_method :dynamic?, :dynamic
     def initialize(route, path, param_names = [])
       @route, @path, @param_names, @dynamic = route, path, param_names, !param_names.empty?
       duplicate_param_names = param_names.dup.uniq!

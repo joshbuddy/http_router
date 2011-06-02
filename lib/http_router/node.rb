@@ -72,6 +72,11 @@ class HttpRouter
       end
     end
 
+    def inject_root_ivar(name, val)
+      root.instance_variable_set(name, val)
+    end
+
+
     def add(matcher)
       @matchers << matcher unless matcher.usable?(@matchers.last)
       @matchers.last

@@ -161,8 +161,8 @@ class HttpRouter
     end
   end
 
-  def process_destination(path, env)
-    path.route.dest.call(env)
+  def process_destination(destination, env)
+    destination.call(env)
   end
 
   def pass_on_response(response)
