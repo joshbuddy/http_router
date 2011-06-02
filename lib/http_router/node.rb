@@ -90,5 +90,9 @@ class HttpRouter
       d, p = d + 1, p.parent until p.nil?
       d
     end
+
+    def use_named_captures?
+      //.respond_to?(:names)
+    end
   end
 end
