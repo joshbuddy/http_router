@@ -8,13 +8,11 @@ class HttpRouter
 
       def to_code
         "request.params << (globbed_params#{depth} = [])
-          remaining_parts = request.path.dup
-          until remaining_parts.empty?
-            globbed_params#{depth} << remaining_parts.shift
-            request.path = remaining_parts
+          until request.path.empty?
+            globbed_params#{depth} << request.path.shift
             #{super}
           end
-          request.path[0,0] = request.params.pop"
+          request.path[0,0] = globbed_params#{depth}"
       end
     end
   end
