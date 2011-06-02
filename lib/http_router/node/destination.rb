@@ -5,7 +5,6 @@ class HttpRouter
       
       def initialize(router, parent, blk, allow_partial)
         @blk, @allow_partial = blk, allow_partial
-        @node_position = router.register_node(blk)
         super(router, parent)
       end
 
@@ -14,9 +13,11 @@ class HttpRouter
       end
 
       def to_code
+        b, method_name = @blk, :"blk_#{router.next_counter}"
+        inject_root_methods { define_method(method_name) { b } }
         "#{"if request.path_finished?" unless @allow_partial}
           request.passed_with = catch(:pass) do
-            router.nodes.at(#{node_position})[request, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(request.params)]"}]
+            #{method_name}[request, #{@param_names.nil? || @param_names.empty? ? 'nil' : "Hash[#{@param_names.inspect}.zip(request.params)]"}]
           end
         #{"end" unless @allow_partial}"
       end

@@ -1,5 +1,6 @@
 class HttpRouter
   class Node
+    autoload :Root,          'http_router/node/root'
     autoload :Glob,          'http_router/node/glob'
     autoload :GlobRegex,     'http_router/node/glob_regex'
     autoload :Variable,      'http_router/node/variable'
@@ -62,20 +63,15 @@ class HttpRouter
       false
     end
 
-    def method_missing(m, *args, &blk)
-      if m.to_s == '[]'
-        compile
-        send(:[], *args)
+    private
+    def inject_root_methods(code = nil, &blk)
+      if code
+        root.methods_module.module_eval(code, __FILE__, __LINE__)
       else
-        super
+        root.methods_module.module_eval(&blk)
       end
     end
 
-    def compile
-      instance_eval "def [](request)\n#{to_code}\nnil\nend", __FILE__, __LINE__
-    end
-
-    private
     def add(matcher)
       @matchers << matcher unless matcher.usable?(@matchers.last)
       @matchers.last
@@ -83,6 +79,10 @@ class HttpRouter
 
     def to_code
       @matchers.map{ |m| "# #{m.class}\n" << m.to_code }.join("\n") << "\n"
+    end
+
+    def root
+      @router.root
     end
 
     def depth

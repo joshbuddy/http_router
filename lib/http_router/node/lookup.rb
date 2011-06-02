@@ -15,18 +15,16 @@ class HttpRouter
       end
 
       def to_code
-        root_methods = @map.keys.map {|k| "
-          define_method(\"lookup #{object_id} #{k}\") do |request|
+        inject_root_methods @map.keys.map {|k| 
+          method = :"lookup_#{object_id}_#{k.hash}"
+          "define_method(#{method.inspect}) do |request|
             part = request.path.shift
             #{@map[k].map{|n| n.to_code} * "\n"}
             request.path.unshift part
           end"}.join("\n")
-        root_methods_module = Module.new
-        root_methods_module.module_eval(root_methods)
-        router.root.extend(root_methods_module)
         code = "
         unless request.path_finished?
-          m = :\"lookup #{object_id} \#{request.path.first}\"
+          m = \"lookup_#{object_id}_\#{request.path.first.hash}\"
           send(m, request) if respond_to?(m)
         end
         "

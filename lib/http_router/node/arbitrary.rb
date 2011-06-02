@@ -5,7 +5,6 @@ class HttpRouter
 
       def initialize(router, parent, sallow_partial, blk, param_names)
         @allow_partial, @blk, @param_names = allow_partial, blk, param_names
-        @node_position = router.register_node(blk)
         super(router, parent)
       end
 
@@ -14,13 +13,15 @@ class HttpRouter
       end
 
       def to_code
+        b, method_name = @blk, :"blk_#{router.next_counter}"
+        inject_root_methods { define_method(method_name) { b } }
         "#{"if request.path_finished?" unless @allow_partial}
           request.continue = proc { |state|
             if state
               #{super}
             end
           }
-          router.nodes.at(#{node_position})[request, #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(request.params)]"}]
+          #{method_name}[request, #{@param_names.nil? || @param_names.empty? ? '{}' : "Hash[#{@param_names.inspect}.zip(request.params)]"}]
           request.continue = nil
         #{"end" unless @allow_partial}"
       end

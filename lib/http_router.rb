@@ -39,7 +39,7 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
-    @nodes                   = []
+    @counter                 = 0
     reset!
     instance_eval(&blk) if blk
   end
@@ -138,22 +138,13 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
-    @routes, @named_routes, @root = [], {}, Node.new(self, nil)
+    @routes, @named_routes, @root = [], {}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
   end
 
   # Assigns the default application.
   def default(app)
     @default_app = app
-  end
-
-  def register_node(n)
-    @nodes << n
-    @nodes.size - 1
-  end
-
-  def [](pos)
-    @nodes.at(pos)
   end
 
   # Generate a URL for a specified route. This will accept a list of variable values plus any other variable names named as a hash.
@@ -206,6 +197,10 @@ class HttpRouter
 
   def compile
     @root.compile
+  end
+
+  def next_counter
+    @counter += 1
   end
 
   private
