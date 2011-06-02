@@ -44,15 +44,6 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
   end
 
-  def test_passing_with_custom_pass_wrapper
-    passed, working = router {
-      add('/').to { |env| [404, {}, ['pass']] }
-      add('/').to { |env| [200, {}, ['working']] }
-    }
-    router.set_pass_on_response {|response| response.first == 404}
-    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
-  end
-
   def test_optional
     route = router {
       add 'one(/two(/three(/four)(/five)))'

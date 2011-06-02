@@ -1,10 +1,9 @@
 class HttpRouter
   class Request
-    attr_reader :acceptance_test
     attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with
     alias_method :rack, :rack_request
-    def initialize(path, rack_request, perform_call, &acceptance_test)
-      @rack_request, @perform_call, @acceptance_test = rack_request, perform_call, acceptance_test
+    def initialize(path, rack_request, perform_call)
+      @rack_request, @perform_call = rack_request, perform_call
       @path = URI.unescape(path).split(/\//)
       @path.shift if @path.first == ''
       @path.push('') if path[-1] == ?/

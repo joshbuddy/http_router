@@ -70,14 +70,6 @@ class HttpRouter
     route
   end
 
-  def pass_on_response(response)
-    response[1]['X-Cascade'] == 'pass'
-  end
-
-  def set_pass_on_response(&blk)
-    extend(Module.new { define_method(:pass_on_response, &blk) })
-  end
-
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
@@ -108,21 +100,21 @@ class HttpRouter
   # Returns the route object.
   def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
-  def recognize(env, &blk)
-    call(env, false, &blk)
+  def recognize(env)
+    call(env, false)
   end
 
   # Rack compatible #call. If matching route is found, and +dest+ value responds to #call, processing will pass to the matched route. Otherwise,
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>.
-  def call(env, perform_call = true, &blk)
+  def call(env, perform_call = true)
     rack_request = ::Rack::Request.new(env)
     if redirect_trailing_slash? && (rack_request.head? || rack_request.get?) && rack_request.path_info[-1] == ?/
       response = ::Rack::Response.new
       response.redirect(request.path_info[0, request.path_info.size - 1], 302)
       response.finish
     else
-      request = Request.new(rack_request.path_info, rack_request, perform_call, &blk)
+      request = Request.new(rack_request.path_info, rack_request, perform_call)
       response = catch(:success) { @root[request] }
       if response
         response
@@ -167,6 +159,14 @@ class HttpRouter
     when Route  then route.url(*args)
     else raise UngeneratableRouteException
     end
+  end
+
+  def process_destination(path, env)
+    path.route.dest.call(env)
+  end
+
+  def pass_on_response(response)
+    response[1]['X-Cascade'] == 'pass'
   end
 
   # Ignore trailing slash feature enabled? See #initialize for details.

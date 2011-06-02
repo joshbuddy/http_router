@@ -36,6 +36,7 @@ TIMES = 50_000
 #simple_and_dynamic_env1 = Rack::MockRequest.env_for('/rails/controller/action/id')
 #simple_and_dynamic_env2 = Rack::MockRequest.env_for('/greedy/controller/action/id')
 #simple_and_dynamic_env3 = Rack::MockRequest.env_for('/greedy/hey.hello.html')
+u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
 5.times {
   RBench.run(TIMES) do
 
