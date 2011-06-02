@@ -16,7 +16,7 @@ class HttpRouter
 
       def to_code
         root_methods = @map.keys.map {|k| "
-          define_method(\"lookup_#{object_id} #{k}\") do |request|
+          define_method(\"lookup #{object_id} #{k}\") do |request|
             part = request.path.shift
             #{@map[k].map{|n| n.to_code} * "\n"}
             request.path.unshift part
@@ -26,7 +26,7 @@ class HttpRouter
         router.root.extend(root_methods_module)
         code = "
         unless request.path_finished?
-          m = (\"lookup_#{object_id} \" << request.path.first).to_sym
+          m = :\"lookup #{object_id} \#{request.path.first}\"
           send(m, request) if respond_to?(m)
         end
         "
