@@ -9,7 +9,7 @@ class HttpRouter
         "request.params << (globbed_params#{depth} = [])
           remaining_parts = request.path.dup
           until remaining_parts.empty?
-            globbed_params#{depth} << URI.unescape(remaining_parts.shift)
+            globbed_params#{depth} << remaining_parts.shift
             request.path = remaining_parts
             #{super}
           end

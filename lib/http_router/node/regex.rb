@@ -17,8 +17,8 @@ class HttpRouter
         params_size = @splitting_indicies.size + @capturing_indicies.size
         "if match = #{@matcher.inspect}.match(request.path.first) and match.begin(0).zero?
           part = request.path.shift\n" <<
-          @splitting_indicies.map { |s| "request.params << URI.unescape(match[#{s}]).split(/\\//)\n" }.join <<
-          @capturing_indicies.map { |c| "request.params << URI.unescape(match[#{c}])\n" }.join << "
+          @splitting_indicies.map { |s| "request.params << match[#{s}].split(/\\//)\n" }.join <<
+          @capturing_indicies.map { |c| "request.params << match[#{c}]\n" }.join << "
           #{super}
           request.path.unshift part
           #{params_size == 1 ? "request.params.pop" : "request.params.slice!(#{-params_size}, #{params_size})"}

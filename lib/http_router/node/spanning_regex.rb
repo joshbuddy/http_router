@@ -7,8 +7,8 @@ class HttpRouter
           if match = #{@matcher.inspect}.match(whole_path) and match.begin(0).zero?
             original_path#{depth} = request.path.dup
             " <<
-            (@splitting_indicies || []).map { |s| "request.params << URI.unescape(match[#{s}]).split(/\\//)\n" }.join <<
-            @capturing_indicies.map { |c| "request.params << URI.unescape(match[#{c}])\n" }.join << "
+            (@splitting_indicies || []).map { |s| "request.params << match[#{s}].split(/\\//)\n" }.join <<
+            @capturing_indicies.map { |c| "request.params << match[#{c}]\n" }.join << "
             remaining_path = whole_path[match[0].size + (whole_path[match[0].size] == ?/ ? 1 : 0), whole_path.size]
             request.path = remaining_path.split('/')
             #{node_to_code}

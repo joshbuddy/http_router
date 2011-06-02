@@ -212,7 +212,7 @@ class HttpRouter
               matches_with[name.to_sym] = @opts[name.to_sym]
               @opts[name.to_sym] ? node.add_spanning_match(@opts.delete(name.to_sym)) : node.add_glob
             else
-              node.add_lookup(URI.encode(parts[0]))
+              node.add_lookup(parts[0])
             end
           else
             capturing_indicies = []
@@ -239,7 +239,7 @@ class HttpRouter
                 matches_with[name] = @opts[name]
                 "(#{(@opts[name] || '.*?')})"
               else
-                Regexp.quote(URI.encode(part))
+                Regexp.quote(part)
               end
             end
             node = spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies) :

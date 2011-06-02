@@ -23,7 +23,7 @@ class HttpRouter
           end"}.join("\n")
         root_methods_module = Module.new
         root_methods_module.module_eval(root_methods)
-        router.root.extend root_methods_module
+        router.root.extend(root_methods_module)
         code = "
         unless request.path_finished?
           m = (\"lookup_#{object_id} \" << request.path.first).to_sym

@@ -7,9 +7,9 @@ class HttpRouter
 
       def to_code
         "unless request.path_finished?
-          request.params << URI.unescape(request.path.shift)
+          request.params << request.path.shift
           #{super}
-          request.path.unshift URI.escape(request.params.pop)
+          request.path.unshift request.params.pop
         end"
       end
     end
