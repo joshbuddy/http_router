@@ -14,7 +14,7 @@ class HttpRouter
       def to_code
         "request.params << (globbed_params#{depth} = [])
           remaining_parts = request.path.dup
-          while !remaining_parts.empty? and match = remaining_parts.first.match(#{@matcher.inspect}) and match.begin(0).zero?
+          while !remaining_parts.empty? and match = remaining_parts.first.match(#{@matcher.inspect}) and match[0] == remaining_parts.first
             globbed_params#{depth} << remaining_parts.shift
             request.path = remaining_parts
             #{node_to_code}

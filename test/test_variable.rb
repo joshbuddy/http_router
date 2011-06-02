@@ -93,6 +93,7 @@ class TestVariable < MiniTest::Unit::TestCase
   def test_glob_with_regexp
     r = router { add('/test/*variable', :variable => /[a-z]+/) }
     assert_route nil, '/test/asd/123'
+    assert_route nil, '/test/asd/asd123'
     assert_route r, '/test/asd/qwe', :variable => ['asd', 'qwe']
   end
 
