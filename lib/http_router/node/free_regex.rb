@@ -8,8 +8,8 @@ class HttpRouter
       end
 
       def to_code
-        "whole_path = \"/\#{request.joined_path}\"
-        if match = #{matcher.inspect}.match(whole_path) and match[0].size == whole_path.size
+        "whole_path#{depth} = \"/\#{request.joined_path}\"
+        if match = #{matcher.inspect}.match(whole_path#{depth}) and match[0].size == whole_path#{depth}.size
           request.extra_env['router.regex_match'] = match
           old_path = request.path
           request.path = ['']

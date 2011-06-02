@@ -1,6 +1,7 @@
 class HttpRouter
   class Node
     autoload :Glob,          'http_router/node/glob'
+    autoload :GlobRegex,     'http_router/node/glob_regex'
     autoload :Variable,      'http_router/node/variable'
     autoload :Regex,         'http_router/node/regex'
     autoload :SpanningRegex, 'http_router/node/spanning_regex'
@@ -23,6 +24,10 @@ class HttpRouter
 
     def add_glob
       add(Glob.new(@router, self))
+    end
+
+    def add_glob_regexp(matcher)
+      add(GlobRegex.new(@router, self, matcher))
     end
 
     def add_request(opts)

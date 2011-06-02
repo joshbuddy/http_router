@@ -92,6 +92,16 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_body '/',         router.call(Rack::MockRequest.env_for('/'))
   end
 
+  def test_request_mutation
+    got_this_far = false
+    non_matching, matching = router {
+      add("/test/:var/:var2/*glob").matching(:var2 => /123/, :glob => /[a-z]+/).get.arbitrary{|env, params| got_this_far = true; false}
+      add("/test/:var/:var2/*glob").matching(:var2 => /123/, :glob => /[a-z]+/).get
+    }
+    assert_route matching, '/test/123/123/asd/aasd/zxcqwe/asdzxc', {:var => '123', :var2 => '123', :glob => %w{asd aasd zxcqwe asdzxc}}
+    assert got_this_far, "matching should have gotten this far"
+  end
+
   def test_multiple_partial
     test, root = router {
       add("/test").partial.to{|env| [200, {}, ['/test',env['PATH_INFO']]]}

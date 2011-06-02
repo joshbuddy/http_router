@@ -90,12 +90,31 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route '/test/*variable/test', '/test/one/two/three/test', {:variable => ['one', 'two', 'three']}
   end
 
+  def test_glob_with_regexp
+    r = router { add('/test/*variable', :variable => /[a-z]+/) }
+    assert_route nil, '/test/asd/123'
+    assert_route r, '/test/asd/qwe', :variable => ['asd', 'qwe']
+  end
+
+  def test_glob_with_regexp_and_static
+    r = router { add('/test/*variable/test', :variable => /[a-z]+/) }
+    assert_route nil, '/test/asd/123/test'
+    assert_route r, '/test/asd/qwe/test', :variable => ['asd', 'qwe']
+  end
+
   def test_glob_with_variable
     assert_route '/test/*variable/:test', '/test/one/two/three', {:variable => ['one', 'two'], :test => 'three'}
   end
 
   def test_glob_with_format
     assert_route '/test/*variable.:format', 'test/one/two/three.html', {:variable => ['one', 'two', 'three'], :format => 'html'}
+  end
+
+  def test_glob_regexp_with_format
+    r = router { add('/test/*variable.:format', :variable => /[a-z]+/, :format => 'html') }
+    assert_route nil, 'test/one/2/three.html'
+    assert_route nil, 'test/one/two/three.xml'
+    assert_route r, 'test/one/two/three.html', {:variable => ['one', 'two', 'three'], :format => 'html'}
   end
 
   def test_glob_with_optional_format

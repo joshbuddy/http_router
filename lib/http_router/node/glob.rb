@@ -1,6 +1,7 @@
 class HttpRouter
   class Node
     class Glob < Node
+      alias_method :node_to_code, :to_code
       def usable?(other)
         other.class == self.class
       end

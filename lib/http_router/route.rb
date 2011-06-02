@@ -210,7 +210,7 @@ class HttpRouter
             when ?*
               param_names << name.to_sym
               matches_with[name.to_sym] = @opts[name.to_sym]
-              @opts[name.to_sym] ? node.add_spanning_match(@opts.delete(name.to_sym)) : node.add_glob
+              @opts[name.to_sym] ? node.add_glob_regexp(@opts.delete(name.to_sym)) : node.add_glob
             else
               node.add_lookup(parts[0])
             end
@@ -237,7 +237,8 @@ class HttpRouter
                 name = part[1, part.size].to_sym
                 param_names << name
                 matches_with[name] = @opts[name]
-                "(#{(@opts[name] || '.*?')})"
+                @opts[name] ?
+                  "((?:#{@opts[name]}\\/?)+)" : '(.*?)'
               else
                 Regexp.quote(part)
               end

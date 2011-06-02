@@ -1,17 +1,25 @@
 class HttpRouter
   class Node
-    class GlobRegex < SpanningRegex
+    class GlobRegex < Glob
+      attr_reader :matcher
+      def initialize(router, parent, matcher)
+        @matcher = matcher
+        super router, parent
+      end
+
+      def usable?(other)
+        other.class == self.class && other.matcher == matcher
+      end
+
       def to_code
-        "whole_path = request.joined_path
-          if match = #{@matcher.inspect}.match(whole_path) and match.begin(0).zero?
-            original_path = request.path.dup\n" << 
-          @capturing_indicies.map { |c| "request.params << match[#{c}].split(/\\//)\n" }.join << "
-          remaining_path = whole_path[match[0].size + (whole_path[match[0].size] == ?/ ? 1 : 0), whole_path.size]
-          request.path = remaining_path.split('/')
-          #{super}
-          request.path = original_path
-          #{@capturing_indicies.size == 1 ? "request.params.pop" : "request.params.slice!(#{-@capturing_indicies.size}, #{@capturing_indicies.size})"}
-        end
+        "request.params << (globbed_params#{depth} = [])
+          remaining_parts = request.path.dup
+          while !remaining_parts.empty? and match = remaining_parts.first.match(#{@matcher.inspect}) and match.begin(0).zero?
+            globbed_params#{depth} << remaining_parts.shift
+            request.path = remaining_parts
+            #{node_to_code}
+          end
+          request.path[0,0] = request.params.pop
           "
       end
     end
