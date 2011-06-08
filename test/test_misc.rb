@@ -19,4 +19,11 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal :test, r1.routes.first.dest
     assert_equal :test, r2.routes.first.dest
   end
+
+  def test_reseting
+    r = HttpRouter.new { add('/hi').to(:test) }
+    assert r.recognize(Rack::MockRequest.env_for('/hi'))
+    r.reset!
+    assert !r.recognize(Rack::MockRequest.env_for('/hi'))
+  end
 end
