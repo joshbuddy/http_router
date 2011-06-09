@@ -7,6 +7,18 @@ require 'http_router'
 #require 'http_router'
 
 u = HttpRouter.new
+
+#puts Benchmark.measure {
+#  ('aa'..'nn').each do |first|
+#    ('a'..'n').each do |second|
+#      u.add("/#{first}/#{second}").to {|env| [200, {'Content-type'=>'text/html'}, []]}
+#    end
+#  end
+#  puts "u.routes.size: #{u.routes.size}"
+#}
+
+u.add('/').to {|env| [200, {'Content-type'=>'text/html'}, []]}
+
 u.add('/simple').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 u.add('/simple/again').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/simple/again/and/again').compile.to {|env| [200, {'Content-type'=>'text/html'}, []]}
@@ -15,17 +27,6 @@ u.add('/dynamic/:variable').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/:greed').matching(:greed => /.*/).compile.to {|env| [200, {'Content-type'=>'text/html'}, []]}
 #u.add('/greedy/hey.:greed.html').to {|env| [200, {'Content-type'=>'text/html'}, []]}
 
-u.compile rescue nil
-
-puts Benchmark.measure {
-  ('aa'..'nn').each do |first|
-    ('a'..'n').each do |second|
-      u.add("/#{first}/#{second}").to {|env| [200, {'Content-type'=>'text/html'}, []]}
-    end
-  end
-#
-  puts "u.routes.size: #{u.routes.size}"
-}
 #
 TIMES = 50_000
 
@@ -40,11 +41,15 @@ u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
 5.times {
   RBench.run(TIMES) do
 
+    report "1 levels, static" do
+      u.call(Rack::MockRequest.env_for('/')).first == 200 or raise
+    end
+
     report "2 levels, static" do
       u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
     end
 
-    report "4 levels, static" do
+    report "3 levels, static" do
       u.call(Rack::MockRequest.env_for('/simple/again')).first == 200 or raise
     end
 
@@ -52,7 +57,7 @@ u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
     #  u.call(simple3_env).first == 200 or raise
     #end
 
-    report "4 levels, 1 dynamic" do
+    report "1 static, 1 dynamic" do
       u.call(Rack::MockRequest.env_for('/dynamic/anything')).first == 200 or raise
     end
 
