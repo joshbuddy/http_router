@@ -59,7 +59,7 @@ class TestGenerate < MiniTest::Unit::TestCase
     assert_generate '/var/fooz', "/:var1(/:var2)", 'var', 'fooz'
     assert_generate '/var',      "/:var1(/:var2)", :var1 => 'var'
     assert_generate '/var/fooz', "/:var1(/:var2)", :var1 => 'var', :var2 => 'fooz'
-    assert_raises(HttpRouter::UngeneratableRouteException) { router.url(router.add("/:var1(/:var2)").to(:test), :var2 => 'fooz') }
+    assert_raises(HttpRouter::InvalidRouteException) { router.url(router.add("/:var1(/:var2)").to(:test), :var2 => 'fooz') }
   end
 
   def test_optionals_with_format

@@ -1,4 +1,3 @@
-
 class HttpRouter
   class Route
     attr_reader :default_values, :matches_with, :router, :path, :conditions
@@ -6,7 +5,6 @@ class HttpRouter
     def initialize(router, path, opts = {})
       @router = router
       @original_path = path
-      @path = path
       @opts = opts
       @matches_with = {}
       @default_values = opts[:default_values] || {}
@@ -14,7 +12,6 @@ class HttpRouter
         @match_partially = true
         path.slice!(-1)
       end
-      @paths = OptionalCompiler.new(path).paths
       process_opts
     end
 
@@ -149,14 +146,14 @@ class HttpRouter
       else
         matching_path(args, options)
       end
-      raise UngeneratableRouteException unless path
+      raise InvalidRouteException unless path
       result, params = path.url(args, options)
       mount_point = router.url_mount && router.url_mount.url(options)
       mount_point ? [File.join(mount_point, result), params] : [result, params]
     end
 
     def significant_variable_names
-      @significant_variable_names ||= @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
+      @significant_variable_names ||= @original_path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
     end
 
     def matching_path(params, other_hash = nil)
@@ -192,7 +189,25 @@ class HttpRouter
 
     def compile
       return if @compiled
-      @paths.map! do |path|
+      start_index, end_index = 0, 1
+      raw_paths, chars = [""], @original_path.split('')
+      until chars.empty?
+      case fc = chars.first[0]
+        when ?(
+          chars.shift
+          (start_index...end_index).each { |path_index| raw_paths << raw_paths[path_index].dup }
+          start_index = end_index
+          end_index = raw_paths.size
+        when ?)
+          chars.shift
+          start_index -= end_index - start_index
+        else
+          c = if chars[0][0] == ?\\ && (chars[1][0] == ?( || chars[1][0] == ?)); chars.shift; chars.shift; else; chars.shift; end
+          (start_index...end_index).each { |path_index| raw_paths[path_index] << c } 
+        end
+      end
+      raw_paths.reverse!
+      @paths = raw_paths.map do |path|
         param_names = []
         node = @router.root
         path.split(/\//).each do |part|

@@ -25,7 +25,6 @@ Takes the following options:
 
 * `:default_app` - The default #call made on non-matches. Defaults to a 404 generator.
 * `:ignore_trailing_slash` - Ignores the trailing slash when matching. Defaults to true.
-* `:redirect_trailing_slash` - Redirect on trailing slash matches to non-trailing slash paths. Defaults to false.
 * `:middleware` - Perform matching without deferring to matched route. Defaults to false.
 
 ### `#add(name, options)`

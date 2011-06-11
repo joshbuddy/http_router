@@ -26,4 +26,11 @@ class TestMisc < MiniTest::Unit::TestCase
     r.reset!
     assert !r.recognize(Rack::MockRequest.env_for('/hi'))
   end
+
+  def test_redirect_trailing_slash
+    r = HttpRouter.new(:redirect_trailing_slash => true) { add('/hi').to(:test) }
+    response = r.recognize(Rack::MockRequest.env_for('/hi/'))
+    assert 304, response[0]
+    assert "/hi", response[1]["Location"]
+  end
 end

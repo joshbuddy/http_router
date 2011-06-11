@@ -10,16 +10,13 @@ require 'http_router/route'
 require 'http_router/path'
 require 'http_router/rack'
 require 'http_router/regex_route'
-require 'http_router/optional_compiler'
 
 class HttpRouter
 
   attr_reader :root, :routes, :known_methods, :named_routes, :nodes
   attr_accessor :default_app, :url_mount
 
-  # Raised when a Route is not able to be generated.
-  UngeneratableRouteException = Class.new(RuntimeError)
-  # Raised when a Route is generated that isn't valid.
+  # Raised when a url is not able to be generated for the given parameters
   InvalidRouteException       = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
   MissingParameterException   = Class.new(RuntimeError)
@@ -109,22 +106,16 @@ class HttpRouter
   # be available under the key <tt>router.params</tt>.
   def call(env, perform_call = true)
     rack_request = ::Rack::Request.new(env)
-    if redirect_trailing_slash? && (rack_request.head? || rack_request.get?) && rack_request.path_info[-1] == ?/
-      response = ::Rack::Response.new
-      response.redirect(request.path_info[0, request.path_info.size - 1], 302)
-      response.finish
+    request = Request.new(rack_request.path_info, rack_request, perform_call)
+    response = catch(:success) { @root[request] }
+    if response
+      response
+    elsif response.nil?
+      no_response(env, perform_call)
+    elsif perform_call
+      @default_app.call(env)
     else
-      request = Request.new(rack_request.path_info, rack_request, perform_call)
-      response = catch(:success) { @root[request] }
-      if response
-        response
-      elsif response.nil?
-        no_response(env, perform_call)
-      elsif perform_call
-        @default_app.call(env)
-      else
-        nil
-      end
+      nil
     end
   end
 
@@ -155,9 +146,9 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-    when Symbol then @named_routes.key?(route) ? @named_routes[route].url(*args) : raise(UngeneratableRouteException)
+    when Symbol then @named_routes.key?(route) ? @named_routes[route].url(*args) : raise(InvalidRouteException)
     when Route  then route.url(*args)
-    else raise UngeneratableRouteException
+    else raise InvalidRouteException
     end
   end
 

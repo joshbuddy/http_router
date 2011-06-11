@@ -27,11 +27,11 @@ class HttpRouter
           new_part
         }
         @path_validation_regex = Regexp.new("^#{@path_validation_regex}$")
-        instance_eval "
+        instance_eval <<-EOT, __FILE__, __LINE__ + 1
         def raw_url(args,options)
           \"#{code}\"
         end
-        ", __FILE__, __LINE__
+        EOT
       end
     end
 
@@ -52,7 +52,7 @@ class HttpRouter
 
     private
     def raw_url(args, options)
-      raise UngeneratableRouteException
+      raise InvalidRouteException
     end
   end
 end
