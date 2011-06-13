@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :matches_with, :router, :path, :conditions
+    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path
 
     def initialize(router, path, opts = {})
       @router = router
