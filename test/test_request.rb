@@ -7,8 +7,13 @@ class TestRequest < MiniTest::Unit::TestCase
   end
 
   def test_simple_case_with_array
-    r = router { add('test', :request => {:request_methods => ['POST', 'GET']}) }
+    r = router { add('test', :conditions => {:request_method => ['POST', 'GET']}) }
     assert_route r, Rack::MockRequest.env_for('/test', :method => 'POST')
+    assert_route r, Rack::MockRequest.env_for('/test', :method => 'GET')
+  end
+
+  def test_simple_case_with_non_array
+    r = router { add('test', :conditions => {:request_method => 'GET'}) }
     assert_route r, Rack::MockRequest.env_for('/test', :method => 'GET')
   end
 

@@ -16,6 +16,7 @@ class HttpRouter
       def to_code
         code = "if "
         code << @opts.map do |k,v|
+          v = [v] unless v.is_a?(Array)
           case v.size
           when 1 then to_code_condition(k, v.first)
           else        "(#{v.map{|vv| to_code_condition(k, vv)}.join(' or ')})"
