@@ -18,7 +18,7 @@ class HttpRouter
         code << @opts.map do |k,v|
           case v.size
           when 1 then to_code_condition(k, v.first)
-          else        "(#{v.map{|k, vv| to_code_condition(k, vv)}.join(' or ')})"
+          else        "(#{v.map{|vv| to_code_condition(k, vv)}.join(' or ')})"
           end           
         end * ' and '
         code << "\n  #{super}\nend"

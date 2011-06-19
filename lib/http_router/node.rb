@@ -66,7 +66,7 @@ class HttpRouter
     private
     def inject_root_methods(code = nil, &blk)
       if code
-        root.methods_module.module_eval(code, __FILE__, __LINE__)
+        root.methods_module.module_eval(code)
       else
         root.methods_module.module_eval(&blk)
       end
