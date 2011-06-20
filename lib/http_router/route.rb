@@ -2,9 +2,8 @@ class HttpRouter
   class Route
     DoubleCompileError = Class.new(RuntimeError)
 
-    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :compiled, :regex, :named
+    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :regex, :named
     alias_method :match_partially?, :match_partially
-    alias_method :compiled?, :compiled
     alias_method :regex?, :regex
 
     def initialize(router, path, opts = {})
@@ -33,6 +32,10 @@ class HttpRouter
       {:__matching__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @named, :__partial__ => @partially_match, :__arbitrary__ => @arbitrary}
     end
 
+    def compiled?
+      !@paths.nil?
+    end
+
     def partial(match_partially = true)
       @match_partially = match_partially
       self
@@ -40,7 +43,7 @@ class HttpRouter
 
     def to(dest = nil, &dest2)
       @dest = dest || dest2
-      compile
+      add_path_to_tree
       self
     end
 
@@ -234,20 +237,20 @@ class HttpRouter
         node.add_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies)
     end
 
-    def compile
+    def add_path_to_tree
       raise DoubleCompileError if compiled?
-      @paths = raw_paths.map do |path|
-        param_names = []
-        node = @router.root
-        path.split(/\//).each do |part|
-          next if part == ''
-          parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
-          node = parts.size == 1 ? add_normal_part(node, part, param_names) : add_complex_part(node, parts, param_names)
+      @paths ||= begin
+        raw_paths.map do |path|
+          param_names = []
+          node = @router.root
+          path.split(/\//).each do |part|
+            next if part == ''
+            parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
+            node = parts.size == 1 ? add_normal_part(node, part, param_names) : add_complex_part(node, parts, param_names)
+          end
+          add_non_path_to_tree(node, path, param_names)
         end
-        add_non_path_to_tree(node, path, param_names)
       end
-      @compiled = true
-      self
     end
 
     def add_non_path_to_tree(node, path, names)

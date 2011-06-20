@@ -6,9 +6,9 @@ class HttpRouter
       process_opts
     end
 
-    def compile
+    def add_path_to_tree
+      @paths = [@original_path]
       add_non_path_to_tree(@router.root.add_free_match(@original_path), path, @param_names)
-      @compiled = true
     end
 
     def significant_variable_names
