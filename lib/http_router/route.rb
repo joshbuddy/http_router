@@ -2,7 +2,7 @@ class HttpRouter
   class Route
     DoubleCompileError = Class.new(RuntimeError)
 
-    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :compiled, :regex
+    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :compiled, :regex, :named
     alias_method :match_partially?, :match_partially
     alias_method :compiled?, :compiled
     alias_method :regex?, :regex
@@ -30,7 +30,7 @@ class HttpRouter
     end
 
     def as_options
-      {:__matching__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @name, :__partial__ => @partially_match, :__arbitrary__ => @arbitrary}
+      {:__matching__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @named, :__partial__ => @partially_match, :__arbitrary__ => @arbitrary}
     end
 
     def partial(match_partially = true)
@@ -45,7 +45,7 @@ class HttpRouter
     end
 
     def name(n)
-      @name = n
+      @named = n
       @router.named_routes[n] = self
       self
     end
@@ -148,28 +148,12 @@ class HttpRouter
     def matching_path(params, other_hash = nil)
       if @paths.size == 1
         @paths.first
+      elsif params.is_a?(Array)
+        significant_keys = other_hash && significant_variable_names & other_hash.keys
+        @paths.find { |path| path.param_names.size == (significant_keys ? params.size + significant_keys.size : params.size) }
       else
-        if params.is_a?(Array)
-          significant_keys = other_hash && significant_variable_names & other_hash.keys
-          @paths.find { |path|
-            var_count = significant_keys ? params.size + significant_keys.size : params.size
-            path.param_names.size == var_count
-          }
-        else
-          @paths.each do |path|
-            if params && !params.empty?
-              return path if (path.param_names & params.keys).size == path.param_names.size
-            elsif path.param_names.empty?
-              return path
-            end
-          end
-          nil
-        end
+        @paths.find { |path| (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
       end
-    end
-
-    def named
-      @name
     end
 
     def to_s
@@ -178,7 +162,7 @@ class HttpRouter
 
     private
     def raw_paths
-      unless @raw_paths
+      @raw_paths ||= begin
         start_index, end_index = 0, 1
         @raw_paths, chars = [""], @original_path.split('')
         until chars.empty?
@@ -198,7 +182,6 @@ class HttpRouter
         end
         @raw_paths.reverse!
       end
-      @raw_paths
     end
 
     def add_normal_part(node, part, param_names)
