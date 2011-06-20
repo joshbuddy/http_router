@@ -2,12 +2,12 @@ class HttpRouter
   class Route
     DoubleCompileError = Class.new(RuntimeError)
 
-    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :regex, :named
+    attr_reader :default_values, :router, :path, :conditions, :original_path, :match_partially, :dest, :regex, :named, :matches_with
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
 
     def initialize(router, path, opts = {})
-      @router, @original_path, @opts, @matches_with = router, path, opts, {}
+      @router, @original_path, @opts = router, path, opts
       if @original_path[-1] == ?*
         @match_partially = true
         path.slice!(-1)
@@ -18,9 +18,9 @@ class HttpRouter
     def process_opts
       @default_values = @opts[:__default_values__] || @opts[:default_values] || {}
       @arbitrary = @opts[:__arbitrary__] || @opts[:arbitrary]
-      @matching = significant_variable_names.include?(:matching) ? @opts : @opts[:__matching__] || @opts[:matching] || {}
+      @matches_with = significant_variable_names.include?(:matching) ? @opts : @opts[:__matching__] || @opts[:matching] || {}
       significant_variable_names.each do |name|
-        @matching[name] = @opts[name] if @opts.key?(name) && !@matching.key?(name)
+        @matches_with[name] = @opts[name] if @opts.key?(name) && !@matches_with.key?(name)
       end
       @conditions = @opts[:__conditions__] || @opts[:conditions] || {}
       @match_partially = @opts[:__partial__] if @match_partially.nil? && !@opts[:__partial__].nil?
@@ -70,7 +70,7 @@ class HttpRouter
     end
 
     def matching(matchers)
-      @matching.merge!(matchers.is_a?(Array) ? Hash[*matchers] : matchers)
+      @matches_with.merge!(matchers.is_a?(Array) ? Hash[*matchers] : matchers)
       self
     end
 
@@ -149,12 +149,12 @@ class HttpRouter
     end
 
     def matching_path(params, other_hash = nil)
-      if @paths.size == 1
-        @paths.first
-      elsif params.is_a?(Array)
+      return @paths.first if @paths.size == 1
+      case params
+      when Array
         significant_keys = other_hash && significant_variable_names & other_hash.keys
         @paths.find { |path| path.param_names.size == (significant_keys ? params.size + significant_keys.size : params.size) }
-      else
+      when Hash
         @paths.find { |path| (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
       end
     end
@@ -194,41 +194,31 @@ class HttpRouter
         node.add_lookup(part[1].chr)
       when ?:
         param_names << name.to_sym
-        matches_with[name.to_sym] = @matching[name.to_sym]
-        @matching[name.to_sym] ? node.add_spanning_match(@matching[name.to_sym]) : node.add_variable
+        @matches_with[name.to_sym] ? node.add_spanning_match(@matches_with[name.to_sym]) : node.add_variable
       when ?*
         param_names << name.to_sym
-        matches_with[name.to_sym] = @matching[name.to_sym]
-        @matching[name.to_sym] ? node.add_glob_regexp(@matching[name.to_sym]) : node.add_glob
+        @matches_with[name.to_sym] ? node.add_glob_regexp(@matches_with[name.to_sym]) : node.add_glob
       else
         node.add_lookup(part)
       end
     end
 
     def add_complex_part(node, parts, param_names)
-      capturing_indicies = []
-      splitting_indicies = []
-      captures = 0
-      spans = false
+      capturing_indicies, splitting_indicies, captures, spans = [], [], 0, false
       regex = parts.inject('') do |reg, part|
         reg << case part[0]
         when ?\\ then Regexp.quote(part[1].chr)
-        when ?:
+        when ?:, ?*
+          spans = true if part[0] == ?*
           captures += 1
-          capturing_indicies << captures
+          (part[0] == ?* ? splitting_indicies : capturing_indicies) << captures
           name = part[1, part.size].to_sym
           param_names << name
-          matches_with[name] = @matching[name]
-          "(#{(matches_with[name] || '[^/]*?')})"
-        when ?*
-          spans = true
-          captures += 1
-          splitting_indicies << captures
-          name = part[1, part.size].to_sym
-          param_names << name
-          matches_with[name] = @matching[name]
-          matches_with[name] ?
-            "((?:#{matches_with[name]}\\/?)+)" : '(.*?)'
+          if spans
+            @matches_with[name] ? "((?:#{@matches_with[name]}\\/?)+)" : '(.*?)'
+          else
+            "(#{(@matches_with[name] || '[^/]*?')})"
+          end
         else
           Regexp.quote(part)
         end
