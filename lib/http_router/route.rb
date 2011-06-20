@@ -1,13 +1,14 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path
+    DoubleCompileError = Class.new(RuntimeError)
+
+    attr_reader :default_values, :matches_with, :router, :path, :conditions, :original_path, :match_partially, :dest, :compiled, :regex
+    alias_method :match_partially?, :match_partially
+    alias_method :compiled?, :compiled
+    alias_method :regex?, :regex
 
     def initialize(router, path, opts = {})
-      @router = router
-      @original_path = path
-      @opts = opts
-      @matches_with = {}
-      @default_values = opts[:default_values] || {}
+      @router, @original_path, @opts, @matches_with = router, path, opts, {}
       if @original_path[-1] == ?*
         @match_partially = true
         path.slice!(-1)
@@ -16,15 +17,20 @@ class HttpRouter
     end
 
     def process_opts
-      @arbitrary = @opts[:arbitrary] || @opts[:__arbitrary__]
-      @conditions = @opts[:conditions] || @opts[:__conditions__] || {}
-      @opts.merge!(@opts[:matching]) if @opts[:matching]
-      @match_partially = @opts[:partial] if @match_partially.nil? && @opts.key?(:partial)
-      name(@opts[:name]) if @opts.key?(:name)
+      @default_values = @opts[:__default_values__] || @opts[:default_values] || {}
+      @arbitrary = @opts[:__arbitrary__] || @opts[:arbitrary]
+      @matching = significant_variable_names.include?(:matching) ? @opts : @opts[:__matching__] || @opts[:matching] || {}
+      significant_variable_names.each do |name|
+        @matching[name] = @opts[name] if @opts.key?(name) && !@matching.key?(name)
+      end
+      @conditions = @opts[:__conditions__] || @opts[:conditions] || {}
+      @match_partially = @opts[:__partial__] if @match_partially.nil? && !@opts[:__partial__].nil?
+      @match_partially = @opts[:partial] if @match_partially.nil? && !@opts[:partial].nil?
+      name(@opts[:__name__] || @opts[:name]) if @opts.key?(:__name__) || @opts.key?(:name)
     end
 
     def as_options
-      {:matching => @matches_with, :conditions => @conditions, :default_values => @default_values, :name => @name, :partial => @partially_match, :arbitrary => @arbitrary}
+      {:__matching__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @name, :__partial__ => @partially_match, :__arbitrary__ => @arbitrary}
     end
 
     def partial(match_partially = true)
@@ -32,26 +38,10 @@ class HttpRouter
       self
     end
 
-    def match_partially?
-      @match_partially
-    end
-
-    def dest
-      @app
-    end
-
-    def regex?
-      false
-    end
-
     def to(dest = nil, &dest2)
-      @app = dest || dest2
+      @dest = dest || dest2
       compile
       self
-    end
-
-    def compiled?
-      @compiled
     end
 
     def name(n)
@@ -77,8 +67,7 @@ class HttpRouter
     end
 
     def matching(matchers)
-      matchers = Hash[*matchers] if matchers.is_a?(Array)
-      @opts.merge!(matchers)
+      @matching.merge!(matchers.is_a?(Array) ? Hash[*matchers] : matchers)
       self
     end
 
@@ -187,80 +176,91 @@ class HttpRouter
       "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect} @arbitrary=#{@arbitrary.inspect}>"
     end
 
-    def compile
-      return if @compiled
-      start_index, end_index = 0, 1
-      raw_paths, chars = [""], @original_path.split('')
-      until chars.empty?
-      case fc = chars.first[0]
-        when ?(
-          chars.shift
-          (start_index...end_index).each { |path_index| raw_paths << raw_paths[path_index].dup }
-          start_index = end_index
-          end_index = raw_paths.size
-        when ?)
-          chars.shift
-          start_index -= end_index - start_index
+    private
+    def raw_paths
+      unless @raw_paths
+        start_index, end_index = 0, 1
+        @raw_paths, chars = [""], @original_path.split('')
+        until chars.empty?
+        case fc = chars.first[0]
+          when ?(
+            chars.shift
+            (start_index...end_index).each { |path_index| raw_paths << raw_paths[path_index].dup }
+            start_index = end_index
+            end_index = raw_paths.size
+          when ?)
+            chars.shift
+            start_index -= end_index - start_index
+          else
+            c = if chars[0][0] == ?\\ && (chars[1][0] == ?( || chars[1][0] == ?)); chars.shift; chars.shift; else; chars.shift; end
+            (start_index...end_index).each { |path_index| raw_paths[path_index] << c } 
+          end
+        end
+        @raw_paths.reverse!
+      end
+      @raw_paths
+    end
+
+    def add_normal_part(node, part, param_names)
+      name = part[1, part.size]
+      node = case part[0]
+      when ?\\
+        node.add_lookup(part[1].chr)
+      when ?:
+        param_names << name.to_sym
+        matches_with[name.to_sym] = @matching[name.to_sym]
+        @matching[name.to_sym] ? node.add_spanning_match(@matching[name.to_sym]) : node.add_variable
+      when ?*
+        param_names << name.to_sym
+        matches_with[name.to_sym] = @matching[name.to_sym]
+        @matching[name.to_sym] ? node.add_glob_regexp(@matching[name.to_sym]) : node.add_glob
+      else
+        node.add_lookup(part)
+      end
+    end
+
+    def add_complex_part(node, parts, param_names)
+      capturing_indicies = []
+      splitting_indicies = []
+      captures = 0
+      spans = false
+      regex = parts.inject('') do |reg, part|
+        reg << case part[0]
+        when ?\\
+          Regexp.quote(part[1].chr)
+        when ?:
+          captures += 1
+          capturing_indicies << captures
+          name = part[1, part.size].to_sym
+          param_names << name
+          matches_with[name] = @matching[name]
+          "(#{(matches_with[name] || '[^/]*?')})"
+        when ?*
+          spans = true
+          captures += 1
+          splitting_indicies << captures
+          name = part[1, part.size].to_sym
+          param_names << name
+          matches_with[name] = @matching[name]
+          matches_with[name] ?
+            "((?:#{matches_with[name]}\\/?)+)" : '(.*?)'
         else
-          c = if chars[0][0] == ?\\ && (chars[1][0] == ?( || chars[1][0] == ?)); chars.shift; chars.shift; else; chars.shift; end
-          (start_index...end_index).each { |path_index| raw_paths[path_index] << c } 
+          Regexp.quote(part)
         end
       end
-      raw_paths.reverse!
+      spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies) :
+        node.add_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies)
+    end
+
+    def compile
+      raise DoubleCompileError if compiled?
       @paths = raw_paths.map do |path|
         param_names = []
         node = @router.root
         path.split(/\//).each do |part|
           next if part == ''
           parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
-          if parts.size == 1
-            name = part[1, part.size]
-            node = case parts[0][0]
-            when ?\\
-              node.add_lookup(parts[0][1].chr)
-            when ?:
-              param_names << name.to_sym
-              matches_with[name.to_sym] = @opts[name.to_sym]
-              @opts[name.to_sym] ? node.add_spanning_match(@opts.delete(name.to_sym)) : node.add_variable
-            when ?*
-              param_names << name.to_sym
-              matches_with[name.to_sym] = @opts[name.to_sym]
-              @opts[name.to_sym] ? node.add_glob_regexp(@opts.delete(name.to_sym)) : node.add_glob
-            else
-              node.add_lookup(parts[0])
-            end
-          else
-            capturing_indicies = []
-            splitting_indicies = []
-            captures = 0
-            spans = false
-            regex = parts.inject('') do |reg, part|
-              reg << case part[0]
-              when ?\\
-                Regexp.quote(part[1].chr)
-              when ?:
-                captures += 1
-                capturing_indicies << captures
-                name = part[1, part.size].to_sym
-                param_names << name
-                matches_with[name] = @opts[name]
-                "(#{(@opts[name] || '[^/]*?')})"
-              when ?*
-                spans = true
-                captures += 1
-                splitting_indicies << captures
-                name = part[1, part.size].to_sym
-                param_names << name
-                matches_with[name] = @opts[name]
-                @opts[name] ?
-                  "((?:#{@opts[name]}\\/?)+)" : '(.*?)'
-              else
-                Regexp.quote(part)
-              end
-            end
-            node = spans ? node.add_spanning_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies) :
-              node.add_match(Regexp.new("#{regex}$"), capturing_indicies, splitting_indicies)
-          end
+          node = parts.size == 1 ? add_normal_part(node, part, param_names) : add_complex_part(node, parts, param_names)
         end
         add_non_path_to_tree(node, path, param_names)
       end
@@ -268,7 +268,6 @@ class HttpRouter
       self
     end
 
-    private
     def add_non_path_to_tree(node, path, names)
       path_obj = Path.new(self, path, names)
       node = node.add_request(@conditions) unless @conditions.empty?

@@ -25,9 +25,7 @@ class HttpRouter
             #{@map[k].map{|n| n.to_code} * "\n"}
             request.path.unshift part
           end"}.join("\n")
-        code = "
-        send(\"#{method_prefix}\#{request.path.first}\", request) if !request.path_finished? && #{lookup_ivar}.key?(request.path.first)
-        "
+        "send(\"#{method_prefix}\#{request.path.first}\", request) if !request.path_finished? && #{lookup_ivar}.key?(request.path.first)"
       end
     end
   end
