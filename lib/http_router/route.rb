@@ -226,8 +226,7 @@ class HttpRouter
       spans = false
       regex = parts.inject('') do |reg, part|
         reg << case part[0]
-        when ?\\
-          Regexp.quote(part[1].chr)
+        when ?\\ then Regexp.quote(part[1].chr)
         when ?:
           captures += 1
           capturing_indicies << captures
