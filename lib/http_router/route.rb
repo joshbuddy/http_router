@@ -133,11 +133,7 @@ class HttpRouter
       options = args.last.is_a?(Hash) ? args.pop : nil
       options = options.nil? ? default_values.dup : default_values.merge(options) if default_values
       options.delete_if{ |k,v| v.nil? } if options
-      path = if args.empty?
-        matching_path(options)
-      else
-        matching_path(args, options)
-      end
+      path = args.empty? ? matching_path(options) : matching_path(args, options)
       raise InvalidRouteException unless path
       result, params = path.url(args, options)
       mount_point = router.url_mount && router.url_mount.url(options)

@@ -196,10 +196,6 @@ class HttpRouter
     cloned_router
   end
 
-  def compile
-    @root.compile
-  end
-
   def next_counter
     @counter += 1
   end
