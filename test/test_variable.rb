@@ -94,6 +94,10 @@ class TestVariable < MiniTest::Unit::TestCase
     assert_route '/test/*variable/test/*variable2', '/test/one/two/three/test/four/five/six', {:variable => ['one', 'two', 'three'], :variable2 => ['four', 'five', 'six']}
   end
 
+  def test_var_glob_var
+    assert_route '/test/:test-*variable.:format', '/test/one-two/three/four/five.six', {:test=> 'one', :variable => ['two', 'three', 'four', 'five'], :format => 'six'}
+  end
+
   def test_glob_with_regexp
     r = router { add('/test/*variable', :variable => /[a-z]+/) }
     assert_route nil, '/test/asd/123'

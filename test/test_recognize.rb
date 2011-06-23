@@ -53,6 +53,7 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_route route, '/one/two/three'
     assert_route route, '/one/two/three/four'
     assert_route route, '/one/two/three/five'
+    assert_route route, '/one/two/three/four/five'
   end
 
   def test_escape_paren
