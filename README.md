@@ -41,10 +41,12 @@ Once you have a route object, use `HttpRouter::Route#to` to add a destination an
 
 e.g.
 
+```ruby
   r = HttpRouter.new
   r.add('/test/:variable(.:format)').name(:my_test_path).to {|env| [200, {}, "Hey dude #{env['router.params'][:variable]}"]}
   r.add('/test').redirect("http://www.google.com/")
   r.add('/static').static('/my_file_system')
+```
 
 As well, you can support regex matching and request conditions. To add a regex match, use `matching(:id => /\d+/)`.
 To match on a request condition you can use `condition(:request_method => %w(POST HEAD))` or more succinctly `request_method('POST', 'HEAD')`.
