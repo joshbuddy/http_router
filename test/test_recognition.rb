@@ -1,4 +1,13 @@
-class TestArbitrary < MiniTest::Unit::TestCase
+class TestRecognition < MiniTest::Unit::TestCase
+  if //.respond_to?(:names)
+    eval <<-EOT
+    def test_match_path_with_groups
+      r = router { add(%r{/(?<year>\\d{4})/(?<month>\\d{2})/(?<day>\\d{2})/?}) }
+      assert_route r, "/1234/23/56", {:year => "1234", :month => "23", :day => "56"}
+    end
+    EOT
+  end
+
   def test_match
     hello, love80, love8080 = router {
       add('test').arbitrary(Proc.new{|req, params| req.rack.host == 'hellodooly' })
@@ -54,5 +63,31 @@ class TestArbitrary < MiniTest::Unit::TestCase
       add('test').arbitrary_with_continue{|req, p| req.continue[true]}
     }
     assert_route yes, '/test'
+  end
+
+  def test_passing
+    passed, working = router {
+      add('/').to { |env| throw :pass; [200, {}, ['pass']] }
+      add('/').to { |env| [200, {}, ['working']] }
+    }
+    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
+  end
+
+  def test_passing_with_cascade
+    passed, working = router {
+      add('/').to { |env| [200, {'X-Cascade' => 'pass'}, ['pass']] }
+      add('/').to { |env| [200, {}, ['working']] }
+    }
+    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
+  end
+
+  def test_request_mutation
+    got_this_far = false
+    non_matching, matching = router {
+      add("/test/:var/:var2/*glob").matching(:var2 => /123/, :glob => /[a-z]+/).get.arbitrary{|env, params| got_this_far = true; false}
+      add("/test/:var/:var2/*glob").matching(:var2 => /123/, :glob => /[a-z]+/).get
+    }
+    assert_route matching, '/test/123/123/asd/aasd/zxcqwe/asdzxc', {:var => '123', :var2 => '123', :glob => %w{asd aasd zxcqwe asdzxc}}
+    assert got_this_far, "matching should have gotten this far"
   end
 end

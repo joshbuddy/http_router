@@ -1,0 +1,87 @@
+{"a": "/"}
+{"b": "/test"}
+{"c": "/test/time"}
+{"d": "/one/more/what"}
+{"e": "/test.html"}
+	["/", "a"]
+	["/test", "b"]
+	["/test/time", "c"]
+	["/one/more/what", "d"]
+	["/test.html", "e"]
+
+{"a": "/:var"}
+	["/test", "a", {"var":"test"}]
+	["/test", "a", ["test"]]
+
+{"a": "/:var"}
+	["/test?query=string", "a", {"var":"test", "query": "string"}]
+	["/test?query=string", "a", ["test", {"query": "string"}]]
+
+{"a": "/:var/:baz"}
+	["/one/two", "a", {"var":"one", "baz": "two"}]
+	["/one/two", "a", ["one", "two"]]
+
+{"a": "/test.:format"}
+	["/test.html", "a", {"format":"html"}]
+	["/test.html", "a", ["html"]]
+
+{"a": "/test(.:format)"}
+	["/test.html", "a", {"format":"html"}]
+	["/test.html", "a", ["html"]]
+	["/test", "a"]
+
+{"a": "/:var.:format"}
+	["/test.html", "a", {"var": "test", "format":"html"}]
+	["/test.html", "a", ["test", "html"]]
+	["/test.html", "a", ["test", {"format": "html"}]]
+	[null, "a", {"format": "html"}]
+
+{"a": "/:var(.:format)"}
+	["/test.html", "a", {"var": "test", "format":"html"}]
+	["/test.html", "a", ["test", "html"]]
+	["/test.html", "a", ["test", {"format": "html"}]]
+	["/test", "a", ["test"]]
+	["/test", "a", {"var": "test"}]
+	[null, "a", {"format": "html"}]
+	[null, "a"]
+
+{"a": "/:var1(/:var2)"}
+	["/foo/bar", "a", {"var1": "foo", "var2":"bar"}]
+	[null, "a", ["foo", {"var1": "bar"}]]
+	["/foo", "a", {"var1": "foo"}]
+	["/foo", "a", ["foo"]]
+	["/foo", "a", ["foo", null]]
+
+{"a": "/:var1(/:var2.:format)"}
+	["/test/test2.html", "a", {"var1": "test", "var2": "test2", "format":"html"}]
+	["/test/test2.html", "a", ["test", "test2", "html"]]
+	["/test", "a", ["test"]]
+
+{"a": "/:var1(/:var2(/:var3))"}
+	["/var/fooz/baz", "a", {"var1": "var", "var2":"fooz", "var3": "baz"}]
+	["/var/fooz", "a", {"var1": "var", "var2":"fooz"}]
+	["/var", "a", {"var1": "var"}]
+	["/var/fooz/baz", "a", ["var", "fooz", "baz"]]
+	["/var/fooz", "a", ["var", "fooz"]]
+	["/var", "a", ["var"]]
+
+{"a": {"path":"/:var", "default":{"page":1}}}
+	["/123?page=1", "a", [123]]
+
+{"a": {"path":"/:page/:entry", "default":{"page":1}}}
+	["/1/123", "a", {"entry": "123"}]
+
+{"a": "/:var"}
+	["/%C3%A4", "a", "ä"]
+
+{"a": {"path": ":var", "var": {"regex": "\\d+"}}}
+	[null, "a", "asd"]
+
+{"a": "/var"}
+	["/var?foo%5B%5D=baz&foo%5B%5D=bar", "a", {"foo": ["baz", "bar"]}]
+
+{"a": "/var"}
+	["/var?foo%5Baz%5D=baz", "a", {"foo": {"az": "baz"}}]
+
+{"a": "/var"}
+	["/var?foo%5Baz%5D%5B%5D=baz", "a", {"foo": {"az": ["baz"]}}]

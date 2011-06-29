@@ -3,7 +3,7 @@ require 'bundler'
 Bundler::GemHelper.install_tasks
 
 desc "Run all tests"
-task :test => ['test:integration', 'test:examples', 'test:rdoc_examples']
+task :test => ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
 
 require 'pp'
 
@@ -21,6 +21,21 @@ namespace :test do
     require './test/helper'
     Dir['./test/**/test_*.rb'].each { |test| require test }
   end
+
+  desc "Run generic recognition tests"
+  task :recognition do
+    $: << 'lib'
+    require 'http_router'
+    require './test/recognition'
+  end
+
+  desc "Run generic recognition tests"
+  task :generation do
+    $: << 'lib'
+    require 'http_router'
+    require './test/generation'
+  end
+
   desc "Run example tests"
   task :examples do
     $: << 'lib'
