@@ -202,7 +202,8 @@ class HttpRouter
 
   private
   def no_response(env, perform_call = true)
-    supported_methods = (@known_methods - [env['REQUEST_METHOD']]).select do |m|
+    supported_methods = @known_methods.select do |m|
+      next if m == env['REQUEST_METHOD']
       test_env = ::Rack::Request.new(env.clone)
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
