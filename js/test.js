@@ -53,11 +53,19 @@
       }
       this.examples.push(new Example(routes, tests));
     }
+    Test.prototype.interpretValue = function(v) {
+      console.log("interpretValue -- v.regex?: " + (v.regex != null));
+      if (v.regex != null) {
+        return new RegExp(v.regex);
+      } else {
+        return v;
+      }
+    };
     Test.prototype.invoke = function() {
       throw "need to implement";
     };
     Test.prototype.constructRouter = function(example) {
-      var k, name, opts, path, route, router, v, vals, _i, _len, _ref;
+      var conditions, k, matchesWith, name, opts, path, route, router, v, vals, _i, _len, _ref, _ref2;
       router = new Sherpa();
       console.log("example.routes: " + example.routes.length);
       _ref = example.routes;
@@ -70,16 +78,36 @@
             name: name
           };
           if (vals.path != null) {
-            path = vals.path;
+            path = this.interpretValue(vals.path);
             delete vals.path;
+            if (vals.conditions != null) {
+              conditions = {};
+              _ref2 = vals.conditions;
+              for (k in _ref2) {
+                v = _ref2[k];
+                switch (k) {
+                  case 'request_method':
+                    conditions.method = this.interpretValue(v);
+                    break;
+                  default:
+                    conditions[k] = this.interpretValue(v);
+                }
+              }
+              opts.conditions = conditions;
+              delete vals.conditions;
+            }
+            matchesWith = {};
             for (k in vals) {
               v = vals[k];
-              opts[k] = v;
+              matchesWith[k] = this.interpretValue(v);
+              delete vals.k;
             }
+            opts.matchesWith = matchesWith;
           } else {
-            path = vals;
+            path = this.interpretValue(vals);
           }
           name = "" + name;
+          console.log("path is " + (util.inspect(path)) + " " + (util.inspect(opts)));
           router.add(path, opts).to(function(req, response) {
             console.log("response: " + (util.inspect(response)) + " " + req.route.name + " " + req.url);
             response.params = req.params;
@@ -129,7 +157,7 @@
       RecognitionTest.__super__.constructor.apply(this, arguments);
     }
     RecognitionTest.prototype.invoke = function() {
-      var example, expectedParams, expectedRouteName, mockRequest, mockResponse, requestingPath, router, test, url, _i, _j, _len, _len2, _ref, _ref2;
+      var example, expectedParams, expectedRouteName, k, mockRequest, mockResponse, requestingPath, router, test, v, _i, _j, _len, _len2, _ref, _ref2;
       console.log("Running " + this.examples.length + " recognition tests");
       _ref = this.examples;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -146,13 +174,22 @@
           };
           process.stdout.write(".");
           expectedRouteName = test[0], requestingPath = test[1], expectedParams = test[2];
-          url = requestingPath;
-          if (!url.match(/^http/)) {
-            url = "http://host" + url;
+          mockRequest = {};
+          if (requestingPath.path != null) {
+            mockRequest.url = requestingPath.path;
+            delete requestingPath.path;
+            console.log("requestingPath: " + (util.inspect(requestingPath)));
+            for (k in requestingPath) {
+              v = requestingPath[k];
+              mockRequest[k] = v;
+            }
+          } else {
+            mockRequest.url = requestingPath;
           }
-          mockRequest = {
-            url: url
-          };
+          if (!mockRequest.url.match(/^http/)) {
+            mockRequest.url = "http://host" + mockRequest.url;
+          }
+          console.log("mockRequest: " + (util.inspect(mockRequest)));
           router.match(mockRequest, mockResponse);
           assert.equal(expectedRouteName, mockResponse.val);
           expectedParams || (expectedParams = {});

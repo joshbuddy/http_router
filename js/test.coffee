@@ -37,7 +37,9 @@ class Test
         else
           routes.push(parsedRoutes)
     @examples.push new Example(routes, tests)
-
+  interpretValue: (v) ->
+    console.log("interpretValue -- v.regex?: #{v.regex?}")
+    if v.regex? then new RegExp(v.regex) else v
   invoke: -> throw("need to implement")
   constructRouter: (example) ->
     router = new Sherpa()
@@ -47,12 +49,25 @@ class Test
         path = null
         opts = {name: name}
         if vals.path?
-          path = vals.path
+          path = @interpretValue(vals.path)
           delete vals.path
-          opts[k] = v for k, v of vals
+          if vals.conditions?
+            conditions = {}
+            for k, v of vals.conditions
+              switch k
+                when 'request_method' then conditions.method = @interpretValue(v)
+                else                       conditions[k]     = @interpretValue(v)
+            opts.conditions = conditions
+            delete vals.conditions
+          matchesWith = {}
+          for k, v of vals
+            matchesWith[k] = @interpretValue(v)
+            delete vals.k
+          opts.matchesWith = matchesWith
         else
-          path = vals
+          path = @interpretValue(vals)
         name = "" + name
+        console.log("path is #{util.inspect path} #{util.inspect opts}")
         router.add(path, opts).to (req, response) ->
           console.log("response: #{util.inspect(response)} #{req.route.name} #{req.url}")
           response.params = req.params
@@ -86,9 +101,17 @@ class RecognitionTest extends Test
         mockResponse = end: (part) -> @val = part
         process.stdout.write "."
         [expectedRouteName, requestingPath, expectedParams] = test
-        url = requestingPath
-        url = "http://host#{url}" unless url.match(/^http/)
-        mockRequest = url: url
+        mockRequest = {}
+        if requestingPath.path?
+          mockRequest.url = requestingPath.path
+          delete requestingPath.path
+          console.log("requestingPath: #{util.inspect requestingPath}")
+          for k, v of requestingPath
+            mockRequest[k] = v
+        else
+          mockRequest.url = requestingPath
+        mockRequest.url = "http://host#{mockRequest.url}" unless mockRequest.url.match(/^http/)
+        console.log "mockRequest: #{util.inspect mockRequest}"
         router.match(mockRequest, mockResponse)
         assert.equal(expectedRouteName, mockResponse.val)
         expectedParams ||= {}

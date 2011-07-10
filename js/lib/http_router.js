@@ -11,7 +11,7 @@
   util = require('util');
   url = require('url');
   root.Sherpa = Sherpa = (function() {
-    var Glob, Lookup, Node, Path, RegexMatcher, Request, RequestMatcher, Response, Route, SpanningRegexMatcher, Variable;
+    var Glob, Lookup, Node, Path, RegexMatcher, RegexPath, Request, RequestMatcher, Response, Route, SpanningRegexMatcher, Variable;
     function Sherpa(callback) {
       this.callback = callback;
       this.root = new Node();
@@ -40,11 +40,18 @@
       return subparts;
     };
     Sherpa.prototype.generatePaths = function(path) {
-      var c, charIndex, chars, endIndex, pathIndex, paths, startIndex, _ref, _ref2;
+      var add, c, charIndex, chars, endIndex, pathIndex, paths, startIndex, _ref, _ref2;
       _ref = [[''], path.split(''), 0, 1], paths = _ref[0], chars = _ref[1], startIndex = _ref[2], endIndex = _ref[3];
       for (charIndex = 0, _ref2 = chars.length; 0 <= _ref2 ? charIndex < _ref2 : charIndex > _ref2; 0 <= _ref2 ? charIndex++ : charIndex--) {
         c = chars[charIndex];
         switch (c) {
+          case '\\':
+            charIndex++;
+            add = chars[charIndex] === ')' || chars[charIndex] === '(' ? chars[charIndex] : "\\" + chars[charIndex];
+            for (pathIndex = startIndex; startIndex <= endIndex ? pathIndex < endIndex : pathIndex > endIndex; startIndex <= endIndex ? pathIndex++ : pathIndex--) {
+              paths[pathIndex] += add;
+            }
+            break;
           case '(':
             for (pathIndex = startIndex; startIndex <= endIndex ? pathIndex < endIndex : pathIndex > endIndex; startIndex <= endIndex ? pathIndex++ : pathIndex--) {
               paths.push(paths[pathIndex]);
@@ -61,6 +68,7 @@
             }
         }
       }
+      paths.reverse();
       return paths;
     };
     Sherpa.prototype.url = function(name, params) {
@@ -68,18 +76,28 @@
       return (_ref = this.routes[name]) != null ? _ref.url(params) : void 0;
     };
     Sherpa.prototype.addComplexPart = function(subparts, compiledPath, matchesWith, variableNames) {
-      var captures, capturingIndicies, name, part, regexSubparts, regexp, spans, splittingIndicies, _ref;
+      var captures, capturingIndicies, escapeRegexp, name, part, regexSubparts, regexp, spans, splittingIndicies, _ref;
+      escapeRegexp = function(str) {
+        var replacement;
+        console.log("escaping " + (util.inspect(str)));
+        replacement = str.replace(/([\.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
+        console.log("...with " + (util.inspect(replacement)));
+        return replacement;
+      };
       _ref = [[], [], 0, false], capturingIndicies = _ref[0], splittingIndicies = _ref[1], captures = _ref[2], spans = _ref[3];
       regexSubparts = (function() {
         var _i, _len, _results;
         _results = [];
         for (_i = 0, _len = subparts.length; _i < _len; _i++) {
           part = subparts[_i];
+          console.log(":part[0] -----> " + (util.inspect(part[0])));
           _results.push((function() {
             var _ref2;
             switch (part[0]) {
               case '\\':
-                return escape(part[1].chr);
+                console.log("part[1]: " + (util.inspect(part[1])));
+                compiledPath.push("'" + part[1] + "'");
+                return escapeRegexp(part[1]);
               case ':':
               case '*':
                 if (part[0] === '*') {
@@ -106,14 +124,16 @@
                 }
                 break;
               default:
+                console.log("part: " + (util.inspect(part)));
                 compiledPath.push("'" + part + "'");
-                return escape(part);
+                return escapeRegexp(part);
             }
           })());
         }
         return _results;
       })();
       regexp = new RegExp("" + (regexSubparts.join('')) + "$");
+      console.log("regexp: " + (util.inspect(regexp)) + " spans: " + spans);
       if (spans) {
         return new SpanningRegexMatcher(regexp, capturingIndicies, splittingIndicies);
       } else {
@@ -138,18 +158,19 @@
           compiledPath.push("params['" + variableName + "'].join('/')");
           variableName = part.slice(1, part.length);
           variableNames.push(variableName);
-          return new Glob();
+          return new Glob(matchesWith[variableName]);
         default:
           compiledPath.push("'" + part + "'");
           return new Lookup(part);
       }
     };
     Sherpa.prototype.add = function(rawPath, opts) {
-      var compiledPath, defaults, escape, matchesWith, nextNodeFn, node, part, parts, path, pathSet, route, routeName, subparts, variableNames;
+      var compiledPath, defaults, matchesWith, nextNodeFn, node, part, parts, path, pathSet, route, routeName, subparts, variableNames;
       matchesWith = (opts != null ? opts.matchesWith : void 0) || {};
       defaults = (opts != null ? opts["default"] : void 0) || {};
       routeName = opts != null ? opts.name : void 0;
-      pathSet = (function() {
+      console.log("rawPath: " + (util.inspect(rawPath)));
+      route = rawPath.exec != null ? new Route([this.root.add(new RegexPath(this.root, rawPath))]) : (console.log("@generatePaths(rawPath): " + (util.inspect(this.generatePaths(rawPath)))), pathSet = (function() {
         var _i, _j, _len, _len2, _ref, _results;
         _ref = this.generatePaths(rawPath);
         _results = [];
@@ -159,14 +180,14 @@
           variableNames = [];
           parts = path.split('/');
           compiledPath = [];
-          escape = function(str) {
-            return str.replace(/([.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
-          };
           for (_j = 0, _len2 = parts.length; _j < _len2; _j++) {
             part = parts[_j];
-            if (part === '') {} else {
+            if (part === '') {
+              console.log("ignoring .. " + (util.inspect(parts)));
+            } else {
               compiledPath.push("'/'");
               subparts = this.findSubparts(part);
+              console.log("subparts: " + (util.inspect(subparts)));
               nextNodeFn = subparts.length === 1 ? this.addSimplePart : this.addComplexPart;
               node = node.add(nextNodeFn(subparts, compiledPath, matchesWith, variableNames));
             }
@@ -174,14 +195,14 @@
           if ((opts != null ? opts.conditions : void 0) != null) {
             node = node.add(new RequestMatcher(opts.conditions));
           }
+          console.log("creating Path for " + node.type);
           path = new Path(node, variableNames);
           path.partial = !!(opts != null ? opts.partial : void 0);
           path.compiled = compiledPath.length === 0 ? "'/'" : compiledPath.join('+');
           _results.push(path);
         }
         return _results;
-      }).call(this);
-      route = new Route(pathSet, matchesWith);
+      }).call(this), new Route(pathSet, matchesWith));
       route["default"] = defaults;
       route.name = routeName;
       if (routeName != null) {
@@ -284,20 +305,28 @@
     })();
     Glob = (function() {
       __extends(Glob, Variable);
-      function Glob() {
+      function Glob(regexp) {
+        this.regexp = regexp;
         this.type = 'glob';
         Glob.__super__.constructor.apply(this, arguments);
       }
       Glob.prototype.match = function(request) {
-        var globbed_variable, original_request, _results;
+        var cloned_path, i, match, original_request, _ref, _results;
         if (request.path.length > 0) {
           original_request = request;
-          globbed_variable = [];
+          cloned_path = request.path.slice(0, request.path);
           _results = [];
-          while (request.path.length > 0) {
-            request = request.clone();
-            globbed_variable.push(request.path.shift());
-            request.variables.push(globbed_variable);
+          for (i = 1, _ref = original_request.path.length; 1 <= _ref ? i <= _ref : i >= _ref; 1 <= _ref ? i++ : i--) {
+            request = original_request.clone();
+            if (this.regexp != null) {
+              match = request.path[i - 1].match(this.regexp);
+            }
+            if ((this.regexp != null) && (!(match != null) || match[0].length !== request.path[i - 1].length)) {
+              return;
+            }
+            request.variables.push(request.path.slice(0, i));
+            request.path = request.path.slice(i, request.path.length);
+            console.log("request.variables[-1]: " + (util.inspect(request.variables[request.variables.length - 1])));
             _results.push(this.superMatch(request));
           }
           return _results;
@@ -308,29 +337,64 @@
     RegexMatcher = (function() {
       __extends(RegexMatcher, Node);
       function RegexMatcher(regexp, capturingIndicies, splittingIndicies) {
+        var i, _i, _j, _len, _len2, _ref, _ref2;
         this.regexp = regexp;
         this.capturingIndicies = capturingIndicies;
         this.splittingIndicies = splittingIndicies;
         this.type || (this.type = 'regex');
+        this.varIndicies = [];
+        _ref = this.splittingIndicies;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          i = _ref[_i];
+          this.varIndicies[i] = [i, 'split'];
+        }
+        _ref2 = this.capturingIndicies;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          i = _ref2[_j];
+          this.varIndicies[i] = [i, 'capture'];
+        }
+        this.varIndicies.sort(function(a, b) {
+          return a[0] - b[0];
+        });
+        console.log("varIndicies: " + (util.inspect(this.varIndicies)) + " " + (util.inspect(this.splittingIndicies)) + " " + (util.inspect(this.capturingIndicies)));
         RegexMatcher.__super__.constructor.apply(this, arguments);
       }
       RegexMatcher.prototype.match = function(request) {
-        var i, match, _i, _j, _len, _len2, _ref, _ref2;
+        var match;
+        console.log("matching regexp_matcher! " + this.regexp);
         if ((request.path[0] != null) && (match = request.path[0].match(this.regexp))) {
+          if (match[0].length !== request.path[0].length) {
+            return;
+          }
+          console.log("successfully matched regexp_matcher! " + this.regexp + " " + (util.inspect(match[0])));
           request = request.clone();
+          this.addVariables(request, match);
           request.path.shift();
-          _ref = this.splittingIndicies;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            i = _ref[_i];
-            request.variables.push(match[i].split('/'));
-          }
-          _ref2 = this.capturingIndicies;
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            i = _ref2[_j];
-            request.variables.push(match[i]);
-          }
           return RegexMatcher.__super__.match.call(this, request);
         }
+      };
+      RegexMatcher.prototype.addVariables = function(request, match) {
+        var idx, type, v, _i, _len, _ref, _results;
+        console.log("----> " + (util.inspect(this.varIndicies)));
+        _ref = this.varIndicies;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          v = _ref[_i];
+          if (v != null) {
+            console.log(util.inspect(v));
+            idx = v[0];
+            type = v[1];
+            _results.push((function() {
+              switch (type) {
+                case 'split':
+                  return request.variables.push(match[idx].split('/'));
+                case 'capture':
+                  return request.variables.push(match[idx]);
+              }
+            })());
+          }
+        }
+        return _results;
       };
       RegexMatcher.prototype.usable = function(n) {
         return n.type === this.type && n.regexp === this.regexp && n.capturingIndicies === this.capturingIndicies && n.splittingIndicies === this.splittingIndicies;
@@ -347,22 +411,23 @@
         SpanningRegexMatcher.__super__.constructor.apply(this, arguments);
       }
       SpanningRegexMatcher.prototype.match = function(request) {
-        var i, match, wholePath, _i, _j, _len, _len2, _ref, _ref2;
+        var match, wholePath;
+        console.log("matching " + this.type + "! " + this.regexp);
         if (request.path.length > 0) {
-          wholePath = request.path.join('/');
+          console.log("request path is non trivial");
+          wholePath = request.wholePath();
+          console.log("whole path is " + wholePath);
           if (match = wholePath.match(this.regexp)) {
+            if (match.index !== 0) {
+              return;
+            }
+            console.log("omg, match " + (util.inspect(match)));
             request = request.clone();
-            _ref = this.splittingIndicies;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              i = _ref[_i];
-              request.variables.push(match[i].split('/'));
-            }
-            _ref2 = this.capturingIndicies;
-            for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-              i = _ref2[_j];
-              request.variables.push(match[i]);
-            }
-            request.splitPath(wholePath.slice(match.index + match[0].length, wholePath.length));
+            this.addVariables(request, match);
+            console.log("" + match.index + " + " + match[0].length + ": " + (match.index + match[0].length));
+            console.log(util.inspect(wholePath.slice(match.index + match[0].length, wholePath.length)));
+            request.path = request.splitPath(wholePath.slice(match.index + match[0].length, wholePath.length));
+            console.log(util.inspect(request.path));
             return this.superMatch(request);
           }
         }
@@ -422,14 +487,18 @@
         this.type = 'path';
         this.partial = false;
       }
+      Path.prototype.addDestination = function(request) {
+        return request.destinations.push({
+          route: this.route,
+          request: request,
+          params: this.constructParams(request)
+        });
+      };
       Path.prototype.match = function(request) {
-        console.log("matched! " + this.route.name);
+        console.log("matched! " + this.route.name + " " + this.partial + " " + (util.inspect(request.path)));
         if (this.partial || request.path.length === 0) {
-          return request.destinations.push({
-            route: this.route,
-            request: request,
-            params: this.constructParams(request)
-          });
+          console.log("... path matched");
+          return this.addDestination(request);
         }
       };
       Path.prototype.constructParams = function(request) {
@@ -476,6 +545,30 @@
       };
       return Path;
     })();
+    RegexPath = (function() {
+      __extends(RegexPath, Path);
+      function RegexPath(parent, regexp) {
+        this.parent = parent;
+        this.regexp = regexp;
+        this.type = 'regexp_route';
+        RegexPath.__super__.constructor.apply(this, arguments);
+      }
+      RegexPath.prototype.match = function(request) {
+        request.regexpRouteMatch = this.regexp.exec(request.decodedPath());
+        if ((request.regexpRouteMatch != null) && request.regexpRouteMatch[0].length === request.decodedPath().length) {
+          request = request.clone();
+          request.path = [];
+          return RegexPath.__super__.match.call(this, request);
+        }
+      };
+      RegexPath.prototype.constructParams = function(request) {
+        return request.regexpRouteMatch;
+      };
+      RegexPath.prototype.url = function(rawParams) {
+        throw "This route cannot be generated";
+      };
+      return RegexPath;
+    })();
     Route = (function() {
       function Route(pathSet, matchesWith) {
         var path, _i, _len, _ref;
@@ -513,6 +606,7 @@
               query += this.generateQuery(v, base === '' ? k : "" + base + "[" + k + "]");
             }
           } else {
+            console.log("creating query .... " + base + " " + params);
             query += encodeURIComponent(base).replace(/%20/g, '+');
             query += '=';
             query += encodeURIComponent(params).replace(/%20/g, '+');
@@ -547,15 +641,27 @@
         this.variables = [];
         this.destinations = [];
         if (this.underlyingRequest != null) {
-          this.path = this.splitPath(this.underlyingRequest.url);
+          this.path = this.splitPath();
         }
       }
       Request.prototype.toString = function() {
         return "<Request path: /" + (this.path.join('/')) + " " + this.path.length + ">";
       };
+      Request.prototype.wholePath = function() {
+        return this.path.join('/');
+      };
+      Request.prototype.decodedPath = function(path) {
+        console.log("Path? " + (util.inspect(path)) + " " + (path != null));
+        if (path == null) {
+          path = url.parse(this.underlyingRequest.url).pathname;
+        }
+        return decodeURI(path);
+      };
       Request.prototype.splitPath = function(path) {
-        var splitPath;
-        splitPath = /^\/?$/.exec(path) ? [] : decodeURI(url.parse(path).pathname).split('/');
+        var decodedPath, splitPath;
+        console.log("splitting path " + (util.inspect(path)) + " " + (util.inspect(this.decodedPath(path).split('/'))));
+        decodedPath = this.decodedPath(path);
+        splitPath = decodedPath === '/' ? [] : decodedPath.split('/');
         if (splitPath[0] === '') {
           splitPath.shift();
         }

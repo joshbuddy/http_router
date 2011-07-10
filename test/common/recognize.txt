@@ -25,148 +25,152 @@
 [{"route": ":var"}]
 	["route", "/%E6%AE%BA%E3%81%99", {"var": "殺す"}]
 
-#[{"route": {"path":{"regex": "/(test123|\\d+)"}}}]
-#	["route", "/test123"]
-#	["route", "/123"]
-#	[null, "/test123andmore"]
-#	[null, "/lesstest123"]
-#
-#[{"route": "/test.:format"}]
-#	["route", "/test.html", {"format": "html"}]
-#
-#[{"route": "/test(.:format)"}]
-#	["route", "/test.html", {"format": "html"}]
-#	["route", "/test"]
-#
-#[{"route": "(.:format)"}]
-#	["route", "/.html", {"format": "html"}]
-#	["route", "/"]
-#
-#[{"route": "/:test.:format"}]
-#	["route", "/foo.bar", {"format": "bar", "test": "foo"}]
-#
-#[{"route": "/:test(.:format)"}]
-#	["route", "/foo", {"test": "foo"}]
-#	["route", "/foo.bar", {"format": "bar", "test": "foo"}]
-#
-#[{"route": {"path": "/:test(.:format)", "format": {"regex": "[^\\.]+"}}}]
-#	["route", "/asd@asd.com.json", {"test": "asd@asd.com", "format": "json"}]
-#
-#[{"route": "/test/*variable"}]
-#	["route", "/test/one/two/three", {"variable": ["one", "two", "three"]}]
-#
-#[{"route": "test/*variable/test"}]
-#	[null, "/test/one/two/three"]
-#	["route", "/test/one/two/three/test", {"variable": ["one", "two", "three"]}]
-#
-#[{"route": "test/*variable/test/*variable2"}]
-#	[null, "/test/one/two/three"]
-#	["route", "/test/one/two/three/test/four/five/six", {"variable": ["one", "two", "three"], "variable2": ["four", "five", "six"]}]
-#
-#[{"route": "/test/:test-*variable.:format"}]
-#	["route", "/test/one-two/three/four/five.six", {"test": "one", "variable": ["two", "three", "four", "five"], "format": "six"}]
-#
-#[{"route": {"path": "test/*variable", "variable": {"regex": "[a-z]+"}}}]
-#	[null, "/test/asd/123"]
-#	[null, "/test/asd/asd123"]
-#	["route", "/test/asd/qwe", {"variable": ["asd", "qwe"]}]
-#
-#[{"route": {"path": "test/*variable/test", "variable": {"regex": "[a-z]+"}}}]
-#	[null, "/test/asd/123"]
-#	[null, "/test/asd/asd123"]
-#	[null, "/test/asd/qwe"]
-#	["route", "/test/asd/qwe/test", {"variable": ["asd", "qwe"]}]
-#
-#[{"route": {"path": "test/*variable/:test", "variable": {"regex": "[a-z]+"}}}]
-#	["route", "/test/asd/qwe/help", {"variable": ["asd", "qwe"], "test": "help"}]
-#
-#[{"route": {"path": "test/*variable.:format"}}]
-#	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
-#
-#[{"route": {"path": "test/*variable.:format", "variable": {"regex": "[a-z]+"}}}]
-#	[null, "/test/asd/123"]
-#	[null, "/test/asd/asd123"]
-#	[null, "/test/asd/qwe"]
-#	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
-#
-#
-#[{"route": {"path": "test/*variable(.:format)", "variable": {"regex": "[a-z]+"}}}]
-#	[null, "/test/asd/123"]
-#	[null, "/test/asd/asd123"]
-#	["route", "/test/asd/qwe", {"variable": ["asd", "qwe"]}]
-#	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
-#
-#[{"route": {"path": "test/*variable.html"}}]
-#	[null, "/test/asd/123"]
-#	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"]}]
-#
-#[{"with_regex": {"path": "/:common_variable/:matched", "matched": {"regex": "\\d+"}}}, {"with_post": {"path": "/:common_variable/:matched", "conditions": {"request_method": "POST"}}}, {"without_regex": "/:common_variable/:unmatched"}]
-#	["with_regex", "/common/123", {"common_variable": "common", "matched": "123"}]
-#	["without_regex", "/common/other", {"common_variable": "common", "unmatched": "other"}]
-#	["with_regex", {"path": "/common/123", "method": "POST"}, {"common_variable": "common", "matched": "123"}]
-#	["with_post", {"path": "/common/other", "method": "POST"}, {"common_variable": "common", "matched": "other"}]
-#
-#[{"regex": {"path":":test/number", "test": {"regex": "\\d+"}}}, {"greedy": ":test/anything"}]
-#   ["regex", "/123/number", {"test": "123"}]
-#   ["greedy", "/123/anything", {"test": "123"}]
-#
-#[{"route": {"path": ":test", "test": {"regex": ".*"}}}]
-#	["route", "/test/", {"test": "test/"}]
-#
-#[{"route": {"path": "/:test", "test": {"regex": ".*"}}}]
-#	["route", "/test.html", {"test": "test.html"}]
-#
-#[{"route": {"path": ":test", "test": {"regex": "\\d+"}}}]
-#  ["route", "/123", {"test": "123"}]
-#  [null, "/a123"]
-#
-#[{"route": ""}]
-#	["route", "/"]
-#	["route", ""]
-#
-#[{"route": "/"}]
-#	["route", "/"]
-#
-#[{"route": "/test"}]
-#	["route", "/test"]
-#
-#[{"route": "/test/one"}]
-#	["route", "/test/one"]
-#
-#[{"route": "/test/one/two"}]
-#	["route", "/test/one/two"]
-#
-#[{"route": "/test.html"}]
-#	["route", "/test.html"]
-#
-#[{"route": ".html"}]
-#	["route", "/.html"]
-#
-#[{"route": "one(/two(/three(/four)(/five)))"}]
-#	["route", "/one"]
-#	["route", "/one/two"]
-#	["route", "/one/two/three"]
-#	["route", "/one/two/three/four"]
-#	["route", "/one/two/three/five"]
-#	["route", "/one/two/three/four/five"]
-#	[null, "/one/two/four/five"]
-#
-#[{"route": "test\\(:variable\\)"}]
-#	["route", "/test(hello)", {"variable": "hello"}]
-#
-#[{"route": "test\\:variable"}]
-#	["route", "/test:variable"]
-#
-#[{"route": "test\\*variable"}]
-#	["route", "/test*variable"]
-#
-#[{"route": "/føø"}]
-#	["route", "/f%C3%B8%C3%B8"]
-#
-#[{"route": "/test*"}]
-#	["route", "/test/optional", {"PATH_INFO": "/optional"}]
-#	["route", "/test", {"PATH_INFO": "/"}]
-#	
+[{"route": {"path":{"regex": "/(test123|\\d+)"}}}]
+	["route", "/test123"]
+	["route", "/123"]
+	[null, "/test123andmore"]
+	[null, "/lesstest123"]
+
+[{"route": "/test.:format"}]
+	["route", "/test.html", {"format": "html"}]
+
+[{"route": "/test(.:format)"}]
+	["route", "/test.html", {"format": "html"}]
+	["route", "/test"]
+
+{"route": "/"}
+	["route", "/"]
+
+[{"route": "(.:format)"}]
+	["route", "/.html", {"format": "html"}]
+	["route", "/"]
+
+[{"route": "/:test.:format"}]
+	["route", "/foo.bar", {"format": "bar", "test": "foo"}]
+
+[{"route": "/:test(.:format)"}]
+	["route", "/foo", {"test": "foo"}]
+	["route", "/foo.bar", {"format": "bar", "test": "foo"}]
+
+
+[{"route": {"path": "/:test(.:format)", "format": {"regex": "[^\\.]+"}}}]
+	["route", "/asd@asd.com.json", {"test": "asd@asd.com", "format": "json"}]
+
+[{"route": "/test/*variable"}]
+	["route", "/test/one/two/three", {"variable": ["one", "two", "three"]}]
+
+[{"route": "test/*variable/test"}]
+	[null, "/test/one/two/three"]
+	["route", "/test/one/two/three/test", {"variable": ["one", "two", "three"]}]
+
+[{"route": "test/*variable/test/*variable2"}]
+	[null, "/test/one/two/three"]
+	["route", "/test/one/two/three/test/four/five/six", {"variable": ["one", "two", "three"], "variable2": ["four", "five", "six"]}]
+
+[{"route": "/test/:test-*variable.:format"}]
+	["route", "/test/one-two/three/four/five.six", {"test": "one", "variable": ["two", "three", "four", "five"], "format": "six"}]
+
+[{"route": {"path": "test/*variable", "variable": {"regex": "[a-z]+"}}}]
+	[null, "/test/asd/123"]
+	[null, "/test/asd/asd123"]
+	["route", "/test/asd/qwe", {"variable": ["asd", "qwe"]}]
+
+[{"route": {"path": "test/*variable/test", "variable": {"regex": "[a-z]+"}}}]
+	[null, "/test/asd/123"]
+	[null, "/test/asd/asd123"]
+	[null, "/test/asd/qwe"]
+	["route", "/test/asd/qwe/test", {"variable": ["asd", "qwe"]}]
+
+[{"route": {"path": "test/*variable/:test", "variable": {"regex": "[a-z]+"}}}]
+	["route", "/test/asd/qwe/help", {"variable": ["asd", "qwe"], "test": "help"}]
+
+[{"route": {"path": "test/*variable.:format"}}]
+	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
+
+[{"route": {"path": "test/*variable.:format", "variable": {"regex": "[a-z]+"}}}]
+	[null, "/test/asd/123"]
+	[null, "/test/asd/asd123"]
+	[null, "/test/asd/qwe"]
+	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
+
+
+[{"route": {"path": "test/*variable(.:format)", "variable": {"regex": "[a-z]+"}}}]
+	[null, "/test/asd/123"]
+	[null, "/test/asd/asd123"]
+	["route", "/test/asd/qwe", {"variable": ["asd", "qwe"]}]
+	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"], "format": "html"}]
+
+[{"route": {"path": "test/*variable.html"}}]
+	[null, "/test/asd/123"]
+	["route", "/test/asd/qwe.html", {"variable": ["asd", "qwe"]}]
+
+[{"with_regex": {"path": "/:common_variable/:matched", "matched": {"regex": "\\d+"}}}, {"with_post": {"path": "/:common_variable/:matched", "conditions": {"request_method": "POST"}}}, {"without_regex": "/:common_variable/:unmatched"}]
+	["with_regex", "/common/123", {"common_variable": "common", "matched": "123"}]
+	["without_regex", "/common/other", {"common_variable": "common", "unmatched": "other"}]
+	["with_regex", {"path": "/common/123", "method": "POST"}, {"common_variable": "common", "matched": "123"}]
+	["with_post", {"path": "/common/other", "method": "POST"}, {"common_variable": "common", "matched": "other"}]
+
+[{"regex": {"path":":test/number", "test": {"regex": "\\d+"}}}, {"greedy": ":test/anything"}]
+   ["regex", "/123/number", {"test": "123"}]
+   ["greedy", "/123/anything", {"test": "123"}]
+
+[{"route": {"path": ":test", "test": {"regex": ".*"}}}]
+	["route", "/test/", {"test": "test/"}]
+
+[{"route": {"path": "/:test", "test": {"regex": ".*"}}}]
+	["route", "/test.html", {"test": "test.html"}]
+
+[{"route": {"path": ":test", "test": {"regex": "\\d+"}}}]
+  ["route", "/123", {"test": "123"}]
+  [null, "/a123"]
+
+[{"route": ""}]
+	["route", "/"]
+	["route", ""]
+
+[{"route": "/"}]
+	["route", "/"]
+
+[{"route": "/test"}]
+	["route", "/test"]
+
+[{"route": "/test/one"}]
+	["route", "/test/one"]
+
+[{"route": "/test/one/two"}]
+	["route", "/test/one/two"]
+
+[{"route": "/test.html"}]
+	["route", "/test.html"]
+
+[{"route": ".html"}]
+	["route", "/.html"]
+
+[{"route": "one(/two(/three(/four)(/five)))"}]
+	["route", "/one"]
+	["route", "/one/two"]
+	["route", "/one/two/three"]
+	["route", "/one/two/three/four"]
+	["route", "/one/two/three/five"]
+	["route", "/one/two/three/four/five"]
+	[null, "/one/two/four/five"]
+
+[{"route": "test\\(:variable\\)"}]
+	["route", "/test(hello)", {"variable": "hello"}]
+
+[{"route": "test\\:variable"}]
+	["route", "/test:variable"]
+
+[{"route": "test\\*variable"}]
+	["route", "/test*variable"]
+
+[{"route": "/føø"}]
+	["route", "/f%C3%B8%C3%B8"]
+
+[{"route": "/test*"}]
+	["route", "/test/optional", {"PATH_INFO": "/optional"}]
+	["route", "/test", {"PATH_INFO": "/"}]
+	
 #[{"route": "/*"}]
 #	["route", "/optional", {"PATH_INFO": "/optional"}]
 #	["route", "/", {"PATH_INFO": "/"}]
