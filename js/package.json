@@ -1,0 +1,10 @@
+{
+  "name": "http_router",
+  "description": "URL routing and generation in js",
+  "author": "Joshua Hull <joshbuddy@gmail.com>",
+  "version": "0.0.0",
+  "directories": {
+    "lib" : "./lib/http_router"
+  },
+  "main": "lib/http_router"
+}
