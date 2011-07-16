@@ -1,4 +1,4 @@
-require.paths.push('lib')
+require.paths.push("#{__dirname}/../lib")
 fs = require('fs')
 util = require('util')
 sys = require('sys')
@@ -38,12 +38,10 @@ class Test
           routes.push(parsedRoutes)
     @examples.push new Example(routes, tests)
   interpretValue: (v) ->
-    console.log("interpretValue -- v.regex?: #{v.regex?}")
     if v.regex? then new RegExp(v.regex) else v
   invoke: -> throw("need to implement")
   constructRouter: (example) ->
     router = new Sherpa()
-    console.log("example.routes: #{example.routes.length}")
     for route in example.routes
       for name, vals of route
         path = null
@@ -59,6 +57,9 @@ class Test
                 else                       conditions[k]     = @interpretValue(v)
             opts.conditions = conditions
             delete vals.conditions
+          if vals.default?
+            opts.default = vals.default
+            delete vals.default
           matchesWith = {}
           for k, v of vals
             matchesWith[k] = @interpretValue(v)
@@ -67,9 +68,7 @@ class Test
         else
           path = @interpretValue(vals)
         name = "" + name
-        console.log("path is #{util.inspect path} #{util.inspect opts}")
         router.add(path, opts).to (req, response) ->
-          console.log("response: #{util.inspect(response)} #{req.route.name} #{req.url}")
           response.params = req.params
           response.end(req.route.name)
     router
@@ -102,23 +101,36 @@ class RecognitionTest extends Test
         process.stdout.write "."
         [expectedRouteName, requestingPath, expectedParams] = test
         mockRequest = {}
+        complex = false
         if requestingPath.path?
+          complex = true
           mockRequest.url = requestingPath.path
           delete requestingPath.path
-          console.log("requestingPath: #{util.inspect requestingPath}")
           for k, v of requestingPath
             mockRequest[k] = v
         else
           mockRequest.url = requestingPath
         mockRequest.url = "http://host#{mockRequest.url}" unless mockRequest.url.match(/^http/)
-        console.log "mockRequest: #{util.inspect mockRequest}"
         router.match(mockRequest, mockResponse)
         assert.equal(expectedRouteName, mockResponse.val)
         expectedParams ||= {}
         mockResponse.params ||= {}
+        pathInfoExcpectation = null
+        if expectedParams.PATH_INFO?
+          pathInfoExcpectation = expectedParams.PATH_INFO
+          delete expectedParams.PATH_INFO
+        assert.equal(pathInfoExcpectation, mockRequest.pathInfo) if pathInfoExcpectation
         assert.deepEqual(expectedParams, mockResponse.params)
+        unless complex
+          mockResponse = end: (part) -> @val = part
+          router.match(requestingPath, mockResponse)
+          assert.equal(expectedRouteName, mockResponse.val)
+          expectedParams ||= {}
+          mockResponse.params ||= {}
+          assert.equal(pathInfoExcpectation, mockRequest.pathInfo) if pathInfoExcpectation
+          assert.deepEqual(expectedParams, mockResponse.params)
     console.log("\nDone!")
 
-#new GenerationTest("#{__dirname}/../test/common/generate.txt").invoke()
-new RecognitionTest("#{__dirname}/../test/common/recognize.txt").invoke()
+new GenerationTest("#{__dirname}/../../test/common/generate.txt").invoke()
+new RecognitionTest("#{__dirname}/../../test/common/recognize.txt").invoke()
 

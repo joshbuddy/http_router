@@ -171,96 +171,38 @@
 	["route", "/test/optional", {"PATH_INFO": "/optional"}]
 	["route", "/test", {"PATH_INFO": "/"}]
 	
-#[{"route": "/*"}]
-#	["route", "/optional", {"PATH_INFO": "/optional"}]
-#	["route", "/", {"PATH_INFO": "/"}]
-#
-#[{"test": "/test*"}, {"root": "/*"}]
-#	["test", "/test/optional", {"PATH_INFO": "/optional"}]
-#	["test", "/test/optional/", {"PATH_INFO": "/optional/"}]
-#	["root", "/testing/optional", {"PATH_INFO": "/testing/optional"}]
-#
-#[{"route": "/one-:variable-time"}]
-#	["route", "one-value-time", {"variable": "value"}]
-#
-#[{"route": {"path": "/one-:variable-time", "variable": {"regex": "\\d+"}}}]
-#	["route", "one-123-time", {"variable": "123"}]
-#	[null, "one-value-time"]
-#
-#[{"route": {"path": "/one-:variable-time", "variable": {"regex": "\\d+"}}}]
-#	["route", "one-123-time", {"variable": "123"}]
-#	[null, "one-value-time"]
-#
-#[{"route": "hey.:greed.html"}]
-#	["route", "/hey.greedybody.html", {"greed": "greedybody"}]
-#
-#[{"r6": "/:v1-:v2-:v3-:v4-:v5-:v6"}, {"r5": "/:v1-:v2-:v3-:v4-:v5"}, {"r4": "/:v1-:v2-:v3-:v4"}, {"r3": "/:v1-:v2-:v3"}, {"r2": "/:v1-:v2"}, {"r1":"/:v1"}]
-#	["r1", "/one", {"v1": "one"}]
-#	["r2", "/one-two", {"v1": "one", "v2": "two"}]
-#	["r3", "/one-two-three", {"v1": "one", "v2":"two", "v3":"three"}]
-#	["r4", "/one-two-three-four", {"v1": "one", "v2":"two", "v3":"three", "v4":"four"}]
-#	["r5", "/one-two-three-four-five", {"v1": "one", "v2":"two", "v3":"three", "v4":"four", "v5":"five"}]
-#	["r6", "/one-two-three-four-five-six", {"v1": "one", "v2":"two", "v3":"three", "v4":"four", "v5":"five", "v6":"six"}]
-#
-#{"with_regex": {"path": "/:common_variable.:matched", "matched": {"regex": "\\d+"}}}
-#{"without_regex": "/:common_variable.:unmatched"}
-#	["with_regex", "/common.123", {"common_variable": "common", "matched": "123"}]
-#	["without_regex", "/common.other", {"common_variable": "common", "unmatched": "other"}]
-#
-#[{"router":{"path":"/test", "conditions": {"request_method": "POST"}}}]
-#	["router", {"path": "/test", "method": "POST"}]
-#	[[405, {"Allow": "POST"}], {"path": "/test", "method": "GET"}]
-#
-#{"router": {"path": "/test", "conditions": {"request_method": ["POST", "GET"]}}}
-#	["router", {"path": "/test", "method": "POST"}]
-#	["router", {"path": "/test", "method": "GET"}]
-#	[[405, {"Allow": "GET, POST"}], {"path": "/test", "method": "PUT"}]
-#
-#{"get": {"path": "/test(.:format)", "conditions": {"request_method": "GET"}}}
-#{"post": {"path": "/test(.:format)", "conditions": {"request_method": "POST"}}}
-#{"delete": {"path": "/test(.:format)", "conditions": {"request_method": "DELETE"}}}
-#	["get", {"path": "/test", "method": "GET"}]
-#	["post", {"path": "/test", "method": "POST"}]
-#	["delete", {"path": "/test", "method": "DELETE"}]
-#	["get", {"path": "/test.html", "method": "GET"}, {"format": "html"}]
-#	["post", {"path": "/test.html", "method": "POST"}, {"format": "html"}]
-#	["delete", {"path": "/test.html", "method": "DELETE"}, {"format": "html"}]
-#	[[405, {"Allow": "DELETE, GET, POST"}], {"path": "/test", "method": "PUT"}]
-#
-#{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
-#{"post_2": {"path": "/test/post", "conditions": {"request_method": "POST"}}}
-#{"get": {"path": "/test", "conditions": {"request_method": "GET"}}}
-#{"get_2": {"path": "/test/post", "conditions": {"request_method": "GET"}}}
-#{"any_2": "/test/post"}
-#{"any": "/test"}
-#	["post", {"path": "/test", "method": "POST"}]
-#	["get", {"path": "/test", "method": "GET"}]
-#	["any", {"path": "/test", "method": "PUT"}]
-#	["post_2", {"path": "/test/post", "method": "POST"}]
-#	["get_2", {"path": "/test/post", "method": "GET"}]
-#	["any_2", {"path": "/test/post", "method": "PUT"}]
-#
-#{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
-#{"any": "/test"}
-#	["post", {"path": "/test", "method": "POST"}]
-#	["any", {"path": "/test", "method": "PUT"}]
-#
-#{"host2_post": {"path": "/test", "conditions": {"request_method": "POST", "host": "host2"}}}
-#{"host2_get": {"path": "/test", "conditions": {"request_method": "GET", "host": "host2"}}}
-#{"host2": {"path": "/test", "conditions": {"host": "host2"}}}
-#{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
-#	["host2", {"path": "http://host2/test", "method": "PUT"}]
-#	["post", {"path": "http://host1/test", "method": "POST"}]
-#	["host2_get", {"path": "http://host2/test", "method": "GET"}]
-#	["host2_post", {"path": "http://host2/test", "method": "POST"}]
-#
-#{"with": {"path": "/test", "conditions": {"request_method": "GET", "host": {"regex": "host1"}}}}
-#{"without": {"path": "/test", "conditions": {"request_method": "GET"}}}
-#	["without", "http://host2/test"]
-#	["with", "http://host2.host1.com/test"]
-#
-#{"http": {"path": "/test", "conditions": {"scheme": "http"}}}
-#{"https": {"path": "/test", "conditions": {"scheme": "https"}}}
-#	["http", {"path": "/test", "scheme": "http"}]
-#	["https", {"path": "/test", "scheme": "https"}]
-#
+[{"route": "/*"}]
+	["route", "/optional", {"PATH_INFO": "/optional"}]
+	["route", "/", {"PATH_INFO": "/"}]
+
+[{"test": "/test*"}, {"root": "/*"}]
+	["test", "/test/optional", {"PATH_INFO": "/optional"}]
+	["test", "/test/optional/", {"PATH_INFO": "/optional/"}]
+	["root", "/testing/optional", {"PATH_INFO": "/testing/optional"}]
+
+{"route": "/one-:variable-time"}
+	["route", "/one-value-time", {"variable": "value"}]
+
+[{"route": {"path": "/one-:variable-time", "variable": {"regex": "\\d+"}}}]
+	["route", "/one-123-time", {"variable": "123"}]
+	[null, "/one-value-time"]
+
+[{"route": {"path": "/one-:variable-time", "variable": {"regex": "\\d+"}}}]
+	["route", "/one-123-time", {"variable": "123"}]
+	[null, "/one-value-time"]
+
+[{"route": "hey.:greed.html"}]
+	["route", "/hey.greedybody.html", {"greed": "greedybody"}]
+
+[{"r6": "/:v1-:v2-:v3-:v4-:v5-:v6"}, {"r5": "/:v1-:v2-:v3-:v4-:v5"}, {"r4": "/:v1-:v2-:v3-:v4"}, {"r3": "/:v1-:v2-:v3"}, {"r2": "/:v1-:v2"}, {"r1":"/:v1"}]
+	["r1", "/one", {"v1": "one"}]
+	["r2", "/one-two", {"v1": "one", "v2": "two"}]
+	["r3", "/one-two-three", {"v1": "one", "v2":"two", "v3":"three"}]
+	["r4", "/one-two-three-four", {"v1": "one", "v2":"two", "v3":"three", "v4":"four"}]
+	["r5", "/one-two-three-four-five", {"v1": "one", "v2":"two", "v3":"three", "v4":"four", "v5":"five"}]
+	["r6", "/one-two-three-four-five-six", {"v1": "one", "v2":"two", "v3":"three", "v4":"four", "v5":"five", "v6":"six"}]
+
+{"with_regex": {"path": "/:common_variable.:matched", "matched": {"regex": "\\d+"}}}
+{"without_regex": "/:common_variable.:unmatched"}
+	["with_regex", "/common.123", {"common_variable": "common", "matched": "123"}]
+	["without_regex", "/common.other", {"common_variable": "common", "unmatched": "other"}]

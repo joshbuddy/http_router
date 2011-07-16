@@ -2,8 +2,30 @@
 require 'bundler'
 Bundler::GemHelper.install_tasks
 
+Rake::Task['release'].enhance {
+  $: << 'lib'
+  require 'http_router/version'
+  File.open('js/package.json', 'w') do |f|
+    f << <<-EOT
+{
+  "name": "http_router",
+  "description": "URL routing and generation in js",
+  "author": "Joshua Hull <joshbuddy@gmail.com>",
+  "version": "#{HttpRouter::VERSION}",
+  "directories": {
+    "lib" : "./lib/http_router"
+  },
+  "main": "lib/http_router"
+}
+  EOT
+  end
+  sh "cd js && npm publish"
+}
+
+test_tasks = ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
+test_tasks << 'test:js' if `which coffee && which node` && $?.success?
 desc "Run all tests"
-task :test => ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
+task :test => test_tasks
 
 require 'pp'
 
@@ -20,6 +42,13 @@ namespace :test do
     require 'http_router'
     require './test/helper'
     Dir['./test/**/test_*.rb'].each { |test| require test }
+  end
+
+  desc "Run js tests"
+  task :js do
+    sh "coffee -c js/test/test.coffee"
+    sh "coffee -c js/lib/http_router.coffee"
+    sh "node js/test/test.js"
   end
 
   desc "Run generic recognition tests"

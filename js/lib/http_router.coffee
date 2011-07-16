@@ -1,15 +1,10 @@
-util = require 'util'
-url = require 'url'
-
 root.Sherpa = class Sherpa
   constructor: (@callback) ->
     @root = new Node()
     @routes = {}
   match: (httpRequest, httpResponse) ->
-    console.log("@httpResponse: #{httpResponse?}")
-    request = new Request(httpRequest)
+    request = if (httpRequest.url?) then new Request(httpRequest) else new PathRequest(httpRequest)
     @root.match(request)
-    console.log("request.destinations.length: #{request.destinations.length}")
     if request.destinations.length > 0
       new Response(request, httpResponse).invoke()
     else if @callback?
@@ -49,17 +44,11 @@ root.Sherpa = class Sherpa
   url: (name, params) ->
     @routes[name]?.url(params)
   addComplexPart: (subparts, compiledPath, matchesWith, variableNames) ->
-    escapeRegexp = (str) ->
-      console.log("escaping #{util.inspect str}")
-      replacement = str.replace(/([\.*+?^=!:${}()|[\]\/\\])/g, '\\$1')
-      console.log("...with #{util.inspect replacement}")
-      replacement
+    escapeRegexp = (str) -> str.replace(/([\.*+?^=!:${}()|[\]\/\\])/g, '\\$1')
     [capturingIndicies, splittingIndicies, captures, spans] = [[], [], 0, false]
     regexSubparts = for part in subparts
-      console.log(":part[0] -----> #{util.inspect part[0]}")
       switch part[0]
         when '\\'
-          console.log("part[1]: #{util.inspect part[1]}")
           compiledPath.push "'#{part[1]}'"
           escapeRegexp(part[1])
         when ':', '*'
@@ -78,11 +67,9 @@ root.Sherpa = class Sherpa
           else
             "(#{(matchesWith[name]?.source || '[^/]*?')})"
         else
-          console.log("part: #{util.inspect part}")
           compiledPath.push "'#{part}'"
           escapeRegexp(part)
     regexp = new RegExp("#{regexSubparts.join('')}$")
-    console.log "regexp: #{util.inspect regexp} spans: #{spans}"
     if spans
       new SpanningRegexMatcher(regexp, capturingIndicies, splittingIndicies)
     else
@@ -107,30 +94,28 @@ root.Sherpa = class Sherpa
     matchesWith = opts?.matchesWith || {}
     defaults = opts?.default || {}
     routeName = opts?.name
-    console.log("rawPath: #{util.inspect rawPath}")
+    partiallyMatch = false
     route = if rawPath.exec?
       new Route([@root.add(new RegexPath(@root, rawPath))])
     else
-      console.log("@generatePaths(rawPath): #{util.inspect @generatePaths(rawPath)}")
+      if rawPath.substring(rawPath.length - 1) == '*'
+        rawPath = rawPath.substring(0, rawPath.length - 1)
+        partiallyMatch = true
       pathSet = for path in @generatePaths(rawPath)
         node = @root
         variableNames = []
         parts = path.split('/')
         compiledPath = []
         for part in parts
-          if part == ''
-            console.log("ignoring .. #{util.inspect parts}")
-          else
+          unless part == ''
             compiledPath.push "'/'"
             subparts = @findSubparts(part)
-            console.log("subparts: #{util.inspect subparts}")
             nextNodeFn = if subparts.length == 1 then @addSimplePart else @addComplexPart
             node = node.add(nextNodeFn(subparts, compiledPath, matchesWith, variableNames))
         if opts?.conditions?
           node = node.add(new RequestMatcher(opts.conditions))
-        console.log("creating Path for #{node.type}")
         path = new Path(node, variableNames)
-        path.partial = !!opts?.partial
+        path.partial = partiallyMatch
         path.compiled = if compiledPath.length == 0 then "'/'" else compiledPath.join('+')
         path
       new Route(pathSet, matchesWith)
@@ -148,10 +133,11 @@ root.Sherpa = class Sherpa
       else
         new Response(@request, @httpResponse, @position + 1).invoke()
     invoke: ->
-      console.log("@httpResponse: #{@httpResponse?} #{util.inspect @request.destinations[@position].route.name} #{@position} #{@request.destinations[@position].route.destination} named: #{@request.destinations[@position].route.name} #{@position}")
-      @request.underlyingRequest.params = @request.destinations[@position].params
-      @request.underlyingRequest.route = @request.destinations[@position].route
-      @request.destinations[@position].route.destination(@request.underlyingRequest, @httpResponse)
+      req = if typeof(@request.underlyingRequest) == 'string' then {} else @request.underlyingRequest
+      req.params = @request.destinations[@position].params
+      req.route = @request.destinations[@position].route
+      req.pathInfo = @request.destinations[@position].pathInfo
+      @request.destinations[@position].route.destination(req, @httpResponse)
 
   class Node
     constructor: ->
@@ -173,7 +159,6 @@ root.Sherpa = class Sherpa
       @map = {}
       super
     match: (request) ->
-      console.log("matching lookup #{util.inspect request.path[0]} #{@map[request.path[0]]?}")
       if @map[request.path[0]]?
         request = request.clone()
         part = request.path.shift()
@@ -187,7 +172,6 @@ root.Sherpa = class Sherpa
       @type ||= 'variable'
       super
     match: (request) ->
-      console.log("matching variable #{util.inspect request.path[0]}")
       if request.path.length > 0
         request = request.clone()
         request.variables.push(request.path.shift())
@@ -207,7 +191,6 @@ root.Sherpa = class Sherpa
           return if @regexp? and (!match? or match[0].length != request.path[i - 1].length)
           request.variables.push(request.path.slice(0, i))
           request.path = request.path.slice(i, request.path.length)
-          console.log "request.variables[-1]: #{util.inspect request.variables[request.variables.length - 1]}"
           @superMatch(request)
 
   class RegexMatcher extends Node
@@ -217,21 +200,16 @@ root.Sherpa = class Sherpa
       @varIndicies[i] = [i, 'split'] for i in @splittingIndicies
       @varIndicies[i] = [i, 'capture'] for i in @capturingIndicies
       @varIndicies.sort (a, b) -> a[0] - b[0]
-      console.log("varIndicies: #{util.inspect @varIndicies} #{util.inspect @splittingIndicies} #{util.inspect @capturingIndicies}")
       super
     match: (request) ->
-      console.log("matching regexp_matcher! #{@regexp}")
       if request.path[0]? and match = request.path[0].match(@regexp)
         return unless match[0].length == request.path[0].length
-        console.log("successfully matched regexp_matcher! #{@regexp} #{util.inspect match[0]}")
         request = request.clone()
         @addVariables(request, match)
         request.path.shift()
         super(request)
     addVariables: (request, match) ->
-      console.log("----> #{util.inspect @varIndicies}")
       for v in @varIndicies when v?
-        console.log(util.inspect v)
         idx = v[0]
         type = v[1]
         switch type
@@ -245,20 +223,13 @@ root.Sherpa = class Sherpa
       @type = 'spanning'
       super
     match: (request) ->
-      console.log("matching #{@type}! #{@regexp}")
       if request.path.length > 0
-        console.log("request path is non trivial")
         wholePath = request.wholePath()
-        console.log("whole path is #{wholePath}")
         if match = wholePath.match(@regexp)
           return unless match.index == 0
-          console.log("omg, match #{util.inspect match}")
           request = request.clone()
           @addVariables(request, match)
-          console.log("#{match.index} + #{match[0].length}: #{match.index + match[0].length}")
-          console.log(util.inspect wholePath.slice(match.index + match[0].length, wholePath.length))
           request.path = request.splitPath(wholePath.slice(match.index + match[0].length, wholePath.length))
-          console.log(util.inspect request.path)
           @superMatch(request)
       
   class RequestMatcher extends Node
@@ -294,10 +265,10 @@ root.Sherpa = class Sherpa
       @partial = false
     addDestination: (request) -> request.destinations.push({route: @route, request: request, params: @constructParams(request)})
     match: (request) ->
-      console.log("matched! #{@route.name} #{@partial} #{util.inspect request.path}" )
       if @partial or request.path.length == 0
-        console.log("... path matched")
         @addDestination(request)
+        if @partial
+          request.destinations[request.destinations.length - 1].pathInfo = "/#{request.wholePath()}"
     constructParams: (request) ->
       params = {}
       for i in [0...@variableNames.length]
@@ -347,7 +318,6 @@ root.Sherpa = class Sherpa
           for k,v of params
             query += @generateQuery(v, if base == '' then k else "#{base}[#{k}]")
         else
-          console.log "creating query .... #{base} #{params}"
           query += encodeURIComponent(base).replace(/%20/g, '+')
           query += '='
           query += encodeURIComponent(params).replace(/%20/g, '+')
@@ -355,8 +325,8 @@ root.Sherpa = class Sherpa
       query
     url: (params) ->
       path = undefined
-      for pathIdx in [(@pathSet.length - 1)..0]
-        path = @pathSet[pathIdx].url(params)
+      for pathObj in @pathSet
+        path = pathObj.url(params)
         break if path?
       if path?
         query = @generateQuery(params)
@@ -374,16 +344,13 @@ root.Sherpa = class Sherpa
     toString: -> "<Request path: /#{@path.join('/') } #{@path.length}>"
     wholePath: -> @path.join('/')
     decodedPath: (path) ->
-      console.log("Path? #{util.inspect(path)} #{path?}")
       unless path?
-        path = url.parse(@underlyingRequest.url).pathname
+        path = require('url').parse(@underlyingRequest.url).pathname
       decodeURI(path)
     splitPath: (path) ->
-      console.log("splitting path #{util.inspect path} #{util.inspect @decodedPath(path).split('/')}")
       decodedPath = @decodedPath(path)
       splitPath = if decodedPath == '/' then [] else decodedPath.split('/')
       splitPath.shift() if splitPath[0] == ''
-      console.log("splitPath: #{util.inspect(splitPath)}")
       splitPath
     clone: ->
       c = new Request()
@@ -393,3 +360,9 @@ root.Sherpa = class Sherpa
       c.callback = @callback
       c.destinations = @destinations
       c
+
+  class PathRequest extends Request
+    decodedPath: (path) ->
+      unless path?
+        path = @underlyingRequest
+      decodeURI(path)

@@ -19,3 +19,4 @@ class RecognitionTest < AbstractTest
 end
 
 RecognitionTest.run("#{File.dirname(__FILE__)}/common/recognize.txt")
+RecognitionTest.run("#{File.dirname(__FILE__)}/common/http_recognize.txt")

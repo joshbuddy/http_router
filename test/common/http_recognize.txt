@@ -1,0 +1,56 @@
+[{"router":{"path":"/test", "conditions": {"request_method": "POST"}}}]
+	["router", {"path": "/test", "method": "POST"}]
+	[[405, {"Allow": "POST"}], {"path": "/test", "method": "GET"}]
+
+{"router": {"path": "/test", "conditions": {"request_method": ["POST", "GET"]}}}
+	["router", {"path": "/test", "method": "POST"}]
+	["router", {"path": "/test", "method": "GET"}]
+	[[405, {"Allow": "GET, POST"}], {"path": "/test", "method": "PUT"}]
+
+{"get": {"path": "/test(.:format)", "conditions": {"request_method": "GET"}}}
+{"post": {"path": "/test(.:format)", "conditions": {"request_method": "POST"}}}
+{"delete": {"path": "/test(.:format)", "conditions": {"request_method": "DELETE"}}}
+	["get", {"path": "/test", "method": "GET"}]
+	["post", {"path": "/test", "method": "POST"}]
+	["delete", {"path": "/test", "method": "DELETE"}]
+	["get", {"path": "/test.html", "method": "GET"}, {"format": "html"}]
+	["post", {"path": "/test.html", "method": "POST"}, {"format": "html"}]
+	["delete", {"path": "/test.html", "method": "DELETE"}, {"format": "html"}]
+	[[405, {"Allow": "DELETE, GET, POST"}], {"path": "/test", "method": "PUT"}]
+
+{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
+{"post_2": {"path": "/test/post", "conditions": {"request_method": "POST"}}}
+{"get": {"path": "/test", "conditions": {"request_method": "GET"}}}
+{"get_2": {"path": "/test/post", "conditions": {"request_method": "GET"}}}
+{"any_2": "/test/post"}
+{"any": "/test"}
+	["post", {"path": "/test", "method": "POST"}]
+	["get", {"path": "/test", "method": "GET"}]
+	["any", {"path": "/test", "method": "PUT"}]
+	["post_2", {"path": "/test/post", "method": "POST"}]
+	["get_2", {"path": "/test/post", "method": "GET"}]
+	["any_2", {"path": "/test/post", "method": "PUT"}]
+
+{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
+{"any": "/test"}
+	["post", {"path": "/test", "method": "POST"}]
+	["any", {"path": "/test", "method": "PUT"}]
+
+{"host2_post": {"path": "/test", "conditions": {"request_method": "POST", "host": "host2"}}}
+{"host2_get": {"path": "/test", "conditions": {"request_method": "GET", "host": "host2"}}}
+{"host2": {"path": "/test", "conditions": {"host": "host2"}}}
+{"post": {"path": "/test", "conditions": {"request_method": "POST"}}}
+	["host2", {"path": "http://host2/test", "method": "PUT"}]
+	["post", {"path": "http://host1/test", "method": "POST"}]
+	["host2_get", {"path": "http://host2/test", "method": "GET"}]
+	["host2_post", {"path": "http://host2/test", "method": "POST"}]
+
+{"with": {"path": "/test", "conditions": {"request_method": "GET", "host": {"regex": "host1"}}}}
+{"without": {"path": "/test", "conditions": {"request_method": "GET"}}}
+	["without", "http://host2/test"]
+	["with", "http://host2.host1.com/test"]
+
+{"http": {"path": "/test", "conditions": {"scheme": "http"}}}
+{"https": {"path": "/test", "conditions": {"scheme": "https"}}}
+	["http", {"path": "/test", "scheme": "http"}]
+	["https", {"path": "/test", "scheme": "https"}]

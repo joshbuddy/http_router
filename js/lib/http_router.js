@@ -1,5 +1,5 @@
 (function() {
-  var Sherpa, url, util;
+  var Sherpa;
   var __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
     for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
     function ctor() { this.constructor = child; }
@@ -8,10 +8,8 @@
     child.__super__ = parent.prototype;
     return child;
   };
-  util = require('util');
-  url = require('url');
   root.Sherpa = Sherpa = (function() {
-    var Glob, Lookup, Node, Path, RegexMatcher, RegexPath, Request, RequestMatcher, Response, Route, SpanningRegexMatcher, Variable;
+    var Glob, Lookup, Node, Path, PathRequest, RegexMatcher, RegexPath, Request, RequestMatcher, Response, Route, SpanningRegexMatcher, Variable;
     function Sherpa(callback) {
       this.callback = callback;
       this.root = new Node();
@@ -19,10 +17,8 @@
     }
     Sherpa.prototype.match = function(httpRequest, httpResponse) {
       var request;
-      console.log("@httpResponse: " + (httpResponse != null));
-      request = new Request(httpRequest);
+      request = (httpRequest.url != null) ? new Request(httpRequest) : new PathRequest(httpRequest);
       this.root.match(request);
-      console.log("request.destinations.length: " + request.destinations.length);
       if (request.destinations.length > 0) {
         return new Response(request, httpResponse).invoke();
       } else if (this.callback != null) {
@@ -78,11 +74,7 @@
     Sherpa.prototype.addComplexPart = function(subparts, compiledPath, matchesWith, variableNames) {
       var captures, capturingIndicies, escapeRegexp, name, part, regexSubparts, regexp, spans, splittingIndicies, _ref;
       escapeRegexp = function(str) {
-        var replacement;
-        console.log("escaping " + (util.inspect(str)));
-        replacement = str.replace(/([\.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
-        console.log("...with " + (util.inspect(replacement)));
-        return replacement;
+        return str.replace(/([\.*+?^=!:${}()|[\]\/\\])/g, '\\$1');
       };
       _ref = [[], [], 0, false], capturingIndicies = _ref[0], splittingIndicies = _ref[1], captures = _ref[2], spans = _ref[3];
       regexSubparts = (function() {
@@ -90,12 +82,10 @@
         _results = [];
         for (_i = 0, _len = subparts.length; _i < _len; _i++) {
           part = subparts[_i];
-          console.log(":part[0] -----> " + (util.inspect(part[0])));
           _results.push((function() {
             var _ref2;
             switch (part[0]) {
               case '\\':
-                console.log("part[1]: " + (util.inspect(part[1])));
                 compiledPath.push("'" + part[1] + "'");
                 return escapeRegexp(part[1]);
               case ':':
@@ -124,7 +114,6 @@
                 }
                 break;
               default:
-                console.log("part: " + (util.inspect(part)));
                 compiledPath.push("'" + part + "'");
                 return escapeRegexp(part);
             }
@@ -133,7 +122,6 @@
         return _results;
       })();
       regexp = new RegExp("" + (regexSubparts.join('')) + "$");
-      console.log("regexp: " + (util.inspect(regexp)) + " spans: " + spans);
       if (spans) {
         return new SpanningRegexMatcher(regexp, capturingIndicies, splittingIndicies);
       } else {
@@ -165,12 +153,12 @@
       }
     };
     Sherpa.prototype.add = function(rawPath, opts) {
-      var compiledPath, defaults, matchesWith, nextNodeFn, node, part, parts, path, pathSet, route, routeName, subparts, variableNames;
+      var compiledPath, defaults, matchesWith, nextNodeFn, node, part, partiallyMatch, parts, path, pathSet, route, routeName, subparts, variableNames;
       matchesWith = (opts != null ? opts.matchesWith : void 0) || {};
       defaults = (opts != null ? opts["default"] : void 0) || {};
       routeName = opts != null ? opts.name : void 0;
-      console.log("rawPath: " + (util.inspect(rawPath)));
-      route = rawPath.exec != null ? new Route([this.root.add(new RegexPath(this.root, rawPath))]) : (console.log("@generatePaths(rawPath): " + (util.inspect(this.generatePaths(rawPath)))), pathSet = (function() {
+      partiallyMatch = false;
+      route = rawPath.exec != null ? new Route([this.root.add(new RegexPath(this.root, rawPath))]) : (rawPath.substring(rawPath.length - 1) === '*' ? (rawPath = rawPath.substring(0, rawPath.length - 1), partiallyMatch = true) : void 0, pathSet = (function() {
         var _i, _j, _len, _len2, _ref, _results;
         _ref = this.generatePaths(rawPath);
         _results = [];
@@ -182,12 +170,9 @@
           compiledPath = [];
           for (_j = 0, _len2 = parts.length; _j < _len2; _j++) {
             part = parts[_j];
-            if (part === '') {
-              console.log("ignoring .. " + (util.inspect(parts)));
-            } else {
+            if (part !== '') {
               compiledPath.push("'/'");
               subparts = this.findSubparts(part);
-              console.log("subparts: " + (util.inspect(subparts)));
               nextNodeFn = subparts.length === 1 ? this.addSimplePart : this.addComplexPart;
               node = node.add(nextNodeFn(subparts, compiledPath, matchesWith, variableNames));
             }
@@ -195,9 +180,8 @@
           if ((opts != null ? opts.conditions : void 0) != null) {
             node = node.add(new RequestMatcher(opts.conditions));
           }
-          console.log("creating Path for " + node.type);
           path = new Path(node, variableNames);
-          path.partial = !!(opts != null ? opts.partial : void 0);
+          path.partial = partiallyMatch;
           path.compiled = compiledPath.length === 0 ? "'/'" : compiledPath.join('+');
           _results.push(path);
         }
@@ -225,10 +209,12 @@
         }
       };
       Response.prototype.invoke = function() {
-        console.log("@httpResponse: " + (this.httpResponse != null) + " " + (util.inspect(this.request.destinations[this.position].route.name)) + " " + this.position + " " + this.request.destinations[this.position].route.destination + " named: " + this.request.destinations[this.position].route.name + " " + this.position);
-        this.request.underlyingRequest.params = this.request.destinations[this.position].params;
-        this.request.underlyingRequest.route = this.request.destinations[this.position].route;
-        return this.request.destinations[this.position].route.destination(this.request.underlyingRequest, this.httpResponse);
+        var req;
+        req = typeof this.request.underlyingRequest === 'string' ? {} : this.request.underlyingRequest;
+        req.params = this.request.destinations[this.position].params;
+        req.route = this.request.destinations[this.position].route;
+        req.pathInfo = this.request.destinations[this.position].pathInfo;
+        return this.request.destinations[this.position].route.destination(req, this.httpResponse);
       };
       return Response;
     })();
@@ -273,7 +259,6 @@
       }
       Lookup.prototype.match = function(request) {
         var part;
-        console.log("matching lookup " + (util.inspect(request.path[0])) + " " + (this.map[request.path[0]] != null));
         if (this.map[request.path[0]] != null) {
           request = request.clone();
           part = request.path.shift();
@@ -294,7 +279,6 @@
         Variable.__super__.constructor.apply(this, arguments);
       }
       Variable.prototype.match = function(request) {
-        console.log("matching variable " + (util.inspect(request.path[0])));
         if (request.path.length > 0) {
           request = request.clone();
           request.variables.push(request.path.shift());
@@ -326,7 +310,6 @@
             }
             request.variables.push(request.path.slice(0, i));
             request.path = request.path.slice(i, request.path.length);
-            console.log("request.variables[-1]: " + (util.inspect(request.variables[request.variables.length - 1])));
             _results.push(this.superMatch(request));
           }
           return _results;
@@ -356,17 +339,14 @@
         this.varIndicies.sort(function(a, b) {
           return a[0] - b[0];
         });
-        console.log("varIndicies: " + (util.inspect(this.varIndicies)) + " " + (util.inspect(this.splittingIndicies)) + " " + (util.inspect(this.capturingIndicies)));
         RegexMatcher.__super__.constructor.apply(this, arguments);
       }
       RegexMatcher.prototype.match = function(request) {
         var match;
-        console.log("matching regexp_matcher! " + this.regexp);
         if ((request.path[0] != null) && (match = request.path[0].match(this.regexp))) {
           if (match[0].length !== request.path[0].length) {
             return;
           }
-          console.log("successfully matched regexp_matcher! " + this.regexp + " " + (util.inspect(match[0])));
           request = request.clone();
           this.addVariables(request, match);
           request.path.shift();
@@ -375,13 +355,11 @@
       };
       RegexMatcher.prototype.addVariables = function(request, match) {
         var idx, type, v, _i, _len, _ref, _results;
-        console.log("----> " + (util.inspect(this.varIndicies)));
         _ref = this.varIndicies;
         _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           v = _ref[_i];
           if (v != null) {
-            console.log(util.inspect(v));
             idx = v[0];
             type = v[1];
             _results.push((function() {
@@ -412,22 +390,15 @@
       }
       SpanningRegexMatcher.prototype.match = function(request) {
         var match, wholePath;
-        console.log("matching " + this.type + "! " + this.regexp);
         if (request.path.length > 0) {
-          console.log("request path is non trivial");
           wholePath = request.wholePath();
-          console.log("whole path is " + wholePath);
           if (match = wholePath.match(this.regexp)) {
             if (match.index !== 0) {
               return;
             }
-            console.log("omg, match " + (util.inspect(match)));
             request = request.clone();
             this.addVariables(request, match);
-            console.log("" + match.index + " + " + match[0].length + ": " + (match.index + match[0].length));
-            console.log(util.inspect(wholePath.slice(match.index + match[0].length, wholePath.length)));
             request.path = request.splitPath(wholePath.slice(match.index + match[0].length, wholePath.length));
-            console.log(util.inspect(request.path));
             return this.superMatch(request);
           }
         }
@@ -495,10 +466,11 @@
         });
       };
       Path.prototype.match = function(request) {
-        console.log("matched! " + this.route.name + " " + this.partial + " " + (util.inspect(request.path)));
         if (this.partial || request.path.length === 0) {
-          console.log("... path matched");
-          return this.addDestination(request);
+          this.addDestination(request);
+          if (this.partial) {
+            return request.destinations[request.destinations.length - 1].pathInfo = "/" + (request.wholePath());
+          }
         }
       };
       Path.prototype.constructParams = function(request) {
@@ -606,7 +578,6 @@
               query += this.generateQuery(v, base === '' ? k : "" + base + "[" + k + "]");
             }
           } else {
-            console.log("creating query .... " + base + " " + params);
             query += encodeURIComponent(base).replace(/%20/g, '+');
             query += '=';
             query += encodeURIComponent(params).replace(/%20/g, '+');
@@ -616,10 +587,12 @@
         return query;
       };
       Route.prototype.url = function(params) {
-        var joiner, path, pathIdx, query, _ref;
+        var joiner, path, pathObj, query, _i, _len, _ref;
         path = void 0;
-        for (pathIdx = _ref = this.pathSet.length - 1; _ref <= 0 ? pathIdx <= 0 : pathIdx >= 0; _ref <= 0 ? pathIdx++ : pathIdx--) {
-          path = this.pathSet[pathIdx].url(params);
+        _ref = this.pathSet;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          pathObj = _ref[_i];
+          path = pathObj.url(params);
           if (path != null) {
             break;
           }
@@ -651,21 +624,18 @@
         return this.path.join('/');
       };
       Request.prototype.decodedPath = function(path) {
-        console.log("Path? " + (util.inspect(path)) + " " + (path != null));
         if (path == null) {
-          path = url.parse(this.underlyingRequest.url).pathname;
+          path = require('url').parse(this.underlyingRequest.url).pathname;
         }
         return decodeURI(path);
       };
       Request.prototype.splitPath = function(path) {
         var decodedPath, splitPath;
-        console.log("splitting path " + (util.inspect(path)) + " " + (util.inspect(this.decodedPath(path).split('/'))));
         decodedPath = this.decodedPath(path);
         splitPath = decodedPath === '/' ? [] : decodedPath.split('/');
         if (splitPath[0] === '') {
           splitPath.shift();
         }
-        console.log("splitPath: " + (util.inspect(splitPath)));
         return splitPath;
       };
       Request.prototype.clone = function() {
@@ -679,6 +649,19 @@
         return c;
       };
       return Request;
+    })();
+    PathRequest = (function() {
+      __extends(PathRequest, Request);
+      function PathRequest() {
+        PathRequest.__super__.constructor.apply(this, arguments);
+      }
+      PathRequest.prototype.decodedPath = function(path) {
+        if (path == null) {
+          path = this.underlyingRequest;
+        }
+        return decodeURI(path);
+      };
+      return PathRequest;
     })();
     return Sherpa;
   })();

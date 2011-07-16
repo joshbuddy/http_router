@@ -8,7 +8,7 @@
     child.__super__ = parent.prototype;
     return child;
   };
-  require.paths.push('lib');
+  require.paths.push("" + __dirname + "/../lib");
   fs = require('fs');
   util = require('util');
   sys = require('sys');
@@ -54,7 +54,6 @@
       this.examples.push(new Example(routes, tests));
     }
     Test.prototype.interpretValue = function(v) {
-      console.log("interpretValue -- v.regex?: " + (v.regex != null));
       if (v.regex != null) {
         return new RegExp(v.regex);
       } else {
@@ -67,7 +66,6 @@
     Test.prototype.constructRouter = function(example) {
       var conditions, k, matchesWith, name, opts, path, route, router, v, vals, _i, _len, _ref, _ref2;
       router = new Sherpa();
-      console.log("example.routes: " + example.routes.length);
       _ref = example.routes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         route = _ref[_i];
@@ -96,6 +94,10 @@
               opts.conditions = conditions;
               delete vals.conditions;
             }
+            if (vals["default"] != null) {
+              opts["default"] = vals["default"];
+              delete vals["default"];
+            }
             matchesWith = {};
             for (k in vals) {
               v = vals[k];
@@ -107,9 +109,7 @@
             path = this.interpretValue(vals);
           }
           name = "" + name;
-          console.log("path is " + (util.inspect(path)) + " " + (util.inspect(opts)));
           router.add(path, opts).to(function(req, response) {
-            console.log("response: " + (util.inspect(response)) + " " + req.route.name + " " + req.url);
             response.params = req.params;
             return response.end(req.route.name);
           });
@@ -157,7 +157,7 @@
       RecognitionTest.__super__.constructor.apply(this, arguments);
     }
     RecognitionTest.prototype.invoke = function() {
-      var example, expectedParams, expectedRouteName, k, mockRequest, mockResponse, requestingPath, router, test, v, _i, _j, _len, _len2, _ref, _ref2;
+      var complex, example, expectedParams, expectedRouteName, k, mockRequest, mockResponse, pathInfoExcpectation, requestingPath, router, test, v, _i, _j, _len, _len2, _ref, _ref2;
       console.log("Running " + this.examples.length + " recognition tests");
       _ref = this.examples;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -175,10 +175,11 @@
           process.stdout.write(".");
           expectedRouteName = test[0], requestingPath = test[1], expectedParams = test[2];
           mockRequest = {};
+          complex = false;
           if (requestingPath.path != null) {
+            complex = true;
             mockRequest.url = requestingPath.path;
             delete requestingPath.path;
-            console.log("requestingPath: " + (util.inspect(requestingPath)));
             for (k in requestingPath) {
               v = requestingPath[k];
               mockRequest[k] = v;
@@ -189,17 +190,40 @@
           if (!mockRequest.url.match(/^http/)) {
             mockRequest.url = "http://host" + mockRequest.url;
           }
-          console.log("mockRequest: " + (util.inspect(mockRequest)));
           router.match(mockRequest, mockResponse);
           assert.equal(expectedRouteName, mockResponse.val);
           expectedParams || (expectedParams = {});
           mockResponse.params || (mockResponse.params = {});
+          pathInfoExcpectation = null;
+          if (expectedParams.PATH_INFO != null) {
+            pathInfoExcpectation = expectedParams.PATH_INFO;
+            delete expectedParams.PATH_INFO;
+          }
+          if (pathInfoExcpectation) {
+            assert.equal(pathInfoExcpectation, mockRequest.pathInfo);
+          }
           assert.deepEqual(expectedParams, mockResponse.params);
+          if (!complex) {
+            mockResponse = {
+              end: function(part) {
+                return this.val = part;
+              }
+            };
+            router.match(requestingPath, mockResponse);
+            assert.equal(expectedRouteName, mockResponse.val);
+            expectedParams || (expectedParams = {});
+            mockResponse.params || (mockResponse.params = {});
+            if (pathInfoExcpectation) {
+              assert.equal(pathInfoExcpectation, mockRequest.pathInfo);
+            }
+            assert.deepEqual(expectedParams, mockResponse.params);
+          }
         }
       }
       return console.log("\nDone!");
     };
     return RecognitionTest;
   })();
-  new RecognitionTest("" + __dirname + "/../test/common/recognize.txt").invoke();
+  new GenerationTest("" + __dirname + "/../../test/common/generate.txt").invoke();
+  new RecognitionTest("" + __dirname + "/../../test/common/recognize.txt").invoke();
 }).call(this);
