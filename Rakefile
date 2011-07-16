@@ -1,8 +1,9 @@
 # encoding: utf-8
 require 'bundler'
 Bundler::GemHelper.install_tasks
+Rake::Task['release'].enhance(:release_js)
 
-Rake::Task['release'].enhance {
+task :release_js do
   $: << 'lib'
   require 'http_router/version'
   File.open('js/package.json', 'w') do |f|
@@ -19,9 +20,8 @@ Rake::Task['release'].enhance {
 }
   EOT
   end
-  raise
   sh "cd js && npm publish"
-}
+end
 
 test_tasks = ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
 test_tasks << 'test:js' if `which coffee && which node` && $?.success?
