@@ -1,6 +1,8 @@
-[{"router":{"path":"/test", "conditions": {"request_method": "POST"}}}]
-	["router", {"path": "/test", "method": "POST"}]
-	[[405, {"Allow": "POST"}], {"path": "/test", "method": "GET"}]
+{"nothing":{"path":"/", "conditions": {"request_method": "GET"}}}
+{"post":{"path":"/test", "conditions": {"request_method": "POST"}}}
+{"put":{"path":"/test", "conditions": {"request_method": "PUT"}}}
+	["post", {"path": "/test", "method": "POST"}]
+	[[405, {"Allow": "POST, PUT"}], {"path": "/test", "method": "GET"}]
 
 {"router": {"path": "/test", "conditions": {"request_method": ["POST", "GET"]}}}
 	["router", {"path": "/test", "method": "POST"}]
