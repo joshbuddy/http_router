@@ -19,6 +19,7 @@ Rake::Task['release'].enhance {
 }
   EOT
   end
+  raise
   sh "cd js && npm publish"
 }
 
