@@ -21,6 +21,7 @@ task :release_js do
   EOT
   end
   sh "cd js && npm publish"
+  sh "git commit js/package.json -m'bumped js version'"
 end
 
 test_tasks = ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
