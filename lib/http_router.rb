@@ -121,7 +121,7 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
-    @routes, @named_routes, @root = [], {}, Node::Root.new(self)
+    @routes, @named_routes, @root = [], Hash.new{|h,k| h[k] = []}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
   end
 
@@ -146,10 +146,9 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-    when Symbol then @named_routes.key?(route) ? @named_routes[route].url(*args) : raise(InvalidRouteException)
+    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); break url if url}
     when Route  then route.url(*args)
-    else raise InvalidRouteException
-    end
+    end or raise(InvalidRouteException)
   end
 
   def process_destination_path(path, env)

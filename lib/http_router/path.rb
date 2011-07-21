@@ -18,7 +18,7 @@ class HttpRouter
               code << part
             else
               @path_validation_regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s
-              code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || raise(MissingParameterException, \"missing parameter :#{part[1, part.size]}\")}"
+              code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || return}"
             end
           else
             @path_validation_regex << Regexp.quote(part)
@@ -28,8 +28,9 @@ class HttpRouter
         }
         @path_validation_regex = Regexp.new("^#{@path_validation_regex}$")
         instance_eval <<-EOT, __FILE__, __LINE__ + 1
-        def raw_url(args,options)
-          \"#{code}\"
+        def raw_url(args, options)
+          url = \"#{code}\"
+          #{"url !~ @path_validation_regex ? nil : " if @dynamic} url
         end
         EOT
       end
@@ -40,10 +41,10 @@ class HttpRouter
     end
 
     def url(args, options)
-      path = raw_url(args, options)
-      raise InvalidRouteException if path !~ @path_validation_regex
-      raise TooManyParametersException unless args.empty?
-      [URI.escape(path), options]
+      if path = raw_url(args, options)
+        raise TooManyParametersException unless args.empty?
+        [URI.escape(path), options]
+      end
     end
 
     def original_path

@@ -51,14 +51,6 @@ module HttpRouter::Rack::BuilderMixin
     map(path, options, :delete, &block)
   end
 
-  # Maps a path with request methods `HEAD` to a block.
-  # @param path [String] Path to map to.
-  # @param options [Hash] Options for added path.
-  # @see HttpRouter#add
-  def head(path, options = {}, &block)
-    map(path, options, :head, &block)
-  end
-
   def options(path, options = {}, &block)
     map(path, options, :options, &block)
   end

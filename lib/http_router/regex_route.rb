@@ -22,5 +22,9 @@ class HttpRouter
     def regex?
       true
     end
+
+    def generate_from?(params)
+      false
+    end
   end
 end

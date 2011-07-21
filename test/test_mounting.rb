@@ -30,10 +30,10 @@ class TestMounting < MiniTest::Unit::TestCase
 
   def test_path_with_optional
     @r1.add("/foo(/:bar)").to(@r2)
-    @r2.add("/hey(/:there)").name(:test).to{|env| [200, {}, []]}
-    assert_equal "/foo/hey", @r2.url(:test)
-    assert_equal "/foo/bar/hey", @r2.url(:test, :bar => "bar")
-    assert_equal "/foo/bar/hey/there", @r2.url(:test, :bar => "bar", :there => "there")
+    @r2.add("/hey(/:there)").name(:test2).to{|env| [200, {}, []]}
+    assert_equal "/foo/hey", @r2.url(:test2)
+    assert_equal "/foo/bar/hey", @r2.url(:test2, :bar => "bar")
+    assert_equal "/foo/bar/hey/there", @r2.url(:test2, :bar => "bar", :there => "there")
   end
 
   def test_nest3

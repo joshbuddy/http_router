@@ -8,8 +8,8 @@ class TestMisc < MiniTest::Unit::TestCase
 
     assert_equal nil, r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2')))
     assert r2.recognize(Rack::MockRequest.env_for('/test2'))
-    assert_equal r1.routes.first, r1.named_routes[:test_route]
-    assert_equal r2.routes.first, r2.named_routes[:test_route]
+    assert_equal r1.routes.first, r1.named_routes[:test_route].first
+    assert_equal r2.routes.first, r2.named_routes[:test_route].first
 
     r1.add('/another').name(:test).to(:test2)
 

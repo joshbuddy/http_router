@@ -26,6 +26,7 @@ class HttpRouter
       @match_partially = @opts[:__partial__] if @match_partially.nil? && !@opts[:__partial__].nil?
       @match_partially = @opts[:partial] if @match_partially.nil? && !@opts[:partial].nil?
       name(@opts[:__name__] || @opts[:name]) if @opts.key?(:__name__) || @opts.key?(:name)
+      @needed_keys = significant_variable_names - @default_values.keys
     end
 
     def as_options
@@ -49,24 +50,30 @@ class HttpRouter
 
     def name(n)
       @named = n
-      @router.named_routes[n] = self
+      @router.named_routes[n] << self
+      @router.named_routes[n].sort!{|r1, r2| r2.significant_variable_names.size <=> r1.significant_variable_names.size }
       self
     end
 
-    def request_method(m)
-      ((@conditions ||= {})[:request_method] ||= []) << m; self
+    def request_method(*method)
+      add_to_contitions(:request_method, method)
     end
 
-    def host(host)
-      ((@conditions ||= {})[:host] ||= []) << host; self
+    def host(*host)
+      add_to_contitions(:host, host)
     end
 
-    def scheme(scheme)
-      ((@conditions ||= {})[:scheme] ||= []) << scheme; self
+    def scheme(*scheme)
+      add_to_contitions(:scheme, scheme)
     end
 
-    def user_agent(user_agent)
-      ((@conditions ||= {})[:user_agent] ||= []) << user_agent; self
+    def user_agent(*user_agent)
+      add_to_contitions(:user_agent, user_agent)
+    end
+
+    def add_to_contitions(name, *vals)
+      ((@conditions ||= {})[name] ||= []).concat(vals.flatten)
+      self
     end
 
     def matching(matchers)
@@ -101,13 +108,13 @@ class HttpRouter
       self
     end
 
-    def post;    request_method('POST');    end
-    def get;     request_method('GET');     end
-    def put;     request_method('PUT');     end
-    def delete;  request_method('DELETE');  end
-    def head;    request_method('HEAD');    end
-    def options; request_method('OPTIONS'); end
-    def patch;   request_method('PATCH'); end
+    def post;    request_method('POST');            end
+    def get;     request_method('GET');             end
+    def put;     request_method('PUT');             end
+    def delete;  request_method('DELETE');          end
+    def head;    request_method('HEAD');            end
+    def options; request_method('OPTIONS');         end
+    def patch;   request_method('PATCH');           end
 
     def arbitrary(blk = nil, &blk2)
       arbitrary_with_continue { |req, params|
@@ -254,13 +261,9 @@ class HttpRouter
 
     def append_querystring_value(uri, key, value)
       case value
-      when Array
-        k = "#{key}[]"
-        value.each{ |v| append_querystring_value(uri, k, v) }
-      when Hash
-        value.each{ |k, v| append_querystring_value(uri, "#{key}[#{k}]", v) }
-      else
-        uri << '&' << CGI.escape(key.to_s) << '=' << CGI.escape(value.to_s)
+      when Array then value.each{ |v| append_querystring_value(uri, "#{key}[]", v) }
+      when Hash  then value.each{ |k, v| append_querystring_value(uri, "#{key}[#{k}]", v) }
+      else            uri << '&' << CGI.escape(key.to_s) << '=' << CGI.escape(value.to_s)
       end
     end
 
