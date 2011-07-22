@@ -146,9 +146,10 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     case route
-    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); break url if url}
-    when Route  then route.url(*args)
-    end or raise(InvalidRouteException)
+    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); return url if url}
+    when Route  then return route.url(*args)
+    end
+    raise(InvalidRouteException)
   end
 
   def process_destination_path(path, env)
