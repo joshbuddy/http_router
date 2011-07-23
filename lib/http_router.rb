@@ -100,6 +100,7 @@ class HttpRouter
   # Returns the route object.
   def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
+  # Performs recoginition without actually calling the application.
   def recognize(env)
     call(env, false)
   end
@@ -155,10 +156,13 @@ class HttpRouter
     raise(InvalidRouteException)
   end
 
+  # This method is invoked when a Path object gets called with an env. Override it to implement custom path processing.
   def process_destination_path(path, env)
     path.route.dest.call(env)
   end
 
+  # This method defines what sort of responses are considered "passes", and thus, route processing will continue. Override
+  # it to implement custom passing.
   def pass_on_response(response)
     response[1]['X-Cascade'] == 'pass'
   end
@@ -171,16 +175,6 @@ class HttpRouter
   # Redirect trailing slash feature enabled? See #initialize for details.
   def redirect_trailing_slash?
     @redirect_trailing_slash
-  end
-
-  def rewrite_partial_path_info(env, request)
-    env['PATH_INFO'] = "/#{request.path.join('/')}"
-    env['SCRIPT_NAME'] += request.rack_request.path_info[0, request.rack_request.path_info.size - env['PATH_INFO'].size]
-  end
-
-  def rewrite_path_info(env, request)
-    env['SCRIPT_NAME'] += request.rack_request.path_info
-    env['PATH_INFO'] = ''    
   end
 
   # Creates a deep-copy of the router.
