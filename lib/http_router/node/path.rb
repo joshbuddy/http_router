@@ -8,6 +8,7 @@ class HttpRouter
         raise AmbiguousVariableException, "You have duplicate variable name present: #{param_names.join(', ')}" if param_names.uniq.size != param_names.size
         process_path_for_generation(@original_path) if @original_path.respond_to?(:split)
         super router, parent
+        root.uncompile
       end
 
       def hashify_params(params)
@@ -22,7 +23,7 @@ class HttpRouter
       end
 
       def to_code
-        path_ivar = :"@path_#{router.next_counter}"
+        path_ivar = :"@path_#{root.next_counter}"
         inject_root_ivar(path_ivar, self)
         "#{"if request.path_finished?" unless route.match_partially?}
           catch(:pass) do

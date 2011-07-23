@@ -40,7 +40,6 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
-    @counter                 = 0
     reset!
     instance_eval(&blk) if blk
   end
@@ -63,7 +62,6 @@ class HttpRouter
   def add(path, opts = {}, &app)
     route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
     route.to(app) if app
-    root.uncompile
     route
   end
 
@@ -199,10 +197,6 @@ class HttpRouter
       end
     end
     cloned_router
-  end
-
-  def next_counter
-    @counter += 1
   end
 
   private

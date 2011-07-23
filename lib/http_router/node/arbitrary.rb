@@ -13,7 +13,7 @@ class HttpRouter
       end
 
       def to_code
-        b, method_name = @blk, :"blk_#{router.next_counter}"
+        b, method_name = @blk, :"blk_#{root.next_counter}"
         inject_root_methods { define_method(method_name) { b } }
         "#{"if request.path_finished?" unless @allow_partial}
           request.continue = proc { |state|

@@ -5,7 +5,7 @@ class HttpRouter
       alias_method :compiled?, :compiled
       def initialize(router)
         super(router, nil)
-        @methods_module = Module.new
+        @counter, @methods_module = 0, Module.new
       end
 
       def [](request)
@@ -16,6 +16,10 @@ class HttpRouter
 
       def uncompile
         instance_eval "undef :[]; alias :[] :compiling_lookup", __FILE__, __LINE__ if compiled?
+      end
+
+      def next_counter
+        @counter += 1
       end
 
       private
