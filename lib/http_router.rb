@@ -7,7 +7,6 @@ require 'http_router/node'
 require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
-require 'http_router/path'
 require 'http_router/rack'
 require 'http_router/regex_route'
 

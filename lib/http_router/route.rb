@@ -247,10 +247,9 @@ class HttpRouter
     end
 
     def add_non_path_to_tree(node, path, names)
-      path_obj = Path.new(self, path, names)
       node = node.add_request(@conditions) unless @conditions.empty?
       @arbitrary.each{|a| node = node.add_arbitrary(a, match_partially?, names)} if @arbitrary
-      node.add_destination(path_obj, @match_partially)
+      path_obj = node.add_destination(self, path, names)
       if dest.respond_to?(:url_mount=)
         urlmount = UrlMount.new(@original_path, @default_values)
         urlmount.url_mount = router.url_mount if router.url_mount

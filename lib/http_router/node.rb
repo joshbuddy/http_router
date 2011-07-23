@@ -11,7 +11,7 @@ class HttpRouter
     autoload :Arbitrary,     'http_router/node/arbitrary'
     autoload :Request,       'http_router/node/request'
     autoload :Lookup,        'http_router/node/lookup'
-    autoload :Destination,   'http_router/node/destination'
+    autoload :Path,          'http_router/node/path'
 
     attr_reader :priority, :router, :node_position, :parent
 
@@ -32,6 +32,7 @@ class HttpRouter
     end
 
     def add_request(opts)
+      raise unless opts
       add(Request.new(@router, self, opts))
     end
 
@@ -51,8 +52,8 @@ class HttpRouter
       add(FreeRegex.new(@router, self, regexp))
     end
 
-    def add_destination(blk, partial)
-      add(Destination.new(@router, self, blk, partial))
+    def add_destination(route, path, param_names = [])
+      add(Path.new(@router, self, route, path, param_names))
     end
 
     def add_lookup(part)
