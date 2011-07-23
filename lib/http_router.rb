@@ -20,6 +20,11 @@ class HttpRouter
   InvalidRouteException       = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
   MissingParameterException   = Class.new(RuntimeError)
+  # Raised when a Route is compiled twice
+  DoubleCompileError = Class.new(RuntimeError)
+  # Raised an invalid request value is used
+  InvalidRequestValueError = Class.new(RuntimeError)
+
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
@@ -59,6 +64,7 @@ class HttpRouter
   def add(path, opts = {}, &app)
     route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
     route.to(app) if app
+    root.uncompile
     route
   end
 

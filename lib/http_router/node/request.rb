@@ -1,8 +1,7 @@
 class HttpRouter
   class Node
     class Request < Node
-      VALID_HTTP_VERBS = %w[HEAD GET DELETE POST PUT OPTIONS PATCH]
-      InvalidValueError = Class.new(RuntimeError)
+      VALID_HTTP_VERBS = %w[HEAD GET DELETE POST PUT OPTIONS PATCH TRACE CONNECT]
 
       attr_reader :request_method, :opts
 
@@ -23,7 +22,7 @@ class HttpRouter
           case k
           when :request_method
             v.map!{|vv| vv.to_s.upcase}
-            v.all?{|m| VALID_HTTP_VERBS.include?(m)} or raise InvalidValueError, "Invalid value for request_method #{v.inspect}"
+            v.all?{|m| VALID_HTTP_VERBS.include?(m)} or raise InvalidRequestValueError, "Invalid value for request_method #{v.inspect}"
           end
           case v.size
           when 1 then to_code_condition(k, v.first)

@@ -90,4 +90,13 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_route matching, '/test/123/123/asd/aasd/zxcqwe/asdzxc', {:var => '123', :var2 => '123', :glob => %w{asd aasd zxcqwe asdzxc}}
     assert got_this_far, "matching should have gotten this far"
   end
+
+  def test_compiling_uncompiling
+    @router = HttpRouter.new
+    root = @router.add('/').default_destination
+    assert_route root, '/'
+    test = @router.add('/test').default_destination
+    assert_route root, '/'
+    assert_route test, '/test'
+  end
 end

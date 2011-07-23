@@ -1,7 +1,5 @@
 class HttpRouter
   class Route
-    DoubleCompileError = Class.new(RuntimeError)
-
     attr_reader :default_values, :router, :path, :conditions, :original_path, :match_partially, :dest, :regex, :named, :matches_with
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
@@ -115,6 +113,8 @@ class HttpRouter
     def head;    request_method('HEAD');            end
     def options; request_method('OPTIONS');         end
     def patch;   request_method('PATCH');           end
+    def trace;   request_method('TRACE');           end
+    def conenct; request_method('CONNECT');         end
 
     def arbitrary(blk = nil, &blk2)
       arbitrary_with_continue { |req, params|
