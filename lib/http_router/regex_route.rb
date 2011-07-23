@@ -3,6 +3,7 @@ class HttpRouter
     def initialize(router, path, opts = {})
       @router, @original_path, @opts = router, path, opts
       @param_names = @original_path.respond_to?(:names) ? @original_path.names.map(&:to_sym) : []
+      process_path_for_generation(opts.delete(:path_for_generation), @original_path) if opts.key?(:path_for_generation)
       process_opts
     end
 

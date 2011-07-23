@@ -6,7 +6,7 @@ class HttpRouter
       def initialize(router, parent, route, path, param_names = [])
         @route, @original_path, @param_names, @dynamic = route, path, param_names, !param_names.empty?
         raise AmbiguousVariableException, "You have duplicate variable name present: #{param_names.join(', ')}" if param_names.uniq.size != param_names.size
-        process_path
+        process_path_for_generation(@original_path) if @original_path.respond_to?(:split)
         super router, parent
       end
 
@@ -58,37 +58,35 @@ class HttpRouter
         raise InvalidRouteException
       end
 
-      def process_path
-        if @original_path.respond_to?(:split)
-          regex_parts = @original_path.split(/([:\*][a-zA-Z0-9_]+)/)
-          path_validation_regex, code = '', ''
-          regex_parts.each_with_index{ |part, index|
-            new_part = case part[0]
-            when ?:, ?*
-              if index != 0 && regex_parts[index - 1][-1] == ?\\
-                path_validation_regex << Regexp.quote(part)
-                code << part
-              else
-                path_validation_regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s
-                code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || return}"
-              end
-            else
-              path_validation_regex << Regexp.quote(part)
+      def process_path_for_generation(path, path_validation_regex = nil)
+        @path_validation_regex = path_validation_regex
+        regex_parts = path.split(/([:\*][a-zA-Z0-9_]+)/)
+        regex, code = '', ''
+        regex_parts.each_with_index do |part, index|
+          case part[0]
+          when ?:, ?*
+            if index != 0 && regex_parts[index - 1][-1] == ?\\
+              regex << Regexp.quote(part)
               code << part
+            else
+              regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s
+              code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || return}"
             end
-            new_part
-          }
-          @path_validation_regex = Regexp.new("^#{path_validation_regex}$")
-          if @dynamic
-            instance_eval <<-EOT, __FILE__, __LINE__ + 1
-            def raw_url(args, options)
-              url = \"#{code}\"
-              #{"url !~ @path_validation_regex ? nil : " if @dynamic} url
-            end
-            EOT
           else
-            instance_eval "def raw_url(args, options); \"#{code}\"; end", __FILE__, __LINE__
+            regex << Regexp.quote(part)
+            code << part
           end
+        end
+        @path_validation_regex ||= Regexp.new("^#{regex}$") if dynamic?
+        if @path_validation_regex
+          instance_eval <<-EOT, __FILE__, __LINE__ + 1
+          def raw_url(args, options)
+            url = \"#{code}\"
+            #{"url !~ @path_validation_regex ? nil : " if @dynamic} url
+          end
+          EOT
+        else
+          instance_eval "def raw_url(args, options); \"#{code}\"; end", __FILE__, __LINE__
         end
       end
     end
