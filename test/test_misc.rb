@@ -33,4 +33,14 @@ class TestMisc < MiniTest::Unit::TestCase
     assert 304, response[0]
     assert "/hi", response[1]["Location"]
   end
+
+  def test_multi_name_gen
+    r = HttpRouter.new
+    r.add('/').name(:index).default_destination
+    r.add('/:name').name(:index).default_destination
+    r.add('/:name/:category').name(:index).default_destination
+    assert_equal '/', r.url(:index)
+    assert_equal '/name', r.url(:index, 'name')
+    assert_equal '/name/category', r.url(:index, 'name', 'category')
+  end
 end
