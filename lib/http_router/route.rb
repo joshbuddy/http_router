@@ -6,9 +6,11 @@ class HttpRouter
 
     def initialize(router, path, opts = {})
       @router, @original_path, @opts = router, path, opts
-      if @original_path[-1] == ?*
+      if @original_path && @original_path[-1] == ?*
         @match_partially = true
         path.slice!(-1)
+      elsif @original_path.nil?
+        @match_partially = true
       end
       process_opts
     end
@@ -148,7 +150,7 @@ class HttpRouter
     end
 
     def significant_variable_names
-      @significant_variable_names ||= @original_path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
+      @significant_variable_names ||= @original_path.nil? ? [] : @original_path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
     end
 
     def matching_path(params, other_hash = nil)
@@ -168,6 +170,7 @@ class HttpRouter
 
     private
     def raw_paths
+      return [] if @original_path.nil?
       @raw_paths ||= begin
         start_index, end_index = 0, 1
         @raw_paths, chars = [""], @original_path.split('')
@@ -233,15 +236,19 @@ class HttpRouter
     def add_path_to_tree
       raise DoubleCompileError if compiled?
       @paths ||= begin
-        raw_paths.map do |path|
-          param_names = []
-          node = @router.root
-          path.split(/\//).each do |part|
-            next if part == ''
-            parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
-            node = parts.size == 1 ? add_normal_part(node, part, param_names) : add_complex_part(node, parts, param_names)
+        if raw_paths.empty?
+          add_non_path_to_tree(@router.root, nil, [])
+        else
+          raw_paths.map do |path|
+            param_names = []
+            node = @router.root
+            path.split(/\//).each do |part|
+              next if part == ''
+              parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
+              node = parts.size == 1 ? add_normal_part(node, part, param_names) : add_complex_part(node, parts, param_names)
+            end
+            add_non_path_to_tree(node, path, param_names)
           end
-          add_non_path_to_tree(node, path, param_names)
         end
       end
     end

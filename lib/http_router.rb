@@ -59,7 +59,9 @@ class HttpRouter
   # The second argument, options, is an optional hash that can modify the route in further ways. See HttpRouter::Route#with_options for details. Typically, you want to add further options to the route by calling additional methods on it. See HttpRouter::Route for further details.
   #
   # Returns the route object.
-  def add(path, opts = {}, &app)
+  def add(*args, &app)
+    opts = args.last.is_a?(Hash) ? args.pop : {}
+    path = args.first
     route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
     route.to(app) if app
     route

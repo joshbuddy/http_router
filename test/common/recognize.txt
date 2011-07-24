@@ -52,7 +52,6 @@
 	["route", "/foo", {"test": "foo"}]
 	["route", "/foo.bar", {"format": "bar", "test": "foo"}]
 
-
 [{"route": {"path": "/:test(.:format)", "format": {"regex": "[^\\.]+"}}}]
 	["route", "/asd@asd.com.json", {"test": "asd@asd.com", "format": "json"}]
 

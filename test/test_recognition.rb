@@ -73,6 +73,15 @@ class TestRecognition < MiniTest::Unit::TestCase
     assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
   end
 
+  def test_non_path_matching
+    passed, working = router {
+      add(:conditions => {:user_agent => /MSIE/}).to { |env| [200, {}, ['IE']] }
+      add('/').to { |env| [200, {}, ['SOMETHING ELSE']] }
+    }
+    assert_body 'SOMETHING ELSE', router.call(Rack::MockRequest.env_for('/'))
+    assert_body 'IE', router.call(Rack::MockRequest.env_for('/', 'HTTP_USER_AGENT' => 'THIS IS MSIE DAWG'))
+  end
+
   def test_passing_with_cascade
     passed, working = router {
       add('/').to { |env| [200, {'X-Cascade' => 'pass'}, ['pass']] }
