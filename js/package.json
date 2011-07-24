@@ -2,7 +2,7 @@
   "name": "http_router",
   "description": "URL routing and generation in js",
   "author": "Joshua Hull <joshbuddy@gmail.com>",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "directories": {
     "lib" : "./lib/http_router"
   },
