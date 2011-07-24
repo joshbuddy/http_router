@@ -1,7 +1,7 @@
 # encoding: utf-8
 require 'bundler'
 Bundler::GemHelper.install_tasks
-Rake::Task['release'].enhance([:test, :release_js])
+# Rake::Task['release'].enhance([:test, :release_js]) FIXME, this just doesn't work.
 
 task :release_js do
   $: << 'lib'
