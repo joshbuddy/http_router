@@ -23,8 +23,7 @@ class HttpRouter
       end
 
       def to_code
-        path_ivar = :"@path_#{root.next_counter}"
-        inject_root_ivar(path_ivar, self)
+        path_ivar = inject_root_ivar(self)
         "#{"if request.path_finished?" unless route.match_partially?}
           catch(:pass) do
             #{"if request.path.size == 1 && request.path.first == '' && (request.rack_request.head? || request.rack_request.get?) && request.rack_request.path_info[-1] == ?/

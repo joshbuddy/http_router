@@ -15,8 +15,7 @@ class HttpRouter
       end
 
       def to_code
-        lookup_ivar = :"@lookup_#{root.next_counter}"
-        inject_root_ivar(lookup_ivar, @map)
+        lookup_ivar = inject_root_ivar(@map)
         method_prefix = "lookup_#{root.next_counter} "
         inject_root_methods @map.keys.map {|k| 
           method = :"#{method_prefix}#{k}"

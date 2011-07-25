@@ -69,8 +69,8 @@ class HttpRouter
       code ? root.methods_module.module_eval(code) : root.methods_module.module_eval(&blk)
     end
 
-    def inject_root_ivar(name, val)
-      root.instance_variable_set(name, val)
+    def inject_root_ivar(obj)
+      root.inject_root_ivar(obj)
     end
 
     def add(matcher)

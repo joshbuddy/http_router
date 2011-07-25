@@ -22,6 +22,12 @@ class HttpRouter
         @counter += 1
       end
 
+      def inject_root_ivar(obj)
+        name = :"@ivar_#{@counter += 1}"
+        root.instance_variable_set(name, obj)
+        name
+      end
+
       private
       def rewrite_partial_path_info(env, request)
         env['PATH_INFO'] = "/#{request.path.join('/')}"

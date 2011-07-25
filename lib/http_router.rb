@@ -20,10 +20,9 @@ class HttpRouter
   # Raised when a Route is not able to be generated due to a missing parameter.
   MissingParameterException   = Class.new(RuntimeError)
   # Raised when a Route is compiled twice
-  DoubleCompileError = Class.new(RuntimeError)
+  DoubleCompileError          = Class.new(RuntimeError)
   # Raised an invalid request value is used
-  InvalidRequestValueError = Class.new(RuntimeError)
-
+  InvalidRequestValueError    = Class.new(RuntimeError)
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
