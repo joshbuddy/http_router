@@ -138,13 +138,19 @@ class HttpRouter
       Route.new(new_router, @original_path.dup, as_options)
     end
 
-    def url_with_params(*args)
+    def url_with_params(*a)
+      url_args_processing(a) do |args, options|
+        path = args.empty? ? matching_path(options) : matching_path(args, options)
+        raise InvalidRouteException unless path
+        path.url(args, options)
+      end
+    end
+
+    def url_args_processing(args)
       options = args.last.is_a?(Hash) ? args.pop : nil
       options = options.nil? ? default_values.dup : default_values.merge(options) if default_values
       options.delete_if{ |k,v| v.nil? } if options
-      path = args.empty? ? matching_path(options) : matching_path(args, options)
-      raise InvalidRouteException unless path
-      result, params = path.url(args, options)
+      result, params = yield args, options
       mount_point = router.url_mount && router.url_mount.url(options)
       mount_point ? [File.join(mount_point, result), params] : [result, params]
     end

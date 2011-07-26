@@ -9,6 +9,7 @@ require 'http_router/response'
 require 'http_router/route'
 require 'http_router/rack'
 require 'http_router/regex_route'
+require 'http_router/util'
 
 class HttpRouter
 

@@ -43,4 +43,18 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal '/name', r.url(:index, 'name')
     assert_equal '/name/category', r.url(:index, 'name', 'category')
   end
+
+  def test_regex_generation
+    r = HttpRouter.new
+    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable').name(:route).default_destination
+    assert_equal '/test/var', r.url(:route, "var")
+  end
+
+  def test_regex_generation
+    r = HttpRouter.new
+    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable').name(:route).default_destination
+    assert_equal '/test/var', r.url(:route, "var")
+    assert_equal '/test/var', r.url(:route, :variable => "var")
+    assert_raises(HttpRouter::InvalidRouteException) { r.url(:route) }
+  end
 end
