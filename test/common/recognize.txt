@@ -163,6 +163,9 @@
 [{"route": "test\\*variable"}]
 	["route", "/test*variable"]
 
+[{"route": "testvariable\\*"}]
+	["route", "/testvariable*"]
+
 [{"route": "/føø"}]
 	["route", "/f%C3%B8%C3%B8"]
 
