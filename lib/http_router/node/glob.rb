@@ -7,12 +7,13 @@ class HttpRouter
       end
 
       def to_code
-        "request.params << (globbed_params#{depth} = [])
+        id = root.next_counter
+        "request.params << (globbed_params#{id} = [])
           until request.path.empty?
-            globbed_params#{depth} << request.path.shift
+            globbed_params#{id} << request.path.shift
             #{super}
           end
-          request.path[0,0] = globbed_params#{depth}"
+          request.path[0,0] = globbed_params#{id}"
       end
     end
   end

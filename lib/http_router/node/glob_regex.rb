@@ -12,10 +12,11 @@ class HttpRouter
       end
 
       def to_code
-        "request.params << (globbed_params#{depth} = [])
+        id = root.next_counter
+        "request.params << (globbed_params#{id} = [])
           remaining_parts = request.path.dup
           while !remaining_parts.empty? and match = remaining_parts.first.match(#{@matcher.inspect}) and match[0] == remaining_parts.first
-            globbed_params#{depth} << remaining_parts.shift
+            globbed_params#{id} << remaining_parts.shift
             request.path = remaining_parts
             #{node_to_code}
           end

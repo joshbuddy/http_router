@@ -1,3 +1,7 @@
+{"a": "/:var"}
+	["/test", "a", {"var":"test"}]
+#	["/test", "a", ["test"]]
+
 {"a": "/"}
 {"b": "/test"}
 {"c": "/test/time"}
@@ -76,7 +80,8 @@
 	["/%C3%A4", "a", {"var": "ä"}]
 
 {"a": {"path": ":var", "var": {"regex": "\\d+"}}}
-	[null, "a", "asd"]
+  [null, "a", "asd"]
+  ["/123", "a", "123"]
 
 {"a": "/var"}
 	["/var?foo%5B%5D=baz&foo%5B%5D=bar", "a", {"foo": ["baz", "bar"]}]

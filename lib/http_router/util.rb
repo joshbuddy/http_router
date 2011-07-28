@@ -14,6 +14,7 @@ class HttpRouter
           else
             regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s unless path_validation_regex
             code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || return}"
+            dynamic = true
           end
         else
           regex << Regexp.quote(part) unless path_validation_regex
@@ -25,11 +26,15 @@ class HttpRouter
         target.instance_eval <<-EOT, __FILE__, __LINE__ + 1
         def raw_url(args, options)
           url = \"#{code}\"
-          #{"url !~ #{path_validation_regex.inspect} ? nil : " if @dynamic} url
+          #{path_validation_regex.inspect}.match(url) ? url : nil
         end
         EOT
       else
-        target.instance_eval "def raw_url(args, options); \"#{code}\"; end", __FILE__, __LINE__
+        target.instance_eval <<-EOT, __FILE__, __LINE__ + 1
+        def raw_url(args, options)
+          \"#{code}\"
+        end
+        EOT
       end
     end
   end

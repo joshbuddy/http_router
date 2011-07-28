@@ -6,10 +6,10 @@ class HttpRouter
 
     def initialize(router, path, opts = {})
       @router, @original_path, @opts = router, path, opts
-      if @original_path && @original_path[-1] == ?*
-        @match_partially = true
-        path.slice!(-1)
-      elsif @original_path.nil?
+      if @original_path
+        @match_partially = true and path.slice!(-1) if @original_path[-1] == ?*
+        @original_path[0, 0] = '/'                  if @original_path[0] != ?/
+      else
         @match_partially = true
       end
       process_opts

@@ -25,11 +25,9 @@ task :release_js do
 end
 
 test_tasks = ['test:generation', 'test:recognition', 'test:integration', 'test:examples', 'test:rdoc_examples']
-test_tasks << 'test:js' if `which coffee && which node` && $?.success?
+#test_tasks << 'test:js' if `which coffee && which node` && $?.success?
 desc "Run all tests"
 task :test => test_tasks
-
-require 'pp'
 
 desc "Clean things"
 task :clean do

@@ -13,7 +13,7 @@ class HttpRouter
     autoload :Lookup,        'http_router/node/lookup'
     autoload :Path,          'http_router/node/path'
 
-    attr_reader :priority, :router, :node_position, :parent
+    attr_reader :router
 
     def initialize(router, parent, matchers = [])
       @router, @parent, @matchers = router, parent, matchers
@@ -84,12 +84,6 @@ class HttpRouter
 
     def root
       @router.root
-    end
-
-    def depth
-      d, p = 0, @parent
-      d, p = d + 1, p.parent until p.nil?
-      d
     end
 
     def use_named_captures?
