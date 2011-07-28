@@ -38,7 +38,7 @@ class HttpRouter
                 env['router.request'] = request
                 env['router.params'] ||= {}
                 #{"env['router.params'].merge!(Hash[#{param_names.inspect}.zip(request.params)])" if dynamic?}
-                rewrite#{"_partial" if route.match_partially?}_path_info(env, request)
+                @router.rewrite#{"_partial" if route.match_partially?}_path_info(env, request)
                 response = @router.process_destination_path(#{path_ivar}, env)
                 router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
               else
