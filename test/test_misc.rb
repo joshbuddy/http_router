@@ -57,4 +57,19 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal '/test/var', r.url(:route, :variable => "var")
     assert_raises(HttpRouter::InvalidRouteException) { r.url(:route) }
   end
+
+  def test_public_interface
+    methods = HttpRouter.public_instance_methods
+    assert methods.include?('url_mount')
+    assert methods.include?('url_mount=')
+    assert methods.include?('call')
+    assert methods.include?('recognize')
+    assert methods.include?('url')
+    assert methods.include?('pass_on_response')
+    assert methods.include?('ignore_trailing_slash?')
+    assert methods.include?('redirect_trailing_slash?')
+    assert methods.include?('process_destination_path')
+    assert methods.include?('rewrite_partial_path_info')
+    assert methods.include?('rewrite_path_info')
+  end
 end

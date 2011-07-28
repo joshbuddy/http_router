@@ -205,7 +205,6 @@ class HttpRouter
     env['PATH_INFO'] = ''
   end
 
-  private
   def no_response(env, perform_call = true)
     supported_methods = @known_methods.select do |m|
       next if m == env['REQUEST_METHOD']
@@ -218,6 +217,7 @@ class HttpRouter
     supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end
 
+  private
   def add_with_request_method(path, method, opts = {}, &app)
     route = add(path, opts).send(method.to_sym)
     route.to(app) if app
