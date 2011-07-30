@@ -70,6 +70,6 @@ class TestMisc < MiniTest::Unit::TestCase
     assert methods.include?(:redirect_trailing_slash?)
     assert methods.include?(:process_destination_path)
     assert methods.include?(:rewrite_partial_path_info)
-    assert methods.include?(:rewrite_partial_path_info)
+    assert methods.include?(:rewrite_path_info)
   end
 end
