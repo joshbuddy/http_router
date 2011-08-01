@@ -42,7 +42,7 @@ class HttpRouter
                 response = @router.process_destination_path(#{path_ivar}, env)
                 router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
               else
-                throw :success, Response.new(request, #{path_ivar})
+                request.matched_route(Response.new(request, #{path_ivar}))
               end
             #{"end" unless route.match_partially?}
           end

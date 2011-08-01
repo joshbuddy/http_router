@@ -30,8 +30,22 @@ class TestMisc < MiniTest::Unit::TestCase
   def test_redirect_trailing_slash
     r = HttpRouter.new(:redirect_trailing_slash => true) { add('/hi').to(:test) }
     response = r.recognize(Rack::MockRequest.env_for('/hi/'))
-    assert 304, response[0]
-    assert "/hi", response[1]["Location"]
+    assert_equal nil, response
+  end
+
+  def test_multi_recognize
+    r1, r2, r3, r4 = router {
+      add('/hi/there')
+      add('/:var/:var2')
+      add('/hi/:var2')
+      add('/:var1/there')
+    }
+    response = router.recognize(Rack::MockRequest.env_for('/hi/there'))
+    assert_equal [r1, r2, r3, r4], response.map{|resp| resp.path.route}
+    response = router.recognize(Rack::MockRequest.env_for('/hi/var'))
+    assert_equal [r2, r3], response.map{|resp| resp.path.route}
+    response = router.recognize(Rack::MockRequest.env_for('/you/there'))
+    assert_equal [r2, r4], response.map{|resp| resp.path.route}
   end
 
   def test_multi_name_gen

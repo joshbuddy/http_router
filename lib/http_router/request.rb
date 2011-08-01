@@ -1,6 +1,7 @@
 class HttpRouter
   class Request
     attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with
+    attr_reader :matches
     alias_method :rack, :rack_request
     def initialize(path, rack_request, perform_call)
       @rack_request, @perform_call = rack_request, perform_call
@@ -9,10 +10,15 @@ class HttpRouter
       @path.push('') if path[-1] == ?/
       @extra_env = {}
       @params = []
+      @matches = []
     end
 
     def joined_path
       @path * '/'
+    end
+
+    def matched_route(response)
+      @matches << response
     end
 
     def perform_call

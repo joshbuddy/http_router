@@ -102,7 +102,8 @@ class HttpRouter
   # Returns the route object.
   def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
-  # Performs recoginition without actually calling the application.
+  # Performs recoginition without actually calling the application and returns an array of all
+  # matching routes or nil if no match was found.
   def recognize(env)
     call(env, false)
   end
@@ -114,14 +115,10 @@ class HttpRouter
     rack_request = ::Rack::Request.new(env)
     request = Request.new(rack_request.path_info, rack_request, perform_call)
     response = catch(:success) { @root[request] }
-    if response
-      response
-    elsif response.nil?
-      no_response(env, perform_call)
-    elsif perform_call
-      @default_app.call(env)
+    if perform_call
+      response or no_response(env)
     else
-      nil
+      request.matches.empty? ? nil : request.matches
     end
   end
 
@@ -205,16 +202,17 @@ class HttpRouter
     env['PATH_INFO'] = ''
   end
 
-  def no_response(env, perform_call = true)
+  def no_response(env)
     supported_methods = @known_methods.select do |m|
       next if m == env['REQUEST_METHOD']
       test_env = ::Rack::Request.new(env.clone)
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
       test_request = Request.new(test_env.path_info, test_env, 405)
-      catch(:success) { @root[test_request] }
+      @root[test_request]
+      !test_request.matches.empty?
     end
-    supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+    supported_methods.empty? ? @default_app.call(env) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end
 
   private
