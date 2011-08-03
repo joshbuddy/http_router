@@ -28,6 +28,14 @@ class HttpRouter
         name
       end
 
+      def depth
+        0
+      end
+
+      def inspect_label
+        "Root (#{@matchers.size} matchers)"
+      end
+
       private
       def compile
         root.extend(root.methods_module)

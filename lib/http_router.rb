@@ -217,6 +217,15 @@ class HttpRouter
     supported_methods.empty? ? (perform_call ? @default_app.call(env) : nil) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end
 
+  def to_s
+    "#<HttpRouter:0x#{object_id.to_s(16)} number of routes (#{routes.size}) ignore_trailing_slash? (#{ignore_trailing_slash?}) redirect_trailing_slash? (#{redirect_trailing_slash?}) known_methods (#{known_methods.to_a.join(', ')})>"
+  end
+
+  def inspect
+    head = to_s
+    "#{to_s}\n#{'=' * head.size}\n#{@root.inspect}"
+  end
+
   private
   def add_with_request_method(path, method, opts = {}, &app)
     route = add(path, opts).send(method.to_sym)

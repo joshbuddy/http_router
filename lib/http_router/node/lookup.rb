@@ -14,6 +14,16 @@ class HttpRouter
         other.class == self.class
       end
 
+      def inspect_matchers_body
+        @map.map { |key, values|
+          ins = "#{' ' * depth}when #{key.inspect}:\n"
+          ins << values.map{|v| v.inspect}.join("\n") }.join("\n")
+      end
+
+      def inspect_label
+        "#{self.class.name}"
+      end
+
       def to_code
         lookup_ivar = inject_root_ivar(@map)
         method_prefix = "lookup_#{root.next_counter} "
