@@ -53,6 +53,10 @@ class HttpRouter
         other == self
       end
 
+      def inspect_label
+        "Path: #{original_path.inspect} for route #{route.named || 'unnamed route'} to #{route.dest.inspect}"
+      end
+
       private
       def raw_url(args, options)
         raise InvalidRouteException

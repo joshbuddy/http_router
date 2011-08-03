@@ -36,6 +36,10 @@ class HttpRouter
         code << "\n  #{super}\nend"
       end
 
+      def inspect_label
+        "#{self.class.name.split("::").last} #{opts.inspect} (#{@matchers.size} matchers)"
+      end
+
       private
       def to_code_condition(k, v)
         case v

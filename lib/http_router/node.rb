@@ -64,6 +64,27 @@ class HttpRouter
       false
     end
 
+    def inspect
+      ins = "#{' ' * depth}#{inspect_label}"
+      body = inspect_matchers_body
+      unless body =~ /^\s*$/
+        ins << "\n" << body
+      end
+      ins
+    end
+
+    def inspect_label
+      "#{self.class.name.split("::").last} (#{@matchers.size} matchers)"
+    end
+
+    def inspect_matchers_body
+      @matchers.map{ |m| m.inspect}.join("\n")
+    end
+
+    def depth
+      @parent.send(:depth) + 1
+    end
+
     private
     def inject_root_methods(code = nil, &blk)
       code ? root.methods_module.module_eval(code) : root.methods_module.module_eval(&blk)
