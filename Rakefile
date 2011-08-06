@@ -96,6 +96,8 @@ namespace :test do
             c = $1
             raise "out was nil" if out.nil?
             test = out.shift
+            c.gsub!(/Last-Modified:.*?[\r\n]+/)
+            test.gsub!(/Last-Modified:.*?[\r\n]+/)
             raise "expected #{c.inspect}, received #{test.inspect}" unless c.strip == test.strip
             assertion_count += 1
           end
