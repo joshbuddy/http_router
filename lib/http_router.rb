@@ -24,6 +24,8 @@ class HttpRouter
   DoubleCompileError          = Class.new(RuntimeError)
   # Raised an invalid request value is used
   InvalidRequestValueError    = Class.new(RuntimeError)
+  # Raised when there are extra parameters passed in to #url
+  TooManyParametersException  = Class.new(RuntimeError)
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.

@@ -64,12 +64,18 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal '/test/var', r.url(:route, "var")
   end
 
-  def test_regex_generation
+  def test_too_many_params
     r = HttpRouter.new
     r.add(%r|/test/.*|, :path_for_generation => '/test/:variable').name(:route).default_destination
     assert_equal '/test/var', r.url(:route, "var")
     assert_equal '/test/var', r.url(:route, :variable => "var")
     assert_raises(HttpRouter::InvalidRouteException) { r.url(:route) }
+  end
+
+  def test_too_many_args
+    r = HttpRouter.new
+    r.add('/').name(:route).default_destination
+    assert_raises(HttpRouter::TooManyParametersException) { r.url(:route, "hi") }
   end
 
   def test_public_interface
