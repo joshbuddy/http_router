@@ -1,7 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :matches_with, :app
-    alias_method :dest, :app
+    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :matches_with, :dest
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
 
@@ -40,9 +39,9 @@ class HttpRouter
         }
     end
 
-    def to(app = nil, &app2)
-      @app = app || app2 || raise("you didn't specify a destination")
-      if @app.respond_to?(:url_mount=)
+    def to(dest = nil, &dest_block)
+      @dest = dest || dest_block || raise("you didn't specify a destination")
+      if @dest.respond_to?(:url_mount=)
         urlmount = UrlMount.new(original_path, @default_values || {})
         urlmount.url_mount = router.url_mount if router.url_mount
         dest.url_mount = urlmount
@@ -60,7 +59,8 @@ class HttpRouter
     end
 
     def clone(new_router)
-      Route.new(new_router, @original_path.dup, as_options).to(@app)
+      r = Route.new(new_router, @original_path.dup, as_options).to(dest)
+      r.to(begin; dest.clone; rescue; dest; end)
     end
 
     def url_with_params(*a)

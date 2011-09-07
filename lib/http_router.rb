@@ -178,11 +178,6 @@ class HttpRouter
     @routes.each do |route|
       new_route = route.clone(cloned_router)
       cloned_router.add_route(new_route)
-      begin
-        new_route.to route.dest.clone
-      rescue
-        new_route.to route.dest
-      end
     end
     cloned_router
   end
