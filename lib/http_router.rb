@@ -112,6 +112,7 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
+    @compiled = false
     uncompile
     @routes, @named_routes, @root = [], Hash.new{|h,k| h[k] = []}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
@@ -209,15 +210,13 @@ class HttpRouter
   def compile
     return if @compiled
     @routes.each {|r| r.send(:compile)}
-    instance_eval "undef :url; alias :url :raw_url", __FILE__, __LINE__
-    instance_eval "undef :call; alias :call :raw_call", __FILE__, __LINE__
+    instance_eval "undef :url; alias :url :raw_url; undef :call; alias :call :raw_call", __FILE__, __LINE__
     @compiled = true
   end
 
   def uncompile
     return unless @compiled
-    instance_eval "undef :url; alias :url :compiling_url", __FILE__, __LINE__
-    instance_eval "undef :call; alias :call :compiling_call", __FILE__, __LINE__
+    instance_eval "undef :url; alias :url :compiling_url; undef :call; alias :call :compiling_call", __FILE__, __LINE__
     @compiled = false
   end
 
