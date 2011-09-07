@@ -70,6 +70,7 @@ class HttpRouter
     route
   end
 
+  # Same as add, but accepts only a +Route+ object.
   def add_route(route)
     @routes << route
     route
@@ -78,17 +79,12 @@ class HttpRouter
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
-  def get(path, opts = {}, &app); add_with_request_method(path, :get, opts, &app); end
+  def get(path, opts = {}, &app); add_with_request_method(path, [:get, :head], opts, &app); end
 
   # Adds a path that only responds to the request method +POST+.
   #
   # Returns the route object.
   def post(path, opts = {}, &app); add_with_request_method(path, :post, opts, &app); end
-
-  # Adds a path that only responds to the request method +HEAD+.
-  #
-  # Returns the route object.
-  def head(path, opts = {}, &app); add_with_request_method(path, :head, opts, &app); end
 
   # Adds a path that only responds to the request method +DELETE+.
   #
@@ -99,11 +95,6 @@ class HttpRouter
   #
   # Returns the route object.
   def put(path, opts = {}, &app); add_with_request_method(path, :put, opts, &app); end
-
-  # Adds a path that only responds to the request method +OPTIONS+.
-  #
-  # Returns the route object.
-  def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.
@@ -122,6 +113,7 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
+    uncompile
     @routes, @named_routes, @root = [], Hash.new{|h,k| h[k] = []}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
   end
@@ -147,7 +139,7 @@ class HttpRouter
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     compile
-    raw_url(route, *args)
+    url(route, *args)
   end
   alias_method :compiling_url, :url
 
