@@ -20,12 +20,12 @@ class HttpRouter
   InvalidRouteException       = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
   MissingParameterException   = Class.new(RuntimeError)
-  # Raised when a Route is compiled twice
-  DoubleCompileError          = Class.new(RuntimeError)
   # Raised an invalid request value is used
   InvalidRequestValueError    = Class.new(RuntimeError)
   # Raised when there are extra parameters passed in to #url
   TooManyParametersException  = Class.new(RuntimeError)
+  # Raised when there are left over options
+  LeftOverOptions             = Class.new(RuntimeError)
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
@@ -62,6 +62,7 @@ class HttpRouter
   #
   # Returns the route object.
   def add(*args, &app)
+    uncompile
     opts = args.last.is_a?(Hash) ? args.pop : {}
     path = args.first
     route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
@@ -114,15 +115,10 @@ class HttpRouter
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>.
   def call(env, perform_call = true)
-    rack_request = ::Rack::Request.new(env)
-    request = Request.new(rack_request.path_info, rack_request, perform_call)
-    response = catch(:success) { @root[request] }
-    if perform_call
-      response or no_response(env)
-    else
-      request.matches.empty? ? nil : request.matches
-    end
+    compile
+    call(env, perform_call)
   end
+  alias_method :compiling_call, :call
 
   # Resets the router to a clean state.
   def reset!
@@ -140,7 +136,7 @@ class HttpRouter
   #
   # Example:
   #   router = HttpRouter.new
-  #   router.add('/:foo.:format').name(:test).to{|env| [200, {}, []]}
+  #   router.add('/:foo.:format', :name => :test).to{|env| [200, {}, []]}
   #   router.url(:test, 123, 'html')
   #   # ==> "/123.html"
   #   router.url(:test, 123, :format => 'html')
@@ -150,12 +146,10 @@ class HttpRouter
   #   router.url(:test, :foo => 123, :format => 'html', :fun => 'inthesun')
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
-    case route
-    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); return url if url}
-    when Route  then return route.url(*args)
-    end
-    raise(InvalidRouteException)
+    compile
+    raw_url(route, *args)
   end
+  alias_method :compiling_url, :url
 
   # This method is invoked when a Path object gets called with an env. Override it to implement custom path processing.
   def process_destination_path(path, env)
@@ -184,7 +178,6 @@ class HttpRouter
     @routes.each do |route|
       new_route = route.clone(cloned_router)
       cloned_router.add_route(new_route)
-      new_route.name(route.named) if route.named
       begin
         new_route.to route.dest.clone
       rescue
@@ -218,6 +211,7 @@ class HttpRouter
   end
 
   def to_s
+    compile
     "#<HttpRouter:0x#{object_id.to_s(16)} number of routes (#{routes.size}) ignore_trailing_slash? (#{ignore_trailing_slash?}) redirect_trailing_slash? (#{redirect_trailing_slash?}) known_methods (#{known_methods.to_a.join(', ')})>"
   end
 
@@ -226,9 +220,44 @@ class HttpRouter
     "#{to_s}\n#{'=' * head.size}\n#{@root.inspect}"
   end
 
+  def compile
+    return if @compiled
+    @routes.each {|r| r.send(:compile)}
+    instance_eval "undef :url; alias :url :raw_url", __FILE__, __LINE__
+    instance_eval "undef :call; alias :call :raw_call", __FILE__, __LINE__
+    @compiled = true
+  end
+
+  def uncompile
+    return unless @compiled
+    instance_eval "undef :url; alias :url :compiling_url", __FILE__, __LINE__
+    instance_eval "undef :call; alias :call :compiling_call", __FILE__, __LINE__
+    @compiled = false
+  end
+
+  def raw_url(route, *args)
+    case route
+    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); return url if url}
+    when Route  then return route.url(*args)
+    end
+    raise(InvalidRouteException)
+  end
+
+  def raw_call(env, perform_call = true)
+    rack_request = ::Rack::Request.new(env)
+    request = Request.new(rack_request.path_info, rack_request, perform_call)
+    response = catch(:success) { @root[request] }
+    if perform_call
+      response or no_response(env)
+    else
+      request.matches.empty? ? nil : request.matches
+    end
+  end
+
   private
   def add_with_request_method(path, method, opts = {}, &app)
-    route = add(path, opts).send(method.to_sym)
+    opts[:request_method] = method
+    route = add(path, opts)
     route.to(app) if app
     route
   end

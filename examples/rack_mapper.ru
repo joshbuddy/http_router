@@ -1,7 +1,7 @@
 require 'http_router'
 HttpRouter::Rack.override_rack_builder!
 
-map('/get/:id', :matching => {:id => /\d+/}) { |env|
+map('/get/:id', :match_with => {:id => /\d+/}) { |env|
   [200, {'Content-type' => 'text/plain'}, ["My id is #{env['router.params'][:id]}, which is a number\n"]]
 }
 

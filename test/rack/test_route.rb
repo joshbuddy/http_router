@@ -26,11 +26,6 @@ class TestRouteExtensions < MiniTest::Unit::TestCase
     assert_equal __FILE__, body.path
   end
 
-  def test_chainable
-    router.get("/index.html").redirect("/").name(:root)
-    assert_equal "/index.html", router.url(:root)
-  end
-
   def test_custom_status
     router.get("/index.html").redirect("/", 303)
     response = router.call(Rack::MockRequest.env_for("/index.html"))

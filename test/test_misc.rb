@@ -1,9 +1,9 @@
 class TestMisc < MiniTest::Unit::TestCase
   def test_cloning
-    r1 = HttpRouter.new { add('/test').name(:test_route).to(:test) }
+    r1 = HttpRouter.new { add('/test', :name => :test_route).to(:test) }
     r2 = r1.clone
 
-    r2.add('/test2').name(:test).to(:test2)
+    r2.add('/test2', :name => :test).to(:test2)
     assert_equal 2, r2.routes.size
 
     assert_equal nil, r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2')))
@@ -11,7 +11,7 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal r1.routes.first, r1.named_routes[:test_route].first
     assert_equal r2.routes.first, r2.named_routes[:test_route].first
 
-    r1.add('/another').name(:test).to(:test2)
+    r1.add('/another', :name => :test).to(:test2)
 
     assert_equal r1.routes.size, r2.routes.size
     assert_equal '/another', r1.url(:test)
@@ -50,9 +50,9 @@ class TestMisc < MiniTest::Unit::TestCase
 
   def test_multi_name_gen
     r = HttpRouter.new
-    r.add('/').name(:index).default_destination
-    r.add('/:name').name(:index).default_destination
-    r.add('/:name/:category').name(:index).default_destination
+    r.add('/', :name => :index).default_destination
+    r.add('/:name', :name => :index).default_destination
+    r.add('/:name/:category', :name => :index).default_destination
     assert_equal '/', r.url(:index)
     assert_equal '/name', r.url(:index, 'name')
     assert_equal '/name/category', r.url(:index, 'name', 'category')
@@ -60,13 +60,13 @@ class TestMisc < MiniTest::Unit::TestCase
 
   def test_regex_generation
     r = HttpRouter.new
-    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable').name(:route).default_destination
+    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable', :name => :route).default_destination
     assert_equal '/test/var', r.url(:route, "var")
   end
 
   def test_too_many_params
     r = HttpRouter.new
-    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable').name(:route).default_destination
+    r.add(%r|/test/.*|, :path_for_generation => '/test/:variable', :name => :route).default_destination
     assert_equal '/test/var', r.url(:route, "var")
     assert_equal '/test/var', r.url(:route, :variable => "var")
     assert_raises(HttpRouter::InvalidRouteException) { r.url(:route) }
@@ -74,7 +74,7 @@ class TestMisc < MiniTest::Unit::TestCase
 
   def test_too_many_args
     r = HttpRouter.new
-    r.add('/').name(:route).default_destination
+    r.add('/', :name => :route).default_destination
     assert_raises(HttpRouter::TooManyParametersException) { r.url(:route, "hi") }
   end
 

@@ -12,7 +12,7 @@ class HttpRouter
             code << part
             dynamic = true
           else
-            regex << (route.matches_with[part[1, part.size].to_sym] || '.*?').to_s unless path_validation_regex
+            regex << (route.matches_with && route.matches_with[part[1, part.size].to_sym] || '.*?').to_s unless path_validation_regex
             code << "\#{args.shift || (options && options.delete(:#{part[1, part.size]})) || return}"
             dynamic = true
           end

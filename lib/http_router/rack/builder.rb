@@ -12,8 +12,7 @@ module HttpRouter::Rack::BuilderMixin
   # @param options [Hash] Options for added path.
   # @see HttpRouter#add
   def map(path, options = {}, method = nil, &block)
-    route = router.add(path, options)
-    route.send(method) if method
+    route = router.send(method || :add, path, options)
     route.to(&block)
     @ins << router unless @ins.last == router
     route

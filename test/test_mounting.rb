@@ -2,7 +2,7 @@ class TestMounting < MiniTest::Unit::TestCase
   def setup
     @r1 = HttpRouter.new
     @r2 = HttpRouter.new
-    @r2.add("/bar").name(:test).to{|env| [200, {}, []]}
+    @r2.add("/bar", :name => :test).to{|env| [200, {}, []]}
   end
 
   def test_url_mount_for_child_route
@@ -12,25 +12,25 @@ class TestMounting < MiniTest::Unit::TestCase
   end
 
   def test_default_values
-    route = @r1.add("/foo/:bar").default(:bar => "baz").to(@r2)
+    route = @r1.add("/foo/:bar", :default_values => {:bar => "baz"}).to(@r2)
     assert_equal "/foo/baz/bar", @r2.url(:test)
     assert_equal "/foo/haha/bar", @r2.url(:test, :bar => "haha")
   end
 
   def test_multiple_values
-    @r1.add("/foo/:bar/:baz").default(:bar => "bar").to(@r2)
+    @r1.add("/foo/:bar/:baz", :default_values => {:bar => "bar"}).to(@r2)
     assert_equal "/foo/bar/baz/bar", @r2.url(:test, :baz => "baz")
   end
 
   def test_bubble_params
-    route = @r1.add("/foo/:bar").default(:bar => "baz").to(@r2)
+    route = @r1.add("/foo/:bar", :default_values => {:bar => 'baz'}).to(@r2)
     assert_equal "/foo/baz/bar?bang=ers",  @r2.url(:test, :bang => "ers")
     assert_equal "/foo/haha/bar?bang=ers", @r2.url(:test, :bar => "haha", :bang => "ers")
   end
 
   def test_path_with_optional
     @r1.add("/foo(/:bar)").to(@r2)
-    @r2.add("/hey(/:there)").name(:test2).to{|env| [200, {}, []]}
+    @r2.add("/hey(/:there)", :name => :test2).to{|env| [200, {}, []]}
     assert_equal "/foo/hey", @r2.url(:test2)
     assert_equal "/foo/bar/hey", @r2.url(:test2, :bar => "bar")
     assert_equal "/foo/bar/hey/there", @r2.url(:test2, :bar => "bar", :there => "there")
@@ -38,10 +38,10 @@ class TestMounting < MiniTest::Unit::TestCase
 
   def test_nest3
     @r3 = HttpRouter.new
-    @r1.add("/foo(/:bar)").default(:bar => "barry").to(@r2)
-    @r2.add("/hi").name(:hi).to{|env| [200, {}, []]}
+    @r1.add("/foo(/:bar)", :default_values => {:bar => 'barry'}).to(@r2)
+    @r2.add("/hi", :name => :hi).to{|env| [200, {}, []]}
     @r2.add("/mounted").to(@r3)
-    @r3.add("/endpoint").name(:endpoint).to{|env| [200, {}, []]}
+    @r3.add("/endpoint", :name => :endpoint).to{|env| [200, {}, []]}
 
     assert_equal "/foo/barry/hi",                @r2.url(:hi)
     assert_equal "/foo/barry/mounted/endpoint",  @r3.url(:endpoint)
@@ -49,7 +49,7 @@ class TestMounting < MiniTest::Unit::TestCase
   end
 
   def test_with_default_host
-    @r1.add("/mounted").default(:host => "example.com").to(@r2)
+    @r1.add("/mounted", :default_values => {:host => "example.com"}).to(@r2)
     assert_equal "http://example.com/mounted/bar", @r2.url(:test)
   end
 

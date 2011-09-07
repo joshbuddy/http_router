@@ -54,7 +54,7 @@ class HttpRouter
       end
 
       def inspect_label
-        "Path: #{original_path.inspect} for route #{route.named || 'unnamed route'} to #{route.dest.inspect}"
+        "Path: #{original_path.inspect} for route #{route.name || 'unnamed route'} to #{route.dest.inspect}"
       end
 
       private

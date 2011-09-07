@@ -83,11 +83,11 @@ class AbstractTest
     @routes.case.each do |route_definition|
       error("Too many keys! #{route_definition.keys.inspect}") unless route_definition.keys.size == 1
       route_name, route_properties = route_definition.keys.first, route_definition.values.first
+      opts = {:name => route_name.to_sym}
       route = case route_properties
       when String
-        @router.add(route_properties)
+        @router.add(route_properties, opts)
       when Hash
-        opts = {}
         route_path = interpret_val(route_properties.delete("path"))
         if route_properties.key?("conditions")
           opts[:conditions] = Hash[route_properties.delete("conditions").map{|k, v| [k.to_sym, interpret_val(v)]}]
@@ -102,7 +102,6 @@ class AbstractTest
       else
         error("Route isn't a String or hash")
       end
-      route.name(route_name.to_sym)
       route.to{|env| [200, {"env-to-test" => env.dup}, [route_name]]}
     end
     run_tests
