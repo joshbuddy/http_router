@@ -12,10 +12,6 @@ require 'http_router/regex_route'
 require 'http_router/util'
 
 class HttpRouter
-
-  attr_reader :root, :routes, :known_methods, :named_routes, :nodes
-  attr_accessor :default_app, :url_mount
-
   # Raised when a url is not able to be generated for the given parameters
   InvalidRouteException       = Class.new(RuntimeError)
   # Raised when a Route is not able to be generated due to a missing parameter.
@@ -26,6 +22,9 @@ class HttpRouter
   TooManyParametersException  = Class.new(RuntimeError)
   # Raised when there are left over options
   LeftOverOptions             = Class.new(RuntimeError)
+
+  attr_reader :root, :routes, :known_methods, :named_routes, :nodes
+  attr_accessor :default_app, :url_mount
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
