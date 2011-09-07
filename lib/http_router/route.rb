@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :matches_with, :dest
+    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :matches_with, :dest, :significant_variable_names
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
 
@@ -49,20 +49,21 @@ class HttpRouter
       self
     end
 
-    def as_options
-      {:__match_with__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @name, :__partial__ => @partially_match}
-    end
-
     def url(*args)
       result, extra_params = url_with_params(*args)
       append_querystring(result, extra_params)
     end
 
     def clone(new_router)
-      r = Route.new(new_router, @original_path.dup, as_options).to(dest)
+      r = Route.new(new_router, @original_path.dup, :__match_with__ => @matches_with, :__conditions__ => @conditions, :__default_values__ => @default_values, :__name__ => @name, :__partial__ => @partially_match).to(dest)
       r.to(begin; dest.clone; rescue; dest; end)
     end
 
+    def to_s
+      "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect}>"
+    end
+
+    private
     def url_with_params(*a)
       url_args_processing(a) do |args, options|
         path = args.empty? ? matching_path(options) : matching_path(args, options)
@@ -80,10 +81,6 @@ class HttpRouter
       mount_point ? [File.join(mount_point, result), params] : [result, params]
     end
 
-    def significant_variable_names
-      @significant_variable_names ||= @original_path.nil? ? [] : @original_path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
-    end
-
     def matching_path(params, other_hash = nil)
       return @paths.first if @paths.size == 1
       case params
@@ -97,11 +94,6 @@ class HttpRouter
       end
     end
 
-    def to_s
-      "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect}>"
-    end
-
-    private
     def add_to_contitions(name, *vals)
       ((@conditions ||= {})[name] ||= []).concat(vals.flatten)
       self
@@ -115,6 +107,7 @@ class HttpRouter
       else
         @match_partially = true
       end
+      @significant_variable_names = @path_for_processing.nil? ? [] : @original_path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
     end
 
     def post_process
