@@ -210,6 +210,7 @@ class HttpRouter
   def compile
     return if @compiled
     @routes.each {|r| r.send(:compile)}
+    @root.compile
     instance_eval "undef :url; alias :url :raw_url; undef :call; alias :call :raw_call", __FILE__, __LINE__
     @compiled = true
   end
@@ -217,6 +218,7 @@ class HttpRouter
   def uncompile
     return unless @compiled
     instance_eval "undef :url; alias :url :compiling_url; undef :call; alias :call :compiling_call", __FILE__, __LINE__
+    @root.uncompile
     @compiled = false
   end
 

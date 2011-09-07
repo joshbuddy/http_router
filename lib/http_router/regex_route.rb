@@ -1,7 +1,7 @@
 class HttpRouter
   class RegexRoute < Route
-    def initialize(router, path, opts = nil)
-      @router, @original_path, @opts = router, path, opts
+    def initialize(router, original_path, opts = nil, &blk)
+      @router, @original_path, @opts, @dest = router, original_path, opts, blk
       @param_names = @original_path.respond_to?(:names) ? @original_path.names.map(&:to_sym) : []
       @path_validation_regex = original_path
       Util.add_path_generation(self, self, opts.delete(:path_for_generation), @original_path) if opts.key?(:path_for_generation)

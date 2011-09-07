@@ -36,9 +36,7 @@ class HttpRouter
         "Root (#{@matchers.size} matchers)"
       end
 
-      private
       def compile
-        router.send(:compile)
         root.extend(root.methods_module)
         instance_eval "def [](request)\n#{to_code}\nnil\nend", __FILE__, __LINE__
         @compiled = true

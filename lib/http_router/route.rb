@@ -4,8 +4,8 @@ class HttpRouter
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
 
-    def initialize(router, original_path, opts = nil)
-      @router, @original_path, @opts = router, original_path, opts
+    def initialize(router, original_path, opts = nil, &blk)
+      @router, @original_path, @opts, @dest = router, original_path, opts, blk
       process_path
       process_opts if opts
       process_match_with
