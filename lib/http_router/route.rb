@@ -1,6 +1,6 @@
 class HttpRouter
   class Route
-    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :matches_with, :dest, :significant_variable_names
+    attr_reader :default_values, :router, :conditions, :original_path, :match_partially, :dest, :regex, :name, :dest, :significant_variable_names
     alias_method :match_partially?, :match_partially
     alias_method :regex?, :regex
 
@@ -61,6 +61,10 @@ class HttpRouter
 
     def to_s
       "#<HttpRouter:Route #{object_id} @original_path=#{@original_path.inspect} @conditions=#{@conditions.inspect}>"
+    end
+
+    def matches_with(var_name)
+      @matches_with && @matches_with[:"#{var_name}"]
     end
 
     private
@@ -133,7 +137,7 @@ class HttpRouter
 
     def process_match_with
       significant_variable_names.each do |name|
-        (@matches_with ||= {})[name] = @opts.delete(name) if @opts.key?(name) && (@matches_with.nil? || !@matches_with.key?(name))
+        (@matches_with ||= {})[name] = @opts.delete(name) if @opts.key?(name) && !matches_with(name)
       end
     end
 
@@ -168,10 +172,10 @@ class HttpRouter
         node.add_lookup(part[1].chr)
       when ?:
         param_names << name.to_sym
-        @matches_with && @matches_with[name.to_sym] ? node.add_spanning_match(@matches_with[name.to_sym]) : node.add_variable
+        matches_with(name) ? node.add_spanning_match(matches_with(name)) : node.add_variable
       when ?*
         param_names << name.to_sym
-        @matches_with && @matches_with[name.to_sym] ? node.add_glob_regexp(@matches_with[name.to_sym]) : node.add_glob
+        matches_with(name) ? node.add_glob_regexp(matches_with(name)) : node.add_glob
       else
         node.add_lookup(part)
       end
@@ -189,9 +193,9 @@ class HttpRouter
           name = part[1, part.size].to_sym
           param_names << name
           if spans
-            @matches_with && @matches_with[name] ? "((?:#{@matches_with[name]}\\/?)+)" : '(.*?)'
+            matches_with(name) ? "((?:#{matches_with(name)}\\/?)+)" : '(.*?)'
           else
-            "(#{(@matches_with && @matches_with[name] || '[^/]*?')})"
+            "(#{(matches_with(name) || '[^/]*?')})"
           end
         else
           Regexp.quote(part)
