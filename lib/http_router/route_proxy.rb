@@ -16,6 +16,10 @@ class HttpRouter
       end
     end
 
+    def name(name = nil)
+      name ? route.name = name : route.name
+    end
+
     def process_opts(opts)
       if opts[:conditions]
         opts.merge!(opts[:conditions])

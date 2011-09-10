@@ -8,6 +8,7 @@ require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
 require 'http_router/route_proxy'
+require 'http_router/regex_route_generation'
 require 'http_router/rack'
 require 'http_router/util'
 

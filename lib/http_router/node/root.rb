@@ -74,14 +74,7 @@ class HttpRouter
             when Regexp
               param_names = path.respond_to?(:names) ? path.names.map(&:to_sym) : []
               Util.add_path_generation(route, route, route.path_for_generation, path) if route.path_for_generation
-              route.instance_eval do
-                def url_with_params(*a)
-                  url_args_processing(a) do |args, options|
-                    respond_to?(:raw_url) or raise InvalidRouteException
-                    raw_url(args, options)
-                  end
-                end
-              end
+              route.instance_eval "extend RegexRouteGeneration", __FILE__, __LINE__
               add_non_path_to_tree(route, add_free_match(path), path, param_names)
             else
               param_names = []

@@ -50,11 +50,6 @@ class HttpRouter
       end
     end
 
-    def url(*args)
-      result, extra_params = url_with_params(*args)
-      append_querystring(result, extra_params)
-    end
-
     def clone(new_router)
       r = super()
       r.dest = (begin; dest.clone; rescue; dest; end)
@@ -89,6 +84,11 @@ class HttpRouter
     def name=(name)
       @name = name
       @router.named_routes[name] << self
+    end
+
+    def url(*args)
+      result, extra_params = url_with_params(*args)
+      append_querystring(result, extra_params)
     end
 
     private
