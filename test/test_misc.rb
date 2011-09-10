@@ -99,9 +99,8 @@ class TestMisc < MiniTest::Unit::TestCase
     router.add('/').to(:test)
     router.add('/test').to(:test2)
     router.post('/test').to(:test3)
-    p router.to_s
-    assert router.to_s.match(/^#<HttpRouter:0x[0-9a-f]+ number of routes \(3\) ignore_trailing_slash\? \(true\) redirect_trailing_slash\? \(false\) known_methods \(POST\)>$/)
-    assert router.inspect.match(/^#<HttpRouter:0x[0-9a-f]+ number of routes \(3\) ignore_trailing_slash\? \(true\) redirect_trailing_slash\? \(false\) known_methods \(POST\)>/)
+    assert router.to_s.match(/^#<HttpRouter:0x[0-9a-f-]+ number of routes \(3\) ignore_trailing_slash\? \(true\) redirect_trailing_slash\? \(false\) known_methods \(POST\)>$/)
+    assert router.inspect.match(/^#<HttpRouter:0x[0-9a-f-]+ number of routes \(3\) ignore_trailing_slash\? \(true\) redirect_trailing_slash\? \(false\) known_methods \(POST\)>/)
     assert router.inspect.match(/Path: "\/test" for route unnamed route to :test3/)
   end
 end
