@@ -1,17 +1,20 @@
 class HttpRouter
   class Node
-    autoload :Root,          'http_router/node/root'
-    autoload :Glob,          'http_router/node/glob'
-    autoload :GlobRegex,     'http_router/node/glob_regex'
-    autoload :Variable,      'http_router/node/variable'
-    autoload :Regex,         'http_router/node/regex'
-    autoload :SpanningRegex, 'http_router/node/spanning_regex'
-    autoload :GlobRegex,     'http_router/node/glob_regex'
-    autoload :FreeRegex,     'http_router/node/free_regex'
-    autoload :Arbitrary,     'http_router/node/arbitrary'
-    autoload :Request,       'http_router/node/request'
-    autoload :Lookup,        'http_router/node/lookup'
-    autoload :Path,          'http_router/node/path'
+    autoload :Root,                'http_router/node/root'
+    autoload :Glob,                'http_router/node/glob'
+    autoload :GlobRegex,           'http_router/node/glob_regex'
+    autoload :Variable,            'http_router/node/variable'
+    autoload :Regex,               'http_router/node/regex'
+    autoload :SpanningRegex,       'http_router/node/spanning_regex'
+    autoload :GlobRegex,           'http_router/node/glob_regex'
+    autoload :FreeRegex,           'http_router/node/free_regex'
+    autoload :AbstractRequestNode, 'http_router/node/abstract_request_node'
+    autoload :Host,                'http_router/node/host'
+    autoload :UserAgent,           'http_router/node/user_agent'
+    autoload :RequestMethod,       'http_router/node/request_method'
+    autoload :Scheme,              'http_router/node/scheme'
+    autoload :Lookup,              'http_router/node/lookup'
+    autoload :Path,                'http_router/node/path'
 
     attr_reader :router
 
@@ -31,13 +34,20 @@ class HttpRouter
       add(GlobRegex.new(@router, self, matcher))
     end
 
-    def add_request(opts)
-      raise unless opts
-      add(Request.new(@router, self, opts))
+    def add_host(hosts)
+      add(Host.new(@router, self, hosts))
     end
 
-    def add_arbitrary(blk, allow_partial, param_names)
-      add(Arbitrary.new(@router, self, allow_partial, blk, param_names))
+    def add_user_agent(uas)
+      add(UserAgent.new(@router, self, uas))
+    end
+
+    def add_request_method(rm)
+      add(RequestMethod.new(@router, self, rm))
+    end
+
+    def add_scheme(scheme)
+      add(Scheme.new(@router, self, scheme))
     end
 
     def add_match(regexp, matching_indicies = [0], splitting_indicies = nil)

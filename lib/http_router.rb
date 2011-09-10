@@ -7,8 +7,8 @@ require 'http_router/node'
 require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
+require 'http_router/route_proxy'
 require 'http_router/rack'
-require 'http_router/regex_route'
 require 'http_router/util'
 
 class HttpRouter
@@ -24,7 +24,7 @@ class HttpRouter
   LeftOverOptions             = Class.new(RuntimeError)
 
   attr_reader :root, :routes, :known_methods, :named_routes, :nodes
-  attr_accessor :default_app, :url_mount
+  attr_accessor :default_app, :url_mount, :route_class
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
@@ -41,6 +41,7 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @known_methods           = Set.new(options && options[:known_methods] || [])
+    @route_class             = Route
     reset!
     instance_eval(&blk) if blk
   end
@@ -62,17 +63,26 @@ class HttpRouter
   # Returns the route object.
   def add(*args, &app)
     uncompile
-    opts = args.last.is_a?(Hash) ? args.pop : {}
+    opts = args.last.is_a?(Hash) ? args.pop : nil
     path = args.first
-    route = add_route((Regexp === path ? RegexRoute : Route).new(self, path, opts))
-    route.to(app) if app
-    route
+    route = route_class.new
+    add_route route
+    proxy = RouteProxy.new(self, route)
+    proxy.path = path if path
+    proxy.process_opts(opts) if opts
+    path.to(app) if app
+    proxy
   end
 
-  # Same as add, but accepts only a +Route+ object.
   def add_route(route)
     @routes << route
-    route
+    @named_routes[route.name] << route if route.name
+    route.router = self
+  end
+
+  def extend_route(&blk)
+    @route_class = Class.new(Route) if @route_class == Route
+    @route_class.class_eval(&blk)
   end
 
   # Adds a path that only responds to the request method +GET+.
@@ -112,7 +122,6 @@ class HttpRouter
 
   # Resets the router to a clean state.
   def reset!
-    @compiled = false
     uncompile
     @routes, @named_routes, @root = [], Hash.new{|h,k| h[k] = []}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
@@ -209,8 +218,10 @@ class HttpRouter
 
   def compile
     return if @compiled
-    @routes.each {|r| r.send(:compile)}
-    @root.compile
+    @root.compile(@routes)
+    @named_routes.each do |_, routes|
+      routes.sort!{|r1, r2| r2.significant_variable_names.size <=> r1.significant_variable_names.size }
+    end
     instance_eval "undef :url; alias :url :raw_url; undef :call; alias :call :raw_call", __FILE__, __LINE__
     @compiled = true
   end

@@ -34,7 +34,7 @@ class TestRecognition < MiniTest::Unit::TestCase
   end
 
   def test_compiling_uncompiling
-    @router = HttpRouter.new
+    @router = router
     root = @router.add('/').default_destination
     assert_route root, '/'
     test = @router.add('/test').default_destination

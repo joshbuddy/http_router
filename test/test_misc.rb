@@ -1,4 +1,5 @@
 class TestMisc < MiniTest::Unit::TestCase
+
   def test_cloning
     r1 = HttpRouter.new { add('/test', :name => :test_route).to(:test) }
     r2 = r1.clone
@@ -49,7 +50,7 @@ class TestMisc < MiniTest::Unit::TestCase
   end
 
   def test_multi_name_gen
-    r = HttpRouter.new
+    r = router
     r.add('/', :name => :index).default_destination
     r.add('/:name', :name => :index).default_destination
     r.add('/:name/:category', :name => :index).default_destination
@@ -59,13 +60,13 @@ class TestMisc < MiniTest::Unit::TestCase
   end
 
   def test_regex_generation
-    r = HttpRouter.new
+    r = router
     r.add(%r|/test/.*|, :path_for_generation => '/test/:variable', :name => :route).default_destination
     assert_equal '/test/var', r.url(:route, "var")
   end
 
   def test_too_many_params
-    r = HttpRouter.new
+    r = router
     r.add(%r|/test/.*|, :path_for_generation => '/test/:variable', :name => :route).default_destination
     assert_equal '/test/var', r.url(:route, "var")
     assert_equal '/test/var', r.url(:route, :variable => "var")
@@ -73,7 +74,7 @@ class TestMisc < MiniTest::Unit::TestCase
   end
 
   def test_too_many_args
-    r = HttpRouter.new
+    r = router
     r.add('/', :name => :route).default_destination
     assert_raises(HttpRouter::TooManyParametersException) { r.url(:route, "hi") }
   end

@@ -2,16 +2,18 @@
 require 'minitest/autorun'
 require 'phocus'
 
-class HttpRouter::Route
-  def default_destination
-    to{|env| Rack::Response.new("Routing to #{to_s}").finish}
-  end
-end
-
 class MiniTest::Unit::TestCase
 
   def router(opts = nil, &blk)
-    @router ||= HttpRouter.new(opts, &blk)
+    @router ||= HttpRouter.new(opts) {
+      extend_route do
+        def default_destination
+          @dest = proc {|env| Rack::Response.new("Routing to #{to_s}").finish}
+          proxy
+        end
+      end
+      instance_eval(&blk) if blk
+    }
     if blk
       @router.routes.each { |route| route.default_destination if route.dest.nil? }
       @router.routes.size > 1 ? @router.routes : @router.routes.first
@@ -48,11 +50,11 @@ class MiniTest::Unit::TestCase
       router.reset!
       route = router.add(route)
     end
-    dest = "Routing to #{route.to_s}"
-    route.to{|env| Rack::Response.new(dest).finish} if route && route.dest.nil?
+    route.default_destination if route && route.dest.nil?
     request = Rack::MockRequest.env_for(request) if request.is_a?(String)
     response = @router.call(request)
     if route
+      dest = "Routing to #{route.route.to_s rescue route.to_s}"
       assert_equal [dest], response.last.body
       if params
         raise "Params was nil, but you expected params" if request['router.params'].nil?

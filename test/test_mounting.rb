@@ -23,7 +23,8 @@ class TestMounting < MiniTest::Unit::TestCase
   end
 
   def test_bubble_params
-    route = @r1.add("/foo/:bar", :default_values => {:bar => 'baz'}).to(@r2)
+    route = @r1.add("/foo/:bar", :default_values => {:bar => 'baz'})
+    route.to(@r2)
     assert_equal "/foo/baz/bar?bang=ers",  @r2.url(:test, :bang => "ers")
     assert_equal "/foo/haha/bar?bang=ers", @r2.url(:test, :bar => "haha", :bang => "ers")
   end
