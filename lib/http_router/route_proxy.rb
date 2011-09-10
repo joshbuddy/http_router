@@ -2,9 +2,9 @@ class HttpRouter
   class RouteProxy
     attr_reader :route
 
-    def initialize(router, route)
-      @router, @route = router, route
-      @route.proxy = self
+    def initialize(route)
+      @route = route
+      @router = route.router
     end
 
     def method_missing(name, *args, &blk)

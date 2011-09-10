@@ -36,7 +36,7 @@ class HttpRouter
   # * :known_methods -- Array of http methods tested for 405s.
   def initialize(*args, &blk)
     default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
-    @options = options
+    @options                 = options
     @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404, {'X-Cascade' => 'pass'}).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
@@ -67,7 +67,7 @@ class HttpRouter
     path = args.first
     route = route_class.new
     add_route route
-    proxy = RouteProxy.new(self, route)
+    proxy = RouteProxy.new(route)
     proxy.path = path if path
     proxy.process_opts(opts) if opts
     path.to(app) if app
