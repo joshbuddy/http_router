@@ -92,6 +92,7 @@ class TestMisc < MiniTest::Unit::TestCase
     assert methods.include?(:process_destination_path)
     assert methods.include?(:rewrite_partial_path_info)
     assert methods.include?(:rewrite_path_info)
+    assert methods.include?(:extend_route)
   end
 
   def test_to_s_and_inspect

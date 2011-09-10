@@ -6,6 +6,10 @@ class HttpRouter
       @params = path.hashify_params(request.params)
     end
 
+    def route
+      path.route
+    end
+
     def param_values
       request.params
     end

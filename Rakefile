@@ -133,7 +133,7 @@ namespace :test do
             msg = expected.dup
             msg << " was expected to be "
             msg << "\#{__example_runner.inspect}"
-            current_example << "raise \"#{msg.gsub('"', '\\"')}\" unless __example_runner.strip == #{expected}\n" if in_example
+            current_example << "raise \"#{msg.gsub('"', '\\"')}\" unless (__example_runner.respond_to?(:strip) ? __example_runner.strip : __example_runner) == #{expected}\n" if in_example
           when ''
             unless current_example.empty?
               examples << current_example

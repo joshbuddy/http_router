@@ -22,10 +22,9 @@ class HttpRouter
         opts.delete(:conditions)
       end
       opts.each do |k, v|
-        case k
-        when :name, :user_agent, :host, :path_for_generation
+        if @route.respond_to?(:"#{k}=")
           @route.send(:"#{k}=", v)
-        when *@route.significant_variable_names
+        elsif @route.significant_variable_names.include?(k)
           @route.add_match_with(k => v)
         else
           send(:"add_#{k}", v)

@@ -80,6 +80,13 @@ class HttpRouter
     route.router = self
   end
 
+  # Extends the route class with custom features.
+  #
+  # Example:
+  #   router = HttpRouter.new { extend_route { attr_accessor :controller } }
+  #   router.add('/foo', :controller => :foo).to{|env| [200, {}, ['foo!']]}
+  #   router.recognize(Rack::MockRequest.env_for('/foo')).first.route.controller
+  #   # ==> :foo
   def extend_route(&blk)
     @route_class = Class.new(Route) if @route_class == Route
     @route_class.class_eval(&blk)
