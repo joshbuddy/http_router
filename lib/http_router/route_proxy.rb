@@ -16,6 +16,19 @@ class HttpRouter
       end
     end
 
+    def path
+      @route.path_for_generation
+    end
+
+    def path=(path)
+      if path.respond_to?(:[]) and path[/[^\\]\*$/]
+        @route.match_partially = true
+        @route.path_for_generation = path[0..path.size - 2]
+      else
+        @route.path_for_generation = path
+      end
+    end
+
     def name(name = nil)
       name ? route.name = name : route.name
     end
@@ -28,10 +41,10 @@ class HttpRouter
       opts.each do |k, v|
         if @route.respond_to?(:"#{k}=")
           @route.send(:"#{k}=", v)
-        elsif @route.significant_variable_names.include?(k)
-          @route.add_match_with(k => v)
-        else
+        elsif @route.respond_to?(:"add_#{k}")
           send(:"add_#{k}", v)
+        else
+          @route.add_match_with(k => v)
         end
       end
     end
@@ -39,7 +52,7 @@ class HttpRouter
     def to(dest = nil, &dest_block)
       @route.dest = dest || dest_block || raise("you didn't specify a destination")
       if @route.dest.respond_to?(:url_mount=)
-        urlmount = UrlMount.new(@route.path, @route.default_values || {}) # TODO url mount should accept nil here.
+        urlmount = UrlMount.new(@route.path_for_generation, @route.default_values || {}) # TODO url mount should accept nil here.
         urlmount.url_mount = @router.url_mount if @router.url_mount
         @route.dest.url_mount = urlmount
       end

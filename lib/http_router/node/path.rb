@@ -7,20 +7,12 @@ class HttpRouter
         @route, @path, @param_names, @dynamic = route, path, param_names, !param_names.empty?
         @route.add_path(self)
         raise AmbiguousVariableException, "You have duplicate variable name present: #{param_names.join(', ')}" if param_names.uniq.size != param_names.size
-        Util.add_path_generation(self, route, @path) if @path.respond_to?(:split)
         super router, parent
         router.uncompile
       end
 
       def hashify_params(params)
         @dynamic && params ? Hash[param_names.zip(params)] : {}
-      end
-
-      def url(args, options)
-        if path = raw_url(args, options)
-          raise TooManyParametersException.new("for #{path.inspect} with #{args.inspect}") unless args.empty?
-          [URI.escape(path), options]
-        end
       end
 
       def to_code
@@ -56,11 +48,6 @@ class HttpRouter
 
       def inspect_label
         "Path: #{path.inspect} for route #{route.name || 'unnamed route'} to #{route.dest.inspect}"
-      end
-
-      private
-      def raw_url(args, options)
-        raise InvalidRouteException.new("for #{@path}")
       end
     end
   end

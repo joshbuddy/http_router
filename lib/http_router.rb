@@ -7,6 +7,7 @@ require 'http_router/node'
 require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
+require 'http_router/generator'
 require 'http_router/route_proxy'
 require 'http_router/regex_route_generation'
 require 'http_router/rack'
@@ -25,7 +26,7 @@ class HttpRouter
   LeftOverOptions             = Class.new(RuntimeError)
 
   attr_reader :root, :routes, :known_methods, :named_routes, :nodes
-  attr_accessor :default_app, :url_mount, :route_class
+  attr_accessor :default_app, :url_mount, :route_class, :default_host, :default_port, :default_scheme
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
@@ -133,6 +134,7 @@ class HttpRouter
     uncompile
     @routes, @named_routes, @root = [], Hash.new{|h,k| h[k] = []}, Node::Root.new(self)
     @default_app = Proc.new{ |env| ::Rack::Response.new("Your request couldn't be found", 404).finish }
+    @default_host, @default_port, @default_scheme = 'localhost', 80, 'http'
   end
 
   # Assigns the default application.
@@ -159,6 +161,12 @@ class HttpRouter
     url(route, *args)
   end
   alias_method :compiling_url, :url
+
+  def path(route, *args)
+    compile
+    path(route, *args)
+  end
+  alias_method :compiling_path, :path
 
   # This method is invoked when a Path object gets called with an env. Override it to implement custom path processing.
   def process_destination_path(path, env)
@@ -228,15 +236,20 @@ class HttpRouter
     return if @compiled
     @root.compile(@routes)
     @named_routes.each do |_, routes|
-      routes.sort!{|r1, r2| r2.significant_variable_names.size <=> r1.significant_variable_names.size }
+      routes.sort!{|r1, r2| r2.max_param_count <=> r1.max_param_count }
     end
-    instance_eval "undef :url; alias :url :raw_url; undef :call; alias :call :raw_call", __FILE__, __LINE__
+
+    instance_eval "undef :path; alias :path :raw_path; 
+                   undef :url; alias :url :raw_url; 
+                   undef :call; alias :call :raw_call", __FILE__, __LINE__
     @compiled = true
   end
 
   def uncompile
     return unless @compiled
-    instance_eval "undef :url; alias :url :compiling_url; undef :call; alias :call :compiling_call", __FILE__, __LINE__
+    instance_eval "undef :path; alias :path :compiling_path;
+                   undef :url; alias :url :compiling_url;
+                   undef :call; alias :call :compiling_call", __FILE__, __LINE__
     @root.uncompile
     @compiled = false
   end
@@ -245,6 +258,14 @@ class HttpRouter
     case route
     when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); return url if url}
     when Route  then return route.url(*args)
+    end
+    raise(InvalidRouteException)
+  end
+
+  def raw_path(route, *args)
+    case route
+    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| path = r.path(*args); return path if path}
+    when Route  then return route.path(*args)
     end
     raise(InvalidRouteException)
   end

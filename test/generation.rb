@@ -7,7 +7,7 @@ class GenerationTest < AbstractTest
       args.compact!
       args.map!{|a| a.is_a?(Hash) ? Hash[a.map{|k,v| [k.to_sym, v]}] : a }
       result = begin
-        @router.url(name.to_sym, *args)
+        @router.path(name.to_sym, *args)
       rescue HttpRouter::InvalidRouteException
         nil
       rescue HttpRouter::MissingParameterException
