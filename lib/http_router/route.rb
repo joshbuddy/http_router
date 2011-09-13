@@ -4,7 +4,7 @@ class HttpRouter
   class Route
     VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTION}
 
-    attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods, :schemes
+    attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods
     attr_accessor :match_partially, :router, :host, :user_agent, :name, :ignore_trailing_slash,
                   :path_for_generation, :path_validation_regex, :generator, :scheme
 
@@ -32,10 +32,6 @@ class HttpRouter
 
     def add_path(path)
       (@paths ||= []) << path
-    end
-
-    def add_scheme(scheme)
-      (@schemes ||= []) << scheme
     end
 
     def add_request_method(methods)

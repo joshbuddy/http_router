@@ -7,13 +7,15 @@ class HttpRouter
       def initialize(route, path, validation_regex = nil)
         @route = route
         @path = path.dup
-        @param_names = if path.respond_to?(:names)
-          path.names.map(&:to_sym)
+        puts "path is a string? #{@path.is_a?(String)}"
+        @param_names = if @path.respond_to?(:names)
+          @path.names.map(&:to_sym)
         elsif path.is_a?(String)
-          path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
+          @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
         else
           []
         end
+        puts "path #{@path.inspect} #{@param_names.inspect}"
 
         if path.is_a?(String)
           path[0, 0] = '/' unless path[0] == ?/
@@ -41,7 +43,13 @@ class HttpRouter
           if validation_regex
             instance_eval <<-EOT, __FILE__, __LINE__ + 1
             def generate(args, options)
+              puts 'generating!'
+              puts "args: \#{args.inspect}"
+              puts "options: \#{options.inspect}"
               generated_path = \"#{code}\"
+              puts "after .. args: \#{args.inspect}"
+              puts "generated path \#{generated_path.inspect}"
+              p #{validation_regex.inspect}.match(generated_path)
               #{validation_regex.inspect}.match(generated_path) ? generated_path : nil
             end
             EOT
@@ -101,6 +109,7 @@ class HttpRouter
       path_args_processing(a) do |args, options|
         path = args.empty? ? matching_path(options) : matching_path(args, options)
         path &&= path.generate(args, options)
+        puts "path is #{path.inspect}"
         raise TooManyParametersException unless args.empty?
         raise InvalidRouteException.new("Error generating #{@route.path_for_generation}") unless path
         path ? [path, options] : nil
@@ -125,7 +134,7 @@ class HttpRouter
           params_size = params ? params.size : 0
           path.param_names.size == (significant_keys ? (params_size) + significant_keys.size : params_size) }
       when Hash
-        @path_generators.find { |path| (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
+        @path_generators.find { |path| p path.param_names; (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
       end
     end
 

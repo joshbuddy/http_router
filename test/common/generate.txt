@@ -1,6 +1,6 @@
 {"a": "/:var"}
 	["/test", "a", {"var":"test"}]
-#	["/test", "a", ["test"]]
+	["/test", "a", ["test"]]
 
 {"a": "/"}
 {"b": "/test"}

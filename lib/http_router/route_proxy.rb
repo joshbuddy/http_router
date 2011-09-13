@@ -39,6 +39,7 @@ class HttpRouter
         opts.delete(:conditions)
       end
       opts.each do |k, v|
+        puts "k #{k.inspect} with adding? #{@route.respond_to?(:"add_#{k}")}"
         if @route.respond_to?(:"#{k}=")
           @route.send(:"#{k}=", v)
         elsif @route.respond_to?(:"add_#{k}")

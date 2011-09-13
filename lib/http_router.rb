@@ -148,13 +148,13 @@ class HttpRouter
   # Example:
   #   router = HttpRouter.new
   #   router.add('/:foo.:format', :name => :test).to{|env| [200, {}, []]}
-  #   router.url(:test, 123, 'html')
+  #   router.path(:test, 123, 'html')
   #   # ==> "/123.html"
-  #   router.url(:test, 123, :format => 'html')
+  #   router.path(:test, 123, :format => 'html')
   #   # ==> "/123.html"
-  #   router.url(:test, :foo => 123, :format => 'html')
+  #   router.path(:test, :foo => 123, :format => 'html')
   #   # ==> "/123.html"
-  #   router.url(:test, :foo => 123, :format => 'html', :fun => 'inthesun')
+  #   router.path(:test, :foo => 123, :format => 'html', :fun => 'inthesun')
   #   # ==> "/123.html?fun=inthesun"
   def url(route, *args)
     compile
