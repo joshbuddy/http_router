@@ -7,14 +7,7 @@ class HttpRouter
       def initialize(route, path, validation_regex = nil)
         @route = route
         @path = path.dup
-        @param_names = if @path.respond_to?(:names)
-          @path.names.map(&:to_sym)
-        elsif path.is_a?(String)
-          @path.scan(/(^|[^\\])[:\*]([a-zA-Z0-9_]+)/).map{|p| p.last.to_sym}
-        else
-          []
-        end
-
+        @param_names = []
         if path.is_a?(String)
           path[0, 0] = '/' unless path[0] == ?/
           regex_parts = path.split(/([:\*][a-zA-Z0-9_]+)/)
@@ -56,16 +49,12 @@ class HttpRouter
       end
     end
 
-    attr_reader :param_names
     def initialize(route, paths)
       @route, @paths = route, paths
       @router = @route.router
       @route.generator = self
       @path_generators = @paths.map do |p|
         generator = PathGenerator.new(route, p.is_a?(String) ? p : route.path_for_generation, p.is_a?(Regexp) ? p : nil)
-      end
-      @path_generators.sort! do |p1, p2|
-        p2.param_names.size <=> p1.param_names.size
       end
     end
 
@@ -74,7 +63,10 @@ class HttpRouter
     end
 
     def each_path
-      @path_generators.each {|p| yield p.path, p.param_names}
+      @path_generators.each {|p| yield p }
+      @path_generators.sort! do |p1, p2|
+        p2.param_names.size <=> p1.param_names.size
+      end
     end
 
     def url(*args)
@@ -128,8 +120,6 @@ class HttpRouter
           significant_key_count += (path.param_names & other_hash.keys).size if other_hash
           significant_key_count >= path.param_names.size
         end
-        #  params_size = params ? params.size : 0
-        #  path.param_names.size == (significant_keys ? (params_size) + significant_keys.size : params_size) }
       when Hash
         @path_generators.find { |path| (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
       end

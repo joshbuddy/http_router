@@ -69,38 +69,41 @@ class HttpRouter
         if paths.empty?
           add_non_path_to_tree(route, @router.root, nil, [])
         else
-          Generator.new(route, paths).each_path do |path, param_names|
-            case path
+          Generator.new(route, paths).each_path do |path_generator|
+            case path_generator.path
             when Regexp
-              add_non_path_to_tree(route, add_free_match(path), path, param_names)
+              path_generator.param_names = path_generator.path.names.map(&:to_sym) if path_generator.path.respond_to?(:names)
+              add_non_path_to_tree(route, add_free_match(path_generator.path), path_generator.path, path_generator.param_names)
             else
               node = self
-              path.split(/\//).each do |part|
+              path_generator.path.split(/\//).each do |part|
                 next if part == ''
                 parts = part.scan(/\\.|[:*][a-z0-9_]+|[^:*\\]+/)
-                node = parts.size == 1 ? add_normal_part(route, node, part) : add_complex_part(route, node, parts)
+                node = parts.size == 1 ? add_normal_part(route, node, part, path_generator) : add_complex_part(route, node, parts, path_generator)
               end
-              add_non_path_to_tree(route, node, path, param_names)
+              add_non_path_to_tree(route, node, path_generator.path, path_generator.param_names)
             end
           end
         end
       end
 
-      def add_normal_part(route, node, part)
+      def add_normal_part(route, node, part, path_generator)
         name = part[1, part.size]
         node = case part[0]
         when ?\\
           node.add_lookup(part[1].chr)
         when ?:
+          path_generator.param_names << name.to_sym
           route.matches_with(name) ? node.add_spanning_match(route.matches_with(name)) : node.add_variable
         when ?*
+          path_generator.param_names << name.to_sym
           route.matches_with(name) ? node.add_glob_regexp(route.matches_with(name)) : node.add_glob
         else
           node.add_lookup(part)
         end
       end
 
-      def add_complex_part(route, node, parts)
+      def add_complex_part(route, node, parts, path_generator)
         capturing_indicies, splitting_indicies, captures, spans = [], [], 0, false
         regex = parts.inject('') do |reg, part|
           reg << case part[0]
@@ -110,6 +113,7 @@ class HttpRouter
             captures += 1
             (part[0] == ?* ? splitting_indicies : capturing_indicies) << captures
             name = part[1, part.size].to_sym
+            path_generator.param_names << name.to_sym
             if spans
               route.matches_with(name) ? "((?:#{route.matches_with(name)}\\/?)+)" : '(.*?)'
             else
