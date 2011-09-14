@@ -162,6 +162,12 @@ class HttpRouter
   end
   alias_method :compiling_url, :url
 
+  def url_ns(route, *args)
+    compile
+    url_ns(route, *args)
+  end
+  alias_method :compiling_url_ns, :url_ns
+
   def path(route, *args)
     compile
     path(route, *args)
@@ -239,17 +245,19 @@ class HttpRouter
       routes.sort!{|r1, r2| r2.max_param_count <=> r1.max_param_count }
     end
 
-    instance_eval "undef :path; alias :path :raw_path; 
-                   undef :url; alias :url :raw_url; 
-                   undef :call; alias :call :raw_call", __FILE__, __LINE__
+    instance_eval "undef :path;   alias :path   :raw_path;
+                   undef :url;    alias :url    :raw_url;
+                   undef :url_ns; alias :url_ns :raw_url_ns;
+                   undef :call;   alias :call   :raw_call", __FILE__, __LINE__
     @compiled = true
   end
 
   def uncompile
     return unless @compiled
-    instance_eval "undef :path; alias :path :compiling_path;
-                   undef :url; alias :url :compiling_url;
-                   undef :call; alias :call :compiling_call", __FILE__, __LINE__
+    instance_eval "undef :path;   alias :path   :compiling_path;
+                   undef :url;    alias :url    :compiling_url;
+                   undef :url_ns; alias :url_ns :compiling_url_ns;
+                   undef :call;   alias :call   :compiling_call", __FILE__, __LINE__
     @root.uncompile
     @compiled = false
   end
@@ -259,7 +267,15 @@ class HttpRouter
     when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url(*args); return url if url}
     when Route  then return route.url(*args)
     end
-    raise(InvalidRouteException)
+    raise(InvalidRouteException.new "No route (url) could be generated for #{route.inspect}")
+  end
+
+  def raw_url_ns(route, *args)
+    case route
+    when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| url = r.url_ns(*args); return url if url}
+    when Route  then return route.url_ns(*args)
+    end
+    raise(InvalidRouteException.new "No route (url_ns) could be generated for #{route.inspect}")
   end
 
   def raw_path(route, *args)
@@ -267,7 +283,7 @@ class HttpRouter
     when Symbol then @named_routes.key?(route) && @named_routes[route].each{|r| path = r.path(*args); return path if path}
     when Route  then return route.path(*args)
     end
-    raise(InvalidRouteException)
+    raise(InvalidRouteException.new "No route (path) could be generated for #{route.inspect}")
   end
 
   def raw_call(env, perform_call = true)

@@ -69,8 +69,8 @@ class HttpRouter
       nil
     end
 
-    def full_url(*args)
-      @generator.full_url(*args)
+    def url_ns(*args)
+      @generator.url_ns(*args)
     rescue InvalidRouteException
       nil
     end

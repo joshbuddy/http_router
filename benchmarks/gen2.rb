@@ -10,7 +10,7 @@ u.add('/simple')                                                                
 u.add('/simple/:variable')                                                                           .name(:one_variable).to{}
 u.add('/simple/:var1/:var2/:var3')                                                                   .name(:three_variables).to{}
 u.add('/simple/:v1/:v2/:v3/:v4/:v5/:v6/:v7/:v8')                                                     .name(:eight_variables).to{}
-u.add('/with_condition/:cond1/:cond2').matching(:cond1 => /^\d+$/, :cond2 => /^[a-z]+$/)             .name(:two_conditions).to{}
+u.add('/with_condition/:cond1/:cond2').matches_with(:cond1 => /^\d+$/, :cond2 => /^[a-z]+$/)             .name(:two_conditions).to{}
 
 TIMES = 50_000
 

@@ -7,7 +7,6 @@ class HttpRouter
       def initialize(route, path, validation_regex = nil)
         @route = route
         @path = path.dup
-        puts "path is a string? #{@path.is_a?(String)}"
         @param_names = if @path.respond_to?(:names)
           @path.names.map(&:to_sym)
         elsif path.is_a?(String)
@@ -15,7 +14,6 @@ class HttpRouter
         else
           []
         end
-        puts "path #{@path.inspect} #{@param_names.inspect}"
 
         if path.is_a?(String)
           path[0, 0] = '/' unless path[0] == ?/
@@ -43,20 +41,14 @@ class HttpRouter
           if validation_regex
             instance_eval <<-EOT, __FILE__, __LINE__ + 1
             def generate(args, options)
-              puts 'generating!'
-              puts "args: \#{args.inspect}"
-              puts "options: \#{options.inspect}"
               generated_path = \"#{code}\"
-              puts "after .. args: \#{args.inspect}"
-              puts "generated path \#{generated_path.inspect}"
-              p #{validation_regex.inspect}.match(generated_path)
-              #{validation_regex.inspect}.match(generated_path) ? generated_path : nil
+              #{validation_regex.inspect}.match(generated_path) ? URI.escape(generated_path) : nil
             end
             EOT
           else
             instance_eval <<-EOT, __FILE__, __LINE__ + 1
             def generate(args, options)
-              \"#{code}\"
+              URI.escape(\"#{code}\")
             end
             EOT
           end
@@ -72,6 +64,9 @@ class HttpRouter
       @path_generators = @paths.map do |p|
         generator = PathGenerator.new(route, p.is_a?(String) ? p : route.path_for_generation, p.is_a?(Regexp) ? p : nil)
       end
+      @path_generators.sort! do |p1, p2|
+        p2.param_names.size <=> p1.param_names.size
+      end
     end
 
     def max_param_count
@@ -82,11 +77,11 @@ class HttpRouter
       @path_generators.each {|p| yield p.path, p.param_names}
     end
 
-    def full_url(*args)
-      "#{scheme_port.first}#{url(*args)}"
+    def url(*args)
+      "#{scheme_port.first}#{url_ns(*args)}"
     end
 
-    def url(*args)
+    def url_ns(*args)
       "://#{@route.host || @router.default_host}#{scheme_port.last}#{path(*args)}"
     end
 
@@ -109,7 +104,6 @@ class HttpRouter
       path_args_processing(a) do |args, options|
         path = args.empty? ? matching_path(options) : matching_path(args, options)
         path &&= path.generate(args, options)
-        puts "path is #{path.inspect}"
         raise TooManyParametersException unless args.empty?
         raise InvalidRouteException.new("Error generating #{@route.path_for_generation}") unless path
         path ? [path, options] : nil
@@ -129,12 +123,15 @@ class HttpRouter
       return @path_generators.first if @path_generators.size == 1
       case params
       when Array, nil
-        significant_keys = other_hash && param_names & other_hash.keys
-        @path_generators.find { |path|
-          params_size = params ? params.size : 0
-          path.param_names.size == (significant_keys ? (params_size) + significant_keys.size : params_size) }
+        @path_generators.find do |path|
+          significant_key_count = params ? params.size : 0
+          significant_key_count += (path.param_names & other_hash.keys).size if other_hash
+          significant_key_count >= path.param_names.size
+        end
+        #  params_size = params ? params.size : 0
+        #  path.param_names.size == (significant_keys ? (params_size) + significant_keys.size : params_size) }
       when Hash
-        @path_generators.find { |path| p path.param_names; (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
+        @path_generators.find { |path| (params && !params.empty? && (path.param_names & params.keys).size == path.param_names.size) || path.param_names.empty? }
       end
     end
 

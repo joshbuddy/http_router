@@ -30,7 +30,12 @@ class HttpRouter
     end
 
     def name(name = nil)
-      name ? route.name = name : route.name
+      if name
+        route.name = name
+        self
+      else
+        route.name
+      end
     end
 
     def process_opts(opts)
@@ -39,7 +44,6 @@ class HttpRouter
         opts.delete(:conditions)
       end
       opts.each do |k, v|
-        puts "k #{k.inspect} with adding? #{@route.respond_to?(:"add_#{k}")}"
         if @route.respond_to?(:"#{k}=")
           @route.send(:"#{k}=", v)
         elsif @route.respond_to?(:"add_#{k}")
