@@ -26,7 +26,9 @@ class HttpRouter
             end" if router.redirect_trailing_slash?}
 
             #{"if request.path.empty?#{" or (request.path.size == 1 and request.path.first == '')" if router.ignore_trailing_slash?}" unless route.match_partially}
-              if request.perform_call
+              if request.as_iterator
+                request.matched_route(Response.new(request, #{path_ivar}))
+              else
                 env = request.rack_request.dup.env
                 env['router.request'] = request
                 env['router.params'] ||= {}
@@ -34,8 +36,6 @@ class HttpRouter
                 @router.rewrite#{"_partial" if route.match_partially}_path_info(env, request)
                 response = @router.process_destination_path(#{path_ivar}, env)
                 router.pass_on_response(response) ? throw(:pass) : throw(:success, response)
-              else
-                request.matched_route(Response.new(request, #{path_ivar}))
               end
             #{"end" unless route.match_partially}
           end

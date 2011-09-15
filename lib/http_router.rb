@@ -117,15 +117,16 @@ class HttpRouter
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.
   def recognize(env)
-    call(env, false)
+    response = call(env, true)
+    response && block_given? ? response.each{|r| yield r} : response
   end
 
   # Rack compatible #call. If matching route is found, and +dest+ value responds to #call, processing will pass to the matched route. Otherwise,
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>.
-  def call(env, perform_call = true)
+  def call(env, as_iterator = false)
     compile
-    call(env, perform_call)
+    call(env, as_iterator)
   end
   alias_method :compiling_call, :call
 
@@ -221,7 +222,7 @@ class HttpRouter
       test_env = ::Rack::Request.new(env.clone)
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
-      test_request = Request.new(test_env.path_info, test_env, 405)
+      test_request = Request.new(test_env.path_info, test_env, true)
       @root[test_request]
       !test_request.matches.empty?
     end
@@ -245,18 +246,18 @@ class HttpRouter
       routes.sort!{|r1, r2| r2.max_param_count <=> r1.max_param_count }
     end
 
-    instance_eval "undef :path;   alias :path   :raw_path;
-                   undef :url;    alias :url    :raw_url;
-                   undef :url_ns; alias :url_ns :raw_url_ns;
+    instance_eval "undef :path;   alias :path   :raw_path
+                   undef :url;    alias :url    :raw_url
+                   undef :url_ns; alias :url_ns :raw_url_ns
                    undef :call;   alias :call   :raw_call", __FILE__, __LINE__
     @compiled = true
   end
 
   def uncompile
     return unless @compiled
-    instance_eval "undef :path;   alias :path   :compiling_path;
-                   undef :url;    alias :url    :compiling_url;
-                   undef :url_ns; alias :url_ns :compiling_url_ns;
+    instance_eval "undef :path;   alias :path   :compiling_path
+                   undef :url;    alias :url    :compiling_url
+                   undef :url_ns; alias :url_ns :compiling_url_ns
                    undef :call;   alias :call   :compiling_call", __FILE__, __LINE__
     @root.uncompile
     @compiled = false
@@ -286,14 +287,14 @@ class HttpRouter
     raise(InvalidRouteException.new "No route (path) could be generated for #{route.inspect}")
   end
 
-  def raw_call(env, perform_call = true)
+  def raw_call(env, as_iterator = false)
     rack_request = ::Rack::Request.new(env)
-    request = Request.new(rack_request.path_info, rack_request, perform_call)
+    request = Request.new(rack_request.path_info, rack_request, as_iterator)
     response = catch(:success) { @root[request] }
-    if perform_call
-      response or no_response(env)
-    else
+    if as_iterator
       request.matches.empty? ? nil : request.matches
+    else
+      response or no_response(env)
     end
   end
 

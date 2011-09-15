@@ -9,8 +9,8 @@ class TestMisc < MiniTest::Unit::TestCase
 
     assert_equal nil, r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2')))
     assert r2.recognize(Rack::MockRequest.env_for('/test2'))
-    assert_equal r1.routes.first, r1.named_routes[:test_route].first
-    assert_equal r2.routes.first, r2.named_routes[:test_route].first
+    assert_equal r1.routes.size, 1
+    assert_equal r2.routes.size, 2
 
     r1.add('/another', :name => :test).to(:test2)
 
@@ -59,6 +59,16 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal '/name/category', r.path(:index, 'name', 'category')
   end
 
+  def test_yielding_from_recognize
+    r = HttpRouter.new
+    r1 = r.add('/:name').default_destination.route
+    r2 = r.add('/:name').default_destination.route
+    r3 = r.add('/:name').default_destination.route
+    matches = []
+    r.recognize(Rack::MockRequest.env_for('/test')) { |r| matches << r.route }
+    assert_equal [r1, r2, r3], matches
+  end
+
   def test_regex_generation
     r = router
     r.add(%r|/test/.*|, :path_for_generation => '/test/:variable', :name => :route).default_destination
@@ -71,12 +81,6 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_equal '/test/var', r.path(:route, "var")
     assert_equal '/test/var', r.path(:route, :variable => "var")
     assert_raises(HttpRouter::InvalidRouteException) { r.path(:route) }
-  end
-
-  def test_too_many_args
-    r = router
-    r.add('/', :name => :route).default_destination
-    assert_raises(HttpRouter::TooManyParametersException) { r.path(:route, "hi") }
   end
 
   def test_public_interface
