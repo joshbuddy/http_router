@@ -23,15 +23,16 @@ class TestMisc < MiniTest::Unit::TestCase
 
   def test_reseting
     r = HttpRouter.new { add('/hi').to(:test) }
-    assert r.recognize(Rack::MockRequest.env_for('/hi'))
+    assert !r.recognize(Rack::MockRequest.env_for('/hi')).empty?
     r.reset!
-    assert !r.recognize(Rack::MockRequest.env_for('/hi'))
+    assert_equal nil, r.recognize(Rack::MockRequest.env_for('/hi'))
   end
 
   def test_redirect_trailing_slash
     r = HttpRouter.new(:redirect_trailing_slash => true) { add('/hi').to(:test) }
-    response = r.recognize(Rack::MockRequest.env_for('/hi/'))
-    assert_equal nil, response
+    response = r.call(Rack::MockRequest.env_for('/hi/'))
+    assert_equal 302, response.first
+    assert_equal '/hi', response[1]['Location']
   end
 
   def test_multi_recognize

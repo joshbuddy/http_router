@@ -9,7 +9,7 @@ class HttpRouter
       end
 
       def uncompile
-        instance_eval "undef :[]; def [](req) raise 'uncompiled root'; end", __FILE__, __LINE__ if compiled?
+        instance_eval "undef :call; def call(req); raise 'uncompiled root'; end", __FILE__, __LINE__ if compiled?
       end
 
       def next_counter
@@ -33,7 +33,7 @@ class HttpRouter
       def compile(routes)
         routes.each {|route| add_route(route)}
         root.extend(root.methods_module)
-        instance_eval "def [](request)\n#{to_code}\nnil\nend", __FILE__, __LINE__
+        instance_eval "def call(request, &callback)\ncalled = false\n#{to_code}\ncallback ? called : nil\nend", __FILE__, __LINE__
         @compiled = true
       end
 

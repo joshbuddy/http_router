@@ -17,15 +17,16 @@ class HttpRouter
 
       def to_code
         path_ivar = inject_root_ivar(self)
-        "#{"if request.path.size == 1 && request.path.first == '' && (request.rack_request.head? || request.rack_request.get?) && request.rack_request.path_info[-1] == ?/
+        "#{"if !callback && request.path.size == 1 && request.path.first == '' && (request.rack_request.head? || request.rack_request.get?) && request.rack_request.path_info[-1] == ?/
           response = ::Rack::Response.new
           response.redirect(request.rack_request.path_info[0, request.rack_request.path_info.size - 1], 302)
           return response.finish
         end" if router.redirect_trailing_slash?}
 
         #{"if request.#{router.ignore_trailing_slash? ? 'path_finished?' : 'path.empty?'}" unless route.match_partially}
-          if request.as_iterator
-            request.matched_route(Response.new(request, #{path_ivar}))
+          if callback
+            called = true
+            callback.call(Response.new(request, #{path_ivar}))
           else
             env = request.rack_request.dup.env
             env['router.request'] = request

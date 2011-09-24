@@ -116,17 +116,22 @@ class HttpRouter
 
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.
-  def recognize(env)
-    response = call(env, true)
-    response && block_given? ? response.each{|r| yield r} : response
+  def recognize(env, &callback)
+    if callback
+      call(env, &callback)
+    else
+      matches = []
+      callback ||= Proc.new {|match| matches << match}
+      call(env, &callback) ? matches : nil
+    end
   end
 
   # Rack compatible #call. If matching route is found, and +dest+ value responds to #call, processing will pass to the matched route. Otherwise,
   # the default application will be called. The router will be available in the env under the key <tt>router</tt>. And parameters matched will
   # be available under the key <tt>router.params</tt>.
-  def call(env, as_iterator = false)
+  def call(env, &callback)
     compile
-    call(env, as_iterator)
+    call(env, &callback)
   end
   alias_method :compiling_call, :call
 
@@ -222,9 +227,8 @@ class HttpRouter
       test_env = ::Rack::Request.new(env.clone)
       test_env.env['REQUEST_METHOD'] = m
       test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
-      test_request = Request.new(test_env.path_info, test_env, true)
-      @root[test_request]
-      !test_request.matches.empty?
+      test_request = Request.new(test_env.path_info, test_env)
+      !@root.call(test_request).nil?
     end
     supported_methods.empty? ? @default_app.call(env) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
   end
@@ -237,20 +241,6 @@ class HttpRouter
   def inspect
     head = to_s
     "#{to_s}\n#{'=' * head.size}\n#{@root.inspect}"
-  end
-
-  def compile
-    return if @compiled
-    @root.compile(@routes)
-    @named_routes.each do |_, routes|
-      routes.sort!{|r1, r2| r2.max_param_count <=> r1.max_param_count }
-    end
-
-    instance_eval "undef :path;   alias :path   :raw_path
-                   undef :url;    alias :url    :raw_url
-                   undef :url_ns; alias :url_ns :raw_url_ns
-                   undef :call;   alias :call   :raw_call", __FILE__, __LINE__
-    @compiled = true
   end
 
   def uncompile
@@ -287,18 +277,31 @@ class HttpRouter
     raise(InvalidRouteException.new "No route (path) could be generated for #{route.inspect}")
   end
 
-  def raw_call(env, as_iterator = false)
+  def raw_call(env, &blk)
     rack_request = ::Rack::Request.new(env)
-    request = Request.new(rack_request.path_info, rack_request, as_iterator)
-    response = @root[request]
-    unless as_iterator
-      response or no_response(env)
+    request = Request.new(rack_request.path_info, rack_request)
+    if blk
+      @root.call(request, &blk)
     else
-      request.matches.empty? ? nil : request.matches
+      @root.call(request) or no_response(env)
     end
   end
 
   private
+  def compile
+    return if @compiled
+    @root.compile(@routes)
+    @named_routes.each do |_, routes|
+      routes.sort!{|r1, r2| r2.max_param_count <=> r1.max_param_count }
+    end
+
+    instance_eval "undef :path;   alias :path   :raw_path
+                   undef :url;    alias :url    :raw_url
+                   undef :url_ns; alias :url_ns :raw_url_ns
+                   undef :call;   alias :call   :raw_call", __FILE__, __LINE__
+    @compiled = true
+  end
+
   def add_with_request_method(path, method, opts = {}, &app)
     opts[:request_method] = method
     route = add(path, opts)
