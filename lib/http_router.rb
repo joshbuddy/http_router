@@ -290,11 +290,11 @@ class HttpRouter
   def raw_call(env, as_iterator = false)
     rack_request = ::Rack::Request.new(env)
     request = Request.new(rack_request.path_info, rack_request, as_iterator)
-    response = catch(:success) { @root[request] }
-    if as_iterator
-      request.matches.empty? ? nil : request.matches
-    else
+    response = @root[request]
+    unless as_iterator
       response or no_response(env)
+    else
+      request.matches.empty? ? nil : request.matches
     end
   end
 

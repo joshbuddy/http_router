@@ -8,14 +8,6 @@ class TestRecognition < MiniTest::Unit::TestCase
     EOT
   end
 
-  def test_passing
-    passed, working = router {
-      add('/').to { |env| throw :pass; [200, {}, ['pass']] }
-      add('/').to { |env| [200, {}, ['working']] }
-    }
-    assert_body 'working', router.call(Rack::MockRequest.env_for('/'))
-  end
-
   def test_non_path_matching
     passed, working = router {
       add(:conditions => {:user_agent => /MSIE/}).to { |env| [200, {}, ['IE']] }

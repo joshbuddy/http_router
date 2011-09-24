@@ -25,16 +25,14 @@ class HttpRouter
       end
 
       def to_code
-        lookup_ivar = inject_root_ivar(@map)
-        method_prefix = "lookup_#{root.next_counter} "
-        inject_root_methods @map.keys.map {|k| 
-          method = :"#{method_prefix}#{k}"
-          "define_method(#{method.inspect}) do |request|
-            part = request.path.shift
-            #{@map[k].map{|n| n.to_code} * "\n"}
-            request.path.unshift part
-          end"}.join("\n")
-        "send(\"#{method_prefix}\#{request.path.first}\", request) if !request.path_finished? && #{lookup_ivar}.key?(request.path.first)"
+        part_name = "part#{root.next_counter}"
+        "unless request.path_finished?
+          #{part_name} = request.path.shift
+          case #{part_name}
+            #{@map.map{|k, v| "when #{k.inspect}; #{v.map(&:to_code) * "\n"};"}}
+          end
+          request.path.unshift #{part_name}
+        end"
       end
     end
   end
