@@ -21,6 +21,7 @@ class HttpRouter
     end
 
     def path=(path)
+      @route.original_path = path
       if path.respond_to?(:[]) and path[/[^\\]\*$/]
         @route.match_partially = true
         @route.path_for_generation = path[0..path.size - 2]
@@ -61,6 +62,11 @@ class HttpRouter
         urlmount.url_mount = @router.url_mount if @router.url_mount
         @route.dest.url_mount = urlmount
       end
+      self
+    end
+
+    def head
+      @route.add_request_method "HEAD"
       self
     end
 

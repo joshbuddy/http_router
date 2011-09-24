@@ -6,7 +6,7 @@ class HttpRouter
 
     attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods
     attr_accessor :match_partially, :router, :host, :user_agent, :name, :ignore_trailing_slash,
-                  :path_for_generation, :path_validation_regex, :generator, :scheme
+                  :path_for_generation, :path_validation_regex, :generator, :scheme, :original_path
 
     def add_default_values(hash)
       @default_values ||= {}
