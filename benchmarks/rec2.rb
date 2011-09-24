@@ -38,7 +38,7 @@ TIMES = 50_000
 #simple_and_dynamic_env2 = Rack::MockRequest.env_for('/greedy/controller/action/id')
 #simple_and_dynamic_env3 = Rack::MockRequest.env_for('/greedy/hey.hello.html')
 u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
-5.times {
+#5.times {
   RBench.run(TIMES) do
 
     report "1 levels, static" do
@@ -70,5 +70,5 @@ u.call(Rack::MockRequest.env_for('/simple')).first == 200 or raise
     #end
 
   end
-}
+#}
 puts `ps -o rss= -p #{Process.pid}`.to_i
