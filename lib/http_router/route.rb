@@ -2,7 +2,7 @@ require 'set'
 
 class HttpRouter
   class Route
-    VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTION}
+    VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTIONS TRACE}
 
     attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods
     attr_accessor :match_partially, :router, :host, :user_agent, :name, :ignore_trailing_slash,
