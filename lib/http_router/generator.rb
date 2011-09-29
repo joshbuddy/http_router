@@ -3,7 +3,8 @@ class HttpRouter
     SCHEME_PORTS = {'http' => 80, 'https' => 443}
 
     class PathGenerator
-      attr_reader :path, :param_names
+      attr_reader :path
+      attr_accessor :param_names
       def initialize(route, path, validation_regex = nil)
         @route = route
         @path = path.dup

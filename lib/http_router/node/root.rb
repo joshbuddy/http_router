@@ -33,7 +33,7 @@ class HttpRouter
       def compile(routes)
         routes.each {|route| add_route(route)}
         root.extend(root.methods_module)
-        instance_eval "def call(request, &callback)\ncalled = false\n#{to_code}\ncallback ? called : nil\nend", __FILE__, __LINE__
+        instance_eval "def call(request, &callback)\ncalled = false\n#{to_code}\ncallback ? called : nil\nend"
         @compiled = true
       end
 
@@ -49,7 +49,7 @@ class HttpRouter
           start_index, end_index = 0, 1
           raw_paths, chars = [""], path_for_generation.split('')
           until chars.empty?
-          case fc = chars.first[0]
+            case chars.first[0]
             when ?(
               chars.shift
               (start_index...end_index).each { |path_index| raw_paths << raw_paths[path_index].dup }

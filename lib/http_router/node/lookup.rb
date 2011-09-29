@@ -29,7 +29,7 @@ class HttpRouter
         "unless request.path_finished?
           #{part_name} = request.path.shift
           case #{part_name}
-            #{@map.map{|k, v| "when #{k.inspect}; #{v.map(&:to_code) * "\n"};"}}
+            #{@map.map{|k, v| "when #{k.inspect}; #{v.map(&:to_code) * "\n"};"} * "\n"}
           end
           request.path.unshift #{part_name}
         end"
