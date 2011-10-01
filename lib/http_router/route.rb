@@ -40,7 +40,6 @@ class HttpRouter
       methods.each do |method|
         method = method.to_s.upcase
         raise unless VALID_HTTP_VERBS.include?(method)
-        @router.known_methods << method
         @request_methods << method
       end
     end

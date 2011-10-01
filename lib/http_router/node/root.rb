@@ -130,8 +130,8 @@ class HttpRouter
       def add_non_path_to_tree(route, node, path, param_names)
         node = node.add_host([route.host, route.other_hosts].flatten.compact) if route.host or route.other_hosts
         node = node.add_user_agent(route.user_agent) if route.user_agent
-        node = node.add_request_method(route.request_methods) if route.request_methods
         node = node.add_scheme(route.scheme) if route.scheme
+        node = node.add_request_method(route.request_methods) if route.request_methods
         path_obj = node.add_destination(route, path, param_names)
         path_obj
       end

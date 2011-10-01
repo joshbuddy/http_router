@@ -25,7 +25,7 @@ class HttpRouter
   # Raised when there are left over options
   LeftOverOptions             = Class.new(RuntimeError)
 
-  attr_reader :root, :routes, :known_methods, :named_routes, :nodes
+  attr_reader :root, :routes, :named_routes, :nodes
   attr_accessor :default_app, :url_mount, :route_class, :default_host, :default_port, :default_scheme
 
   # Creates a new HttpRouter.
@@ -35,14 +35,12 @@ class HttpRouter
   # * :default_app -- Default application used if there is a non-match on #call. Defaults to 404 generator.
   # * :ignore_trailing_slash -- Ignore a trailing / when attempting to match. Defaults to +true+.
   # * :redirect_trailing_slash -- On trailing /, redirect to the same path without the /. Defaults to +false+.
-  # * :known_methods -- Array of http methods tested for 405s.
   def initialize(*args, &blk)
     default_app, options     = args.first.is_a?(Hash) ? [nil, args.first] : [args.first, args[1]]
     @options                 = options
     @default_app             = default_app || options && options[:default_app] || proc{|env| ::Rack::Response.new("Not Found", 404, {'X-Cascade' => 'pass'}).finish }
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
-    @known_methods           = Set.new(options && options[:known_methods] || [])
     @route_class             = Route
     reset!
     instance_eval(&blk) if blk
@@ -221,21 +219,14 @@ class HttpRouter
     env['PATH_INFO'] = ''
   end
 
-  def no_response(env)
-    supported_methods = @known_methods.select do |m|
-      next if m == env['REQUEST_METHOD']
-      test_env = ::Rack::Request.new(env.clone)
-      test_env.env['REQUEST_METHOD'] = m
-      test_env.env['_HTTP_ROUTER_405_TESTING_ACCEPTANCE'] = true
-      test_request = Request.new(test_env.path_info, test_env)
-      !@root.call(test_request).nil?
-    end
-    supported_methods.empty? ? @default_app.call(env) : [405, {'Allow' => supported_methods.sort.join(", ")}, []]
+  def no_response(request, env)
+    request.acceptable_methods.empty? ?
+      @default_app.call(env) : [405, {'Allow' => request.acceptable_methods.sort.join(", ")}, []]
   end
 
   def to_s
     compile
-    "#<HttpRouter:0x#{object_id.to_s(16)} number of routes (#{routes.size}) ignore_trailing_slash? (#{ignore_trailing_slash?}) redirect_trailing_slash? (#{redirect_trailing_slash?}) known_methods (#{known_methods.to_a.join(', ')})>"
+    "#<HttpRouter:0x#{object_id.to_s(16)} number of routes (#{routes.size}) ignore_trailing_slash? (#{ignore_trailing_slash?}) redirect_trailing_slash? (#{redirect_trailing_slash?})>"
   end
 
   def inspect
@@ -283,7 +274,7 @@ class HttpRouter
     if blk
       @root.call(request, &blk)
     else
-      @root.call(request) or no_response(env)
+      @root.call(request) or no_response(request, env)
     end
   end
 
