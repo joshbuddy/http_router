@@ -25,7 +25,7 @@ class HttpRouter
 
         #{"if request.#{router.ignore_trailing_slash? ? 'path_finished?' : 'path.empty?'}" unless route.match_partially}
           if callback
-            called = true
+            request.called = true
             callback.call(Response.new(request, #{path_ivar}))
           else
             env = request.rack_request.dup.env

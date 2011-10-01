@@ -33,7 +33,7 @@ class HttpRouter
       def compile(routes)
         routes.each {|route| add_route(route)}
         root.extend(root.methods_module)
-        instance_eval "def call(request, &callback)\ncalled = false\n#{to_code}\ncallback ? called : nil\nend"
+        instance_eval "def call(request, &callback)\n#{to_code}\nnil\nend"
         @compiled = true
       end
 

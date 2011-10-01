@@ -25,6 +25,8 @@ class HttpRouter
   # Raised when there are left over options
   LeftOverOptions             = Class.new(RuntimeError)
 
+  RecognizeResponse           = Struct.new(:matches, :acceptable_methods)
+
   attr_reader :root, :routes, :named_routes, :nodes
   attr_accessor :default_app, :url_mount, :route_class, :default_host, :default_port, :default_scheme
 
@@ -85,7 +87,8 @@ class HttpRouter
   # Example:
   #   router = HttpRouter.new { extend_route { attr_accessor :controller } }
   #   router.add('/foo', :controller => :foo).to{|env| [200, {}, ['foo!']]}
-  #   router.recognize(Rack::MockRequest.env_for('/foo')).first.route.controller
+  #   matches, other_methods = router.recognize(Rack::MockRequest.env_for('/foo'))
+  #   matches.first.route.controller
   #   # ==> :foo
   def extend_route(&blk)
     @route_class = Class.new(Route) if @route_class == Route
@@ -116,11 +119,13 @@ class HttpRouter
   # matching routes or nil if no match was found.
   def recognize(env, &callback)
     if callback
-      call(env, &callback)
+      request = call(env, &callback)
+      [request.called?, request.acceptable_methods]
     else
       matches = []
       callback ||= Proc.new {|match| matches << match}
-      call(env, &callback) ? matches : nil
+      request = call(env, &callback)
+      [matches.empty? ? nil : matches, request.acceptable_methods]
     end
   end
 
@@ -273,6 +278,7 @@ class HttpRouter
     request = Request.new(rack_request.path_info, rack_request)
     if blk
       @root.call(request, &blk)
+      request
     else
       @root.call(request) or no_response(request, env)
     end

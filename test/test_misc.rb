@@ -7,8 +7,9 @@ class TestMisc < MiniTest::Unit::TestCase
     r2.add('/test2', :name => :test).to(:test2)
     assert_equal 2, r2.routes.size
 
-    assert_equal nil, r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2')))
-    assert r2.recognize(Rack::MockRequest.env_for('/test2'))
+    matches, other_methods = r1.recognize(Rack::Request.new(Rack::MockRequest.env_for('/test2')))
+    assert_equal nil, matches
+    assert r2.recognize(Rack::MockRequest.env_for('/test2')).first
     assert_equal r1.routes.size, 1
     assert_equal r2.routes.size, 2
 
@@ -22,10 +23,12 @@ class TestMisc < MiniTest::Unit::TestCase
   end
 
   def test_reseting
-    r = HttpRouter.new { add('/hi').to(:test) }
-    assert !r.recognize(Rack::MockRequest.env_for('/hi')).empty?
-    r.reset!
-    assert_equal nil, r.recognize(Rack::MockRequest.env_for('/hi'))
+    router = HttpRouter.new
+    r = router.add('/hi').to(:test)
+    matches, other_methods = router.recognize(Rack::MockRequest.env_for('/hi'))
+    assert_equal r.route, matches.first.route
+    router.reset!
+    assert_equal nil, router.recognize(Rack::MockRequest.env_for('/hi')).first
   end
 
   def test_redirect_trailing_slash
@@ -43,11 +46,11 @@ class TestMisc < MiniTest::Unit::TestCase
       add('/:var1/there')
     }
     response = router.recognize(Rack::MockRequest.env_for('/hi/there'))
-    assert_equal [r1, r2, r3, r4], response.map{|resp| resp.path.route}
+    assert_equal [r1, r2, r3, r4], response.first.map{|resp| resp.path.route}
     response = router.recognize(Rack::MockRequest.env_for('/hi/var'))
-    assert_equal [r2, r3], response.map{|resp| resp.path.route}
+    assert_equal [r2, r3], response.first.map{|resp| resp.path.route}
     response = router.recognize(Rack::MockRequest.env_for('/you/there'))
-    assert_equal [r2, r4], response.map{|resp| resp.path.route}
+    assert_equal [r2, r4], response.first.map{|resp| resp.path.route}
   end
 
   def test_multi_name_gen

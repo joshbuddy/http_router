@@ -1,8 +1,10 @@
 class HttpRouter
   class Request
-    attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with
-    alias_method :rack, :rack_request
+    attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with, :called
     attr_reader :acceptable_methods
+    alias_method :rack, :rack_request
+    alias_method :called?, :called
+
     def initialize(path, rack_request)
       @rack_request = rack_request
       @path = URI.unescape(path).split(/\//)
