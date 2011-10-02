@@ -84,5 +84,9 @@ class HttpRouter
       @name = name
       @router.named_routes[name] << self
     end
+
+    def param_names
+      @generator.param_names
+    end
   end
 end

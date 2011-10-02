@@ -3,9 +3,9 @@ require 'minitest/autorun'
 require 'phocus'
 
 class HttpRouter
-  class RouteProxy
+  module RouteHelper
     def default_destination
-      @route.dest = proc {|env| ::Rack::Response.new("Routing to #{@route.object_id}").finish}
+      to proc {|env| ::Rack::Response.new("Routing to #{object_id}").finish}
       self
     end
   end
@@ -50,12 +50,10 @@ class MiniTest::Unit::TestCase
     when String
       router.reset!
       router.add(route)
-    when HttpRouter::RouteProxy
-      route.route
     else
       route
     end
-    HttpRouter::RouteProxy.new(route).default_destination if route && route.dest.nil?
+    route.default_destination if route && route.dest.nil?
     request = Rack::MockRequest.env_for(request) if request.is_a?(String)
     response = @router.call(request)
     if route

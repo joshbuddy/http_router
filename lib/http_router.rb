@@ -8,7 +8,7 @@ require 'http_router/request'
 require 'http_router/response'
 require 'http_router/route'
 require 'http_router/generator'
-require 'http_router/route_proxy'
+require 'http_router/route_helper'
 require 'http_router/regex_route_generation'
 require 'http_router/rack'
 require 'http_router/util'
@@ -28,7 +28,8 @@ class HttpRouter
   RecognizeResponse           = Struct.new(:matches, :acceptable_methods)
 
   attr_reader :root, :routes, :named_routes, :nodes
-  attr_accessor :default_app, :url_mount, :route_class, :default_host, :default_port, :default_scheme
+  attr_writer :route_class
+  attr_accessor :default_app, :url_mount, :default_host, :default_port, :default_scheme
 
   # Creates a new HttpRouter.
   # Can be called with either <tt>HttpRouter.new(proc{|env| ... }, { .. options .. })</tt> or with the first argument omitted.
@@ -69,11 +70,10 @@ class HttpRouter
     path = args.first
     route = route_class.new
     add_route route
-    proxy = RouteProxy.new(route)
-    proxy.path = path if path
-    proxy.process_opts(opts) if opts
-    path.to(app) if app
-    proxy
+    route.path = path if path
+    route.process_opts(opts) if opts
+    route.to(app) if app
+    route
   end
 
   def add_route(route)
@@ -93,6 +93,14 @@ class HttpRouter
   def extend_route(&blk)
     @route_class = Class.new(Route) if @route_class == Route
     @route_class.class_eval(&blk)
+    @extended_route_class = nil
+  end
+
+  def route_class
+    @extended_route_class ||= begin
+      @route_class.send(:include, RouteHelper)
+      @route_class
+    end
   end
 
   # Adds a path that only responds to the request method +GET+.

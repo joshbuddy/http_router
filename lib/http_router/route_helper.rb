@@ -1,41 +1,25 @@
 class HttpRouter
-  class RouteProxy
-    attr_reader :route
-
-    def initialize(route)
-      @route = route
-      @router = route.router
-    end
-
-    def method_missing(name, *args, &blk)
-      if @route.respond_to?(name)
-        @route.send(name, *args, &blk)
-        self
-      else
-        super
-      end
-    end
-
+  module RouteHelper
     def path
       @route.path_for_generation
     end
 
     def path=(path)
-      @route.original_path = path
+      @original_path = path
       if path.respond_to?(:[]) and path[/[^\\]\*$/]
-        @route.match_partially = true
-        @route.path_for_generation = path[0..path.size - 2]
+        @match_partially = true
+        @path_for_generation = path[0..path.size - 2]
       else
-        @route.path_for_generation = path
+        @path_for_generation = path
       end
     end
 
     def name(name = nil)
       if name
-        route.name = name
+        @name = name
         self
       else
-        route.name
+        @name
       end
     end
 
@@ -45,48 +29,48 @@ class HttpRouter
         opts.delete(:conditions)
       end
       opts.each do |k, v|
-        if @route.respond_to?(:"#{k}=")
-          @route.send(:"#{k}=", v)
-        elsif @route.respond_to?(:"add_#{k}")
+        if respond_to?(:"#{k}=")
+          send(:"#{k}=", v)
+        elsif respond_to?(:"add_#{k}")
           send(:"add_#{k}", v)
         else
-          @route.add_match_with(k => v)
+          add_match_with(k => v)
         end
       end
     end
 
     def to(dest = nil, &dest_block)
-      @route.dest = dest || dest_block || raise("you didn't specify a destination")
-      if @route.dest.respond_to?(:url_mount=)
-        urlmount = UrlMount.new(@route.path_for_generation, @route.default_values || {}) # TODO url mount should accept nil here.
+      @dest = dest || dest_block || raise("you didn't specify a destination")
+      if @dest.respond_to?(:url_mount=)
+        urlmount = UrlMount.new(@path_for_generation, @default_values || {}) # TODO url mount should accept nil here.
         urlmount.url_mount = @router.url_mount if @router.url_mount
-        @route.dest.url_mount = urlmount
+        @dest.url_mount = urlmount
       end
       self
     end
 
     def head
-      @route.add_request_method "HEAD"
+      add_request_method "HEAD"
       self
     end
 
     def get
-      @route.add_request_method "GET"
+      add_request_method "GET"
       self
     end
 
     def post
-      @route.add_request_method "POST"
+      add_request_method "POST"
       self
     end
 
     def put
-      @route.add_request_method "PUT"
+      add_request_method "PUT"
       self
     end
 
     def delete
-      @route.add_request_method "DELETE"
+      add_request_method "DELETE"
       self
     end
 
@@ -102,7 +86,7 @@ class HttpRouter
 
     # Sets the destination of this route to serve static files from either a directory or a single file.
     def static(root)
-      @route.match_partially = true if File.directory?(root)
+      @match_partially = true if File.directory?(root)
       to File.directory?(root) ?
         ::Rack::File.new(root) :
         proc {|env| 

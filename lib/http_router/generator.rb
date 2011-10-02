@@ -59,6 +59,10 @@ class HttpRouter
       end
     end
 
+    def param_names
+      @param_names ||= @path_generators.map{|path| path.param_names}.flatten.uniq
+    end
+
     def max_param_count
       @max_param_count ||= @path_generators.map{|p| p.param_names.size}.max
     end

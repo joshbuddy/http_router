@@ -26,7 +26,7 @@ class TestMisc < MiniTest::Unit::TestCase
     router = HttpRouter.new
     r = router.add('/hi').to(:test)
     matches, other_methods = router.recognize(Rack::MockRequest.env_for('/hi'))
-    assert_equal r.route, matches.first.route
+    assert_equal r, matches.first.route
     router.reset!
     assert_equal nil, router.recognize(Rack::MockRequest.env_for('/hi')).first
   end
@@ -65,9 +65,9 @@ class TestMisc < MiniTest::Unit::TestCase
 
   def test_yielding_from_recognize
     r = HttpRouter.new
-    r1 = r.add('/:name').default_destination.route
-    r2 = r.add('/:name').default_destination.route
-    r3 = r.add('/:name').default_destination.route
+    r1 = r.add('/:name').default_destination
+    r2 = r.add('/:name').default_destination
+    r3 = r.add('/:name').default_destination
     matches = []
     r.recognize(Rack::MockRequest.env_for('/test')) { |r| matches << r.route }
     assert_equal [r1, r2, r3], matches
