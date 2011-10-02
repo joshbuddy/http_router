@@ -9,6 +9,7 @@ require 'http_router/response'
 require 'http_router/route'
 require 'http_router/generator'
 require 'http_router/route_helper'
+require 'http_router/generation_helper'
 require 'http_router/regex_route_generation'
 require 'http_router/rack'
 require 'http_router/util'
@@ -99,6 +100,7 @@ class HttpRouter
   def route_class
     @extended_route_class ||= begin
       @route_class.send(:include, RouteHelper)
+      @route_class.send(:include, GenerationHelper)
       @route_class
     end
   end

@@ -16,10 +16,38 @@ class HttpRouter
 
     def name(name = nil)
       if name
-        @name = name
+        self.name = name
         self
       else
         @name
+      end
+    end
+
+    def add_default_values(hash)
+      @default_values ||= {}
+      @default_values.merge!(hash)
+    end
+
+    def add_match_with(matchers)
+      @match_with ||= {}
+      @match_with.merge!(matchers)
+    end
+
+    def add_other_host(hosts)
+      (@other_hosts ||= []).concat(hosts)
+    end
+
+    def add_path(path)
+      (@paths ||= []) << path
+    end
+
+    def add_request_method(methods)
+      @request_methods ||= Set.new
+      methods = [methods] unless methods.is_a?(Array)
+      methods.each do |method|
+        method = method.to_s.upcase
+        raise unless Route::VALID_HTTP_VERBS.include?(method)
+        @request_methods << method
       end
     end
 
