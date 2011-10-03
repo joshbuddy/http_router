@@ -218,7 +218,7 @@ class HttpRouter
   def clone(klass = self.class)
     cloned_router = klass.new(@options)
     @routes.each do |route|
-      new_route = route.clone(cloned_router)
+      new_route = route.create_clone(cloned_router)
       cloned_router.add_route(new_route)
     end
     cloned_router

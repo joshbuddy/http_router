@@ -8,8 +8,8 @@ class HttpRouter
     attr_accessor :match_partially, :router, :host, :user_agent, :ignore_trailing_slash,
                   :path_for_generation, :path_validation_regex, :generator, :scheme, :original_path, :dest
 
-    def clone(new_router)
-      r = super()
+    def create_clone(new_router)
+      r = clone
       r.dest = (begin; dest.clone; rescue; dest; end)
       r
     end
