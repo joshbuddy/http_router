@@ -132,11 +132,6 @@ class HttpRouter
   # Adds a path that only responds to the request method +OPTIONS+.
   #
   # Returns the route object.
-  def patch(path, opts = {}, &app); add_with_request_method(path, :patch, opts, &app); end
-
-  # Adds a path that only responds to the request method +OPTIONS+.
-  #
-  # Returns the route object.
   def trace(path, opts = {}, &app); add_with_request_method(path, :trace, opts, &app); end
 
   # Adds a path that only responds to the request method +OPTIONS+.
