@@ -11,7 +11,6 @@ require 'http_router/generator'
 require 'http_router/route_helper'
 require 'http_router/generation_helper'
 require 'http_router/regex_route_generation'
-require 'http_router/rack'
 require 'http_router/util'
 
 class HttpRouter
