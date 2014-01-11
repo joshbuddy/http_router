@@ -12,7 +12,7 @@ class HttpRouter
           request.path = remaining_path.split('/')
           #{node_to_code}
           request.path = _#{whole_path_var}
-          request.params.slice!(#{-params_count.size}, #{params_count})
+          request.params.slice!(#{-params_count}, #{params_count})
         end
         "
       end
