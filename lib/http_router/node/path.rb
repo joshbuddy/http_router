@@ -6,7 +6,8 @@ class HttpRouter
       def initialize(router, parent, route, path, param_names = [])
         @route, @path, @param_names, @dynamic = route, path, param_names, !param_names.empty?
         @route.add_path(self)
-        raise AmbiguousVariableException, "You have duplicate variable name present: #{param_names.join(', ')}" if param_names.uniq.size != param_names.size
+
+        raise AmbiguousVariableException, "You have duplicate variable names present: #{duplicates.join(', ')}" if param_names.uniq.size != param_names.size
         super router, parent
         router.uncompile
       end
@@ -45,6 +46,10 @@ class HttpRouter
 
       def inspect_label
         "Path: #{path.inspect} for route #{route.name || 'unnamed route'} to #{route.dest.inspect}"
+      end
+
+      def duplicates
+        param_names.group_by { |e| e }.select { |k, v| v.size > 1 }.map(&:first)
       end
     end
   end

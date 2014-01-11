@@ -87,6 +87,12 @@ class TestMisc < MiniTest::Unit::TestCase
     assert_raises(HttpRouter::InvalidRouteException) { r.path(:route) }
   end
 
+  def test_ambigiuous_parameters_in_route
+    r = router
+    r.add("/abc/:id/test/:id", :name => :route).default_destination
+    assert_raises(HttpRouter::AmbiguousVariableException) { r.path(:route, :id => 'fail') }
+  end
+
   def test_public_interface
     methods = HttpRouter.public_instance_methods.map(&:to_sym)
     assert methods.include?(:url_mount)

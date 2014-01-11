@@ -24,6 +24,8 @@ class HttpRouter
   TooManyParametersException  = Class.new(RuntimeError)
   # Raised when there are left over options
   LeftOverOptions             = Class.new(RuntimeError)
+  # Raised when there are duplicate param names specified in a Path
+  AmbiguousVariableException  = Class.new(RuntimeError)
 
   RecognizeResponse           = Struct.new(:matches, :acceptable_methods)
 
