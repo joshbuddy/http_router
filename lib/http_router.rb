@@ -131,15 +131,20 @@ class HttpRouter
   # Returns the route object.
   def patch(path, opts = {}, &app); add_with_request_method(path, :patch, opts, &app); end
 
-  # Adds a path that only responds to the request method +OPTIONS+.
+  # Adds a path that only responds to the request method +TRACE+.
   #
   # Returns the route object.
   def trace(path, opts = {}, &app); add_with_request_method(path, :trace, opts, &app); end
 
-  # Adds a path that only responds to the request method +OPTIONS+.
+  # Adds a path that only responds to the request method +CONNECT+.
   #
   # Returns the route object.
   def connect(path, opts = {}, &app); add_with_request_method(path, :connect, opts, &app); end
+
+  # Adds a path that only responds to the request method +OPTIONS+.
+  #
+  # Returns the route object.
+  def options(path, opts = {}, &app); add_with_request_method(path, :options, opts, &app); end
 
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.
