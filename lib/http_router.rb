@@ -106,40 +106,19 @@ class HttpRouter
     end
   end
 
+  # Creates helper methods for each supported HTTP verb, except GET, which is
+  # a special case that accepts both GET and HEAD requests.
+  Route::VALID_HTTP_VERBS_WITHOUT_GET.each do |request_method|
+    request_method_symbol = request_method.downcase.to_sym
+    define_method(request_method_symbol) do |path, opts = {}, &app|
+      add_with_request_method(path, request_method_symbol, opts, &app)
+    end
+  end
+
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
   def get(path, opts = {}, &app); add_with_request_method(path, [:get, :head], opts, &app); end
-
-  # Adds a path that only responds to the request method +POST+.
-  #
-  # Returns the route object.
-  def post(path, opts = {}, &app); add_with_request_method(path, :post, opts, &app); end
-
-  # Adds a path that only responds to the request method +DELETE+.
-  #
-  # Returns the route object.
-  def delete(path, opts = {}, &app); add_with_request_method(path, :delete, opts, &app); end
-
-  # Adds a path that only responds to the request method +PUT+.
-  #
-  # Returns the route object.
-  def put(path, opts = {}, &app); add_with_request_method(path, :put, opts, &app); end
-
-  # Adds a path that only responds to the request method +PATCH+.
-  #
-  # Returns the route object.
-  def patch(path, opts = {}, &app); add_with_request_method(path, :patch, opts, &app); end
-
-  # Adds a path that only responds to the request method +OPTIONS+.
-  #
-  # Returns the route object.
-  def trace(path, opts = {}, &app); add_with_request_method(path, :trace, opts, &app); end
-
-  # Adds a path that only responds to the request method +OPTIONS+.
-  #
-  # Returns the route object.
-  def connect(path, opts = {}, &app); add_with_request_method(path, :connect, opts, &app); end
 
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.

@@ -46,7 +46,9 @@ class HttpRouter
       methods = [methods] unless methods.is_a?(Array)
       methods.each do |method|
         method = method.to_s.upcase
-        raise unless Route::VALID_HTTP_VERBS.include?(method)
+        unless Route::VALID_HTTP_VERBS.include?(method)
+          raise ArgumentError, "Unsupported HTTP request method: #{method}"
+        end
         @request_methods << method
       end
     end
@@ -77,28 +79,17 @@ class HttpRouter
       self
     end
 
-    def head
-      add_request_method "HEAD"
-      self
+    # Creates helper methods for each supported HTTP verb.
+    Route::VALID_HTTP_VERBS_WITHOUT_GET.each do |request_method|
+      define_method(request_method.downcase) do
+        add_request_method(request_method)
+        self
+      end
     end
 
     def get
-      add_request_method "GET"
-      self
-    end
-
-    def post
-      add_request_method "POST"
-      self
-    end
-
-    def put
-      add_request_method "PUT"
-      self
-    end
-
-    def delete
-      add_request_method "DELETE"
+      add_request_method("GET")
+      add_request_method("HEAD")
       self
     end
 
