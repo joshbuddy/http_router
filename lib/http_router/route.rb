@@ -2,7 +2,9 @@ require 'set'
 
 class HttpRouter
   class Route
-    VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTIONS TRACE}
+    # The list of HTTP request methods supported by HttpRouter.
+    VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTIONS TRACE PATCH OPTIONS LINK UNLINK}
+    VALID_HTTP_VERBS_WITHOUT_GET = VALID_HTTP_VERBS - %w{GET}
 
     attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods, :name
     attr_accessor :match_partially, :router, :host, :user_agent, :ignore_trailing_slash,
