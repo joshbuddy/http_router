@@ -59,11 +59,11 @@ Routes will not be recognized unless `#to` has been called on it.
 
 Generates a route. The args can either be a hash, a list, or a mix of both.
 
-### `#call(env or Rack::Request)`
+### `#call(env)`
 
-Recognizes and dispatches the request.
+Recognizes and dispatches the request. `env` should be a Hash representing the rack environment. 
 
-### `#recognize(env or Rack::Request)`
+### `#recognize(env)`
 
-Only performs recognition.
+Only performs recognition. `env` should be a Hash representing the rack environment.
 
