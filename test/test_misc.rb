@@ -118,4 +118,10 @@ class TestMisc < MiniTest::Unit::TestCase
     assert router.inspect.match(/^#<HttpRouter:0x[0-9a-f-]+ number of routes \(3\) ignore_trailing_slash\? \(true\) redirect_trailing_slash\? \(false\)>/)
     assert router.inspect.match(/Path: "\/test" for route unnamed route to :test3/)
   end
+
+  def test_naming_route_with_no_router
+    route = HttpRouter::Route.new
+    route.name = 'named_route'
+    assert_equal 'named_route', route.name
+  end
 end

@@ -26,7 +26,7 @@ class HttpRouter
 
     def name=(name)
       @name = name
-      router.named_routes[name] << self
+      router.named_routes[name] << self if router
     end
   end
 end
