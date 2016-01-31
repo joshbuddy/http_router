@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'url_mount',    '~> 0.2.1'
   s.add_development_dependency 'minitest', '~> 2.0.0'
   s.add_development_dependency 'code_stats'
-  s.add_development_dependency 'rake',     '~> 10.5.0'
+  s.add_development_dependency 'rake',     '~> 0.8.7'
   s.add_development_dependency 'rbench'
   s.add_development_dependency 'json'
   s.add_development_dependency 'phocus'
