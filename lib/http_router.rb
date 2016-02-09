@@ -225,7 +225,7 @@ class HttpRouter
       env['PATH_INFO'] = "/"
       env['SCRIPT_NAME'] += path_info_before
     else
-      env['PATH_INFO'] = "/#{request.path.join('/')}"
+      env['PATH_INFO'] = "/#{URI.encode(request.path.join('/'))}"
       env['SCRIPT_NAME'] += path_info_before[0, path_info_before.size - env['PATH_INFO'].size]
     end
   end
