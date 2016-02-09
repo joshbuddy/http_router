@@ -72,4 +72,22 @@ class TestRouteExtensions < MiniTest::Unit::TestCase
     router.call(Rack::MockRequest.env_for("/sidekiq"))
     assert_equal('/sidekiq', request_env['SCRIPT_NAME'])
   end
+
+  def test_path_info_with_encoded_request_path
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues/some%20path"))
+    assert_equal('/queues/some%20path', request_env['PATH_INFO'])
+  end
+
+  def test_script_name_with_encoded_request_path
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues/some%20path"))
+    assert_equal('/sidekiq', request_env['SCRIPT_NAME'])
+  end
 end
