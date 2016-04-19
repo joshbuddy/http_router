@@ -6,7 +6,7 @@ class HttpRouter
     VALID_HTTP_VERBS = %w{GET POST PUT DELETE HEAD OPTIONS TRACE PATCH OPTIONS LINK UNLINK}
     VALID_HTTP_VERBS_WITHOUT_GET = VALID_HTTP_VERBS - %w{GET}
 
-    attr_reader :default_values, :router, :match_partially, :other_hosts, :paths, :request_methods, :name
+    attr_reader :default_values, :other_hosts, :paths, :request_methods, :name
     attr_accessor :match_partially, :router, :host, :user_agent, :ignore_trailing_slash,
                   :path_for_generation, :path_validation_regex, :generator, :scheme, :original_path, :dest
 
