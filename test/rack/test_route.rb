@@ -36,4 +36,58 @@ class TestRouteExtensions < MiniTest::Unit::TestCase
   def test_raise_error_on_invalid_status
     assert_raises(ArgumentError) { router.get("/index.html").redirect("/", 200) }
   end
+
+  def test_path_info_from_partial_match
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues"))
+    assert_equal('/queues', request_env['PATH_INFO'])
+  end
+
+  def test_script_name_from_partial_match
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues"))
+    assert_equal('/sidekiq', request_env['SCRIPT_NAME'])
+  end
+
+  def test_path_info_from_partial_match_of_single
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq"))
+    assert_equal('/', request_env['PATH_INFO'])
+  end
+
+  def test_script_name_from_partial_match_of_single
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq"))
+    assert_equal('/sidekiq', request_env['SCRIPT_NAME'])
+  end
+
+  def test_path_info_with_encoded_request_path
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues/some%20path"))
+    assert_equal('/queues/some%20path', request_env['PATH_INFO'])
+  end
+
+  def test_script_name_with_encoded_request_path
+    request_env = nil
+    router do
+      add("/sidekiq*").to { |env| request_env = env; [200, {}, []] }
+    end
+    router.call(Rack::MockRequest.env_for("/sidekiq/queues/some%20path"))
+    assert_equal('/sidekiq', request_env['SCRIPT_NAME'])
+  end
 end

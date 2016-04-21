@@ -220,8 +220,14 @@ class HttpRouter
   end
 
   def rewrite_partial_path_info(env, request)
-    env['PATH_INFO'] = "/#{request.path.join('/')}"
-    env['SCRIPT_NAME'] += request.rack_request.path_info[0, request.rack_request.path_info.size - env['PATH_INFO'].size]
+    path_info_before = request.rack_request.path_info.dup
+    if request.path.empty?
+      env['PATH_INFO'] = "/"
+      env['SCRIPT_NAME'] += path_info_before
+    else
+      env['PATH_INFO'] = "/#{URI.encode(request.path.join('/'))}"
+      env['SCRIPT_NAME'] += path_info_before[0, path_info_before.size - env['PATH_INFO'].size]
+    end
   end
 
   def rewrite_path_info(env, request)
