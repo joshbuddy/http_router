@@ -1,3 +1,5 @@
+require 'addressable/uri'
+
 class HttpRouter
   class Request
     attr_accessor :path, :params, :rack_request, :extra_env, :continue, :passed_with, :called
@@ -7,7 +9,7 @@ class HttpRouter
 
     def initialize(path, rack_request)
       @rack_request = rack_request
-      @path = URI.unescape(path).split(/\//)
+      @path = Addressable::URI.unescape(path).split(/\//)
       @path.shift if @path.first == ''
       @path.push('') if path[-1] == ?/
       @extra_env = {}

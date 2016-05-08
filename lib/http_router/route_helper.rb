@@ -108,7 +108,7 @@ class HttpRouter
       @match_partially = true if File.directory?(root)
       to File.directory?(root) ?
         ::Rack::File.new(root) :
-        proc {|env| 
+        proc {|env|
           env['PATH_INFO'] = File.basename(root)
           ::Rack::File.new(File.dirname(root)).call(env)
         }

@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   # dependencies
   s.add_runtime_dependency 'rack',         '>= 1.0.0'
   s.add_runtime_dependency 'url_mount',    '~> 0.2.1'
+  s.add_runtime_dependency 'addressable',   '~> 2.4'
   s.add_development_dependency 'minitest', '~> 2.0.0'
   s.add_development_dependency 'code_stats'
   s.add_development_dependency 'rake',     '~> 0.8.7'
