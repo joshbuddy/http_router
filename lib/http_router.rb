@@ -47,6 +47,7 @@ class HttpRouter
     @ignore_trailing_slash   = options && options.key?(:ignore_trailing_slash) ? options[:ignore_trailing_slash] : true
     @redirect_trailing_slash = options && options.key?(:redirect_trailing_slash) ? options[:redirect_trailing_slash] : false
     @route_class             = Route
+    @compiled                = false
     reset!
     instance_eval(&blk) if blk
   end
@@ -118,7 +119,9 @@ class HttpRouter
   # Adds a path that only responds to the request method +GET+.
   #
   # Returns the route object.
-  def get(path, opts = {}, &app); add_with_request_method(path, [:get, :head], opts, &app); end
+  def get(path, opts = {}, &app)
+    add_with_request_method(path, [:get, :head], opts, &app)
+  end
 
   # Performs recoginition without actually calling the application and returns an array of all
   # matching routes or nil if no match was found.

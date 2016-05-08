@@ -26,6 +26,6 @@ class HttpRouter
       def inspect_label
         "#{self.class.name.split("::").last} #{tests.inspect} (#{@matchers.size} matchers)"
       end
-     end
+    end
   end
 end

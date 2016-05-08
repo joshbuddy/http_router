@@ -1,3 +1,5 @@
+require 'addressable/uri'
+
 class HttpRouter
   class Generator
     SCHEME_PORTS = {'http' => 80, 'https' => 443}
@@ -36,13 +38,13 @@ class HttpRouter
             instance_eval <<-EOT, __FILE__, __LINE__ + 1
             def generate(args, options)
               generated_path = \"#{code}\"
-              #{validation_regex.inspect}.match(generated_path) ? URI.escape(generated_path) : nil
+              #{validation_regex.inspect}.match(generated_path) ? Addressable::URI.escape(generated_path) : nil
             end
             EOT
           else
             instance_eval <<-EOT, __FILE__, __LINE__ + 1
             def generate(args, options)
-              URI.escape(\"#{code}\")
+              Addressable::URI.escape(\"#{code}\")
             end
             EOT
           end
@@ -55,7 +57,7 @@ class HttpRouter
       @router = @route.router
       @route.generator = self
       @path_generators = @paths.map do |p|
-        generator = PathGenerator.new(route, p.is_a?(String) ? p : route.path_for_generation, p.is_a?(Regexp) ? p : nil)
+        PathGenerator.new(route, p.is_a?(String) ? p : route.path_for_generation, p.is_a?(Regexp) ? p : nil)
       end
     end
 
