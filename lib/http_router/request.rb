@@ -7,7 +7,7 @@ class HttpRouter
 
     def initialize(path, rack_request)
       @rack_request = rack_request
-      @path = URI:DEFAULT_PARSER.unescape(path).split(/\//)
+      @path = URI::DEFAULT_PARSER.unescape(path).split(/\//)
       @path.shift if @path.first == ''
       @path.push('') if path[-1] == ?/
       @extra_env = {}
