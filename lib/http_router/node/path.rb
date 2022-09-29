@@ -29,7 +29,7 @@ class HttpRouter
             request.called = true
             callback.call(Response.new(request, #{path_ivar}))
           else
-            env = request.rack_request.dup.env
+            env = request.rack_request.env
             env['router.request'] = request
             env['router.params'] ||= {}
             #{"env['router.params'].merge!(Hash[#{param_names.inspect}.zip(request.params)])" if dynamic?}
